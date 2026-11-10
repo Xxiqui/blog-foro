@@ -1,0 +1,46 @@
+{% if not user.is_authenticated %}
+<div class="card border-0 shadow-sm mb-4 join-community-widget">
+    <div class="card-body p-4">
+        <h2 class="h6 fw-bold mb-1">
+            <i class="bi bi-stars text-primary me-1" aria-hidden="true"></i>Únete a la comunidad
+        </h2>
+        <p class="small text-muted mb-3">
+            Participa en las comunidades técnicas, sigue a tus autores favoritos y guarda artículos en tus listas.
+        </p>
+
+        {% if hay_proveedores_sociales %}
+            {% include "cuentas/includes/botones_sociales.html" with next=request.get_full_path %}
+            <div class="auth-divider my-2">
+                <span>o</span>
+            </div>
+            <a href="{% url 'cuentas:registro' %}"
+               class="btn btn-outline-primary rounded-pill w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
+               aria-label="Continuar con correo electrónico para crear una cuenta">
+                <i class="bi bi-envelope-fill" aria-hidden="true"></i>
+                <span>Continuar con correo electrónico</span>
+            </a>
+        {% else %}
+            <div class="d-grid gap-2">
+                <a href="{% url 'cuentas:registro' %}"
+                   class="btn btn-primary rounded-pill w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
+                   aria-label="Crear cuenta en la comunidad">
+                    <i class="bi bi-person-plus-fill" aria-hidden="true"></i>
+                    <span>Crear cuenta</span>
+                </a>
+                <a href="{% url 'cuentas:login' %}"
+                   class="btn btn-outline-secondary rounded-pill w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold"
+                   aria-label="Iniciar sesión en la comunidad">
+                    <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+                    <span>Iniciar sesión</span>
+                </a>
+            </div>
+        {% endif %}
+
+        <p class="text-muted text-center mb-0 mt-3" style="font-size: 0.75rem;">
+            Al continuar, aceptas nuestros <a href="{% url 'blog:terminos' %}" class="text-decoration-none">Términos</a>
+            y <a href="{% url 'blog:privacidad' %}" class="text-decoration-none">Política de privacidad</a>.
+        </p>
+    </div>
+</div>
+{% endif %}
+

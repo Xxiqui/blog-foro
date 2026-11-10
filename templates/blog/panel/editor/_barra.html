@@ -1,0 +1,152 @@
+<header class="editor-header d-flex align-items-center justify-content-between px-2 px-sm-3 border-bottom" role="banner">
+    <!-- Izquierda: Flecha de volver (44px) y punto/chip de estado -->
+    <div class="d-flex align-items-center gap-1 gap-sm-2 min-w-0">
+        <a href="{% url 'blog:panel_post_list' %}" class="btn btn-sm btn-outline-secondary touch-target-44 d-flex align-items-center justify-content-center"
+           title="Volver a la lista de posts del panel" aria-label="Volver a la lista de posts">
+            <i class="bi bi-arrow-left fs-5" aria-hidden="true"></i>
+        </a>
+
+        <span class="badge rounded-pill fw-semibold editor-status-badge text-truncate
+              {% if post and post.estado == 'publicado' %}bg-success-subtle text-success border border-success-subtle
+              {% elif post and post.estado == 'programado' %}bg-info-subtle text-info-emphasis border border-info-subtle
+              {% else %}bg-secondary-subtle text-secondary border border-secondary-subtle{% endif %}"
+              id="editorStatusBadge"
+              data-estado="{% if post %}{{ post.estado|default:'borrador' }}{% else %}borrador{% endif %}">
+            {% if post and post.estado == 'publicado' %}
+                <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i><span class="d-none d-sm-inline">Publicado</span>
+            {% elif post and post.estado == 'programado' %}
+                <i class="bi bi-clock-fill me-1" aria-hidden="true"></i><span class="d-none d-sm-inline">Programado</span>
+            {% else %}
+                <i class="bi bi-pencil-fill me-1" aria-hidden="true"></i><span class="d-none d-sm-inline">Borrador</span>
+            {% endif %}
+        </span>
+    </div>
+
+    <!-- Centro: Estado de guardado solo con ícono en móvil (texto >= sm), accesible con aria-live -->
+    <div class="d-flex align-items-center px-1">
+        <span class="editor-save-indicator small text-muted d-flex align-items-center gap-1"
+              id="editorSaveIndicator"
+              aria-live="polite"
+              aria-atomic="true">
+            <i class="bi bi-cloud-check text-success fs-5" aria-hidden="true"></i>
+            <span class="save-status-text d-none d-sm-inline">Guardado</span>
+        </span>
+    </div>
+
+    <!-- Derecha: Acciones directas (en desktop >= md), botón Publicar compacto (NUNCA cortado) y Menú ⋯ -->
+    <div class="d-flex align-items-center gap-1 gap-sm-2 flex-shrink-0">
+        <!-- En desktop (>= md): Botón Vista previa en vivo -->
+        <button type="button" class="btn btn-sm btn-outline-secondary d-none d-md-inline-flex align-items-center gap-1 touch-target-44 px-3"
+                id="btnAbrirVistaPrevia"
+                data-bs-toggle="modal" data-bs-target="#modalVistaPrevia"
+                title="Vista previa en vivo (Ctrl+Enter)" aria-label="Abrir vista previa en vivo">
+            <i class="bi bi-eye" aria-hidden="true"></i>
+            <span>Vista previa</span>
+        </button>
+
+        <!-- En desktop (>= lg): Botón Historial de versiones -->
+        <button type="button" class="btn btn-sm btn-outline-secondary d-none d-lg-inline-flex align-items-center gap-1 touch-target-44 px-3 {% if not post or not post.pk %}d-none{% endif %}"
+                id="btnAbrirHistorial"
+                data-bs-toggle="modal" data-bs-target="#modalHistorial"
+                title="Historial de versiones y revisiones" aria-label="Abrir historial de revisiones">
+            <i class="bi bi-clock-history" aria-hidden="true"></i>
+            <span>Historial</span>
+        </button>
+
+        <!-- En desktop (>= md): Alternar modo de enfoque -->
+        <button type="button" class="btn btn-sm btn-outline-secondary d-none d-md-inline-flex touch-target-44"
+                id="btnAlternarEnfoque"
+                title="Modo concentración / enfoque (Ctrl+Shift+F)" aria-label="Alternar modo enfoque">
+            <i class="bi bi-fullscreen fs-6" aria-hidden="true"></i>
+        </button>
+
+        <!-- Botón principal de Publicar o Actualizar: COMPACTO que NUNCA se corta -->
+        <button type="button" class="btn btn-primary fw-semibold px-2 px-sm-3 d-flex align-items-center gap-1 text-nowrap touch-target-44"
+                id="btnAbrirModalPublicar"
+                data-bs-toggle="modal" data-bs-target="#modalPublicar"
+                aria-label="{% if post and post.estado == 'publicado' %}Actualizar artículo{% else %}Publicar o programar artículo{% endif %}">
+            <i class="bi {% if post and post.estado == 'publicado' %}bi-arrow-repeat{% else %}bi-send-fill{% endif %}" aria-hidden="true"></i>
+            <span id="btnPublicarTexto">
+                {% if post and post.estado == 'publicado' %}Actualizar{% elif post and post.estado == 'programado' %}Reprogramar{% else %}Publicar{% endif %}
+            </span>
+        </button>
+
+        <!-- Menú desplegable (⋯) que agrupa lo secundario en móvil y opciones extras -->
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary touch-target-44 dropdown-toggle dropdown-toggle-no-caret"
+                    type="button" id="menuOpcionesEditor" data-bs-toggle="dropdown" aria-expanded="false"
+                    aria-label="Más acciones del artículo">
+                <i class="bi bi-three-dots-vertical fs-5" aria-hidden="true"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border py-2 dropdown-menu-mobile-sheet" aria-labelledby="menuOpcionesEditor" style="min-width: 220px;">
+                <!-- Opciones que en móvil (< md) se abren desde este menú -->
+                <li class="d-md-none">
+                    <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalVistaPrevia">
+                        <i class="bi bi-eye text-primary" aria-hidden="true"></i>
+                        <span>Vista previa en vivo</span>
+                    </button>
+                </li>
+                <li class="d-lg-none">
+                    <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="offcanvas" data-bs-target="#offcanvasLateral">
+                        <i class="bi bi-sliders text-info" aria-hidden="true"></i>
+                        <span>Configuración y SEO</span>
+                    </button>
+                </li>
+                <li class="d-md-none">
+                    <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" id="btnAlternarEnfoqueMobile">
+                        <i class="bi bi-fullscreen text-secondary" aria-hidden="true"></i>
+                        <span>Modo concentración</span>
+                    </button>
+                </li>
+                <li class="{% if not post or not post.pk %}d-none{% endif %}">
+                    <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="modal" data-bs-target="#modalHistorial">
+                        <i class="bi bi-clock-history text-secondary" aria-hidden="true"></i>
+                        <span>Historial de versiones</span>
+                    </button>
+                </li>
+                <li class="d-md-none"><hr class="dropdown-divider"></li>
+
+                {% if post and post.pk %}
+                    {% if post.estado == 'publicado' %}
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="{{ post.get_absolute_url }}" target="_blank" rel="noopener">
+                                <i class="bi bi-box-arrow-up-right text-success" aria-hidden="true"></i>
+                                <span>Ver publicación pública</span>
+                            </a>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2 text-warning" id="btnAccionDespublicar">
+                                <i class="bi bi-archive" aria-hidden="true"></i>
+                                <span>Pasar a borrador</span>
+                            </button>
+                        </li>
+                    {% endif %}
+                    <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" id="btnAccionDuplicar">
+                            <i class="bi bi-copy text-info" aria-hidden="true"></i>
+                            <span>Duplicar como borrador</span>
+                        </button>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2 text-danger"
+                                data-bs-toggle="modal" data-bs-target="#modalEliminarConfirmar">
+                            <i class="bi bi-trash3" aria-hidden="true"></i>
+                            <span>Eliminar artículo…</span>
+                        </button>
+                    </li>
+                {% else %}
+                    <li><span class="dropdown-item-text text-muted small">Guarda el artículo para ver más opciones</span></li>
+                {% endif %}
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2 text-muted"
+                            data-bs-toggle="modal" data-bs-target="#modalAtajos">
+                        <i class="bi bi-keyboard" aria-hidden="true"></i>
+                        <span>Atajos de teclado (?)</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</header>

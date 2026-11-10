@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Elegir plantilla para nuevo artículo | {{ MARCA }}{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 960px;">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h1 class="h3 fw-bold mb-1">
+                <i class="bi bi-pencil-square text-primary me-2"></i>Crear nuevo artículo
+            </h1>
+            <p class="text-muted mb-0">Selecciona una estructura inicial para comenzar a escribir o empieza desde cero.</p>
+        </div>
+        <a href="{% url 'blog:panel_post_list' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Volver al panel
+        </a>
+    </div>
+
+    <div class="row g-4">
+        {% for clave, p in plantillas.items %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm hover-shadow transition-all">
+                    <div class="card-body p-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary p-3 mb-3" style="width: 52px; height: 52px;">
+                                {% if clave == 'en_blanco' %}
+                                    <i class="bi bi-file-earmark-plus fs-4"></i>
+                                {% elif clave == 'tutorial' %}
+                                    <i class="bi bi-list-ol fs-4"></i>
+                                {% elif clave == 'guia_rapida' %}
+                                    <i class="bi bi-lightning-charge fs-4"></i>
+                                {% elif clave == 'analisis' %}
+                                    <i class="bi bi-graph-up fs-4"></i>
+                                {% else %}
+                                    <i class="bi bi-journal-richtext fs-4"></i>
+                                {% endif %}
+                            </div>
+                            <h2 class="h5 fw-bold mb-2">{{ p.nombre }}</h2>
+                            <p class="small text-muted mb-4">{{ p.descripcion }}</p>
+                        </div>
+                        <a href="{% url 'blog:panel_post_create' %}?plantilla={{ clave }}" class="btn btn-sm {% if clave == 'en_blanco' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100 fw-semibold">
+                            Usar esta plantilla <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+

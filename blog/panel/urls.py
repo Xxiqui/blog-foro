@@ -1,0 +1,46 @@
+from django.urls import path
+from . import api, views
+
+urlpatterns = [
+    # Selector de plantillas y páginas del editor
+    path('nuevo/', views.PanelNuevoSelectorView.as_view(), name='panel_nuevo_selector'),
+    path('posts/', views.PanelPostListView.as_view(), name='panel_post_list'),
+    path('posts/nuevo/', views.PostEditorView.as_view(), name='panel_post_create'),
+    path('posts/<slug:slug>/editar/', views.PostEditorView.as_view(), name='panel_post_update'),
+    path('posts/<slug:slug>/eliminar/', views.PanelPostDeleteView.as_view(), name='panel_post_delete'),
+    path('posts/<slug:slug>/vista-previa/', views.PostBorradorPreviewView.as_view(), name='panel_post_preview'),
+    path('posts/<slug:slug>/preview/', views.PostBorradorPreviewView.as_view(), name='panel_post_preview_alias'),
+
+    # Endpoints JSON del Estudio de Escritura
+    path('api/editor/autoguardar/', api.ApiAutoguardarView.as_view(), name='panel_api_autoguardar'),
+    path('api/autoguardar/', api.ApiAutoguardarView.as_view()),
+    path('api/editor/vista-previa/', api.ApiVistaPreviaView.as_view(), name='panel_api_vista_previa'),
+    path('api/vista-previa/', api.ApiVistaPreviaView.as_view()),
+    path('api/editor/<int:pk>/historial/', api.ApiHistorialView.as_view(), name='panel_api_historial'),
+    path('api/historial/<int:pk>/', api.ApiHistorialView.as_view()),
+    path('api/editor/revision/<int:pk>/', api.ApiRevisionDetalleView.as_view(), name='panel_api_revision_detalle'),
+    path('api/revision/<int:pk>/', api.ApiRevisionDetalleView.as_view()),
+    path('api/editor/<int:pk>/restaurar/', api.ApiRestaurarView.as_view(), name='panel_api_restaurar'),
+    path('api/restaurar/<int:pk>/', api.ApiRestaurarView.as_view()),
+    path('api/editor/portada/subir/', api.ApiPortadaSubirView.as_view()),
+    path('api/editor/<int:pk>/portada/subir/', api.ApiPortadaSubirView.as_view(), name='panel_api_portada_subir'),
+    path('api/portada/subir/', api.ApiPortadaSubirView.as_view()),
+    path('api/editor/portada/quitar/', api.ApiPortadaQuitarView.as_view()),
+    path('api/editor/<int:pk>/portada/quitar/', api.ApiPortadaQuitarView.as_view(), name='panel_api_portada_quitar'),
+    path('api/portada/quitar/', api.ApiPortadaQuitarView.as_view()),
+    path('api/editor/publicar/', api.ApiPublicarView.as_view()),
+    path('api/editor/<int:pk>/publicar/', api.ApiPublicarView.as_view(), name='panel_api_publicar'),
+    path('api/publicar/', api.ApiPublicarView.as_view()),
+    path('api/editor/programar/', api.ApiProgramarView.as_view()),
+    path('api/editor/<int:pk>/programar/', api.ApiProgramarView.as_view(), name='panel_api_programar'),
+    path('api/programar/', api.ApiProgramarView.as_view()),
+    path('api/editor/despublicar/', api.ApiDespublicarView.as_view()),
+    path('api/editor/<int:pk>/despublicar/', api.ApiDespublicarView.as_view(), name='panel_api_despublicar'),
+    path('api/despublicar/', api.ApiDespublicarView.as_view()),
+    path('api/editor/duplicar/', api.ApiDuplicarView.as_view()),
+    path('api/editor/<int:pk>/duplicar/', api.ApiDuplicarView.as_view(), name='panel_api_duplicar'),
+    path('api/duplicar/', api.ApiDuplicarView.as_view()),
+    path('api/editor/destinatarios/', api.ApiDestinatariosCountView.as_view()),
+    path('api/editor/<int:pk>/destinatarios/', api.ApiDestinatariosCountView.as_view(), name='panel_api_destinatarios'),
+    path('api/destinatarios-count/', api.ApiDestinatariosCountView.as_view()),
+]

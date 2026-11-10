@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load blog_extras %}
+
+{% block title %}{{ lista.nombre }} | Listas de lectura{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-4 pb-3 border-bottom gap-3">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <h1 class="h2 fw-bold mb-0">
+                {% if lista.es_guardados %}
+                    <i class="bi bi-bookmark-star-fill text-primary me-2"></i>
+                {% else %}
+                    <i class="bi bi-collection-fill text-primary me-2"></i>
+                {% endif %}
+                {{ lista.nombre }}
+            </h1>
+            {% if lista.publica %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                    <i class="bi bi-globe2 me-1"></i>Pública
+                </span>
+            {% else %}
+                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                    <i class="bi bi-lock-fill me-1"></i>Privada
+                </span>
+            {% endif %}
+        </div>
+
+        {% if lista.descripcion %}
+            <p class="text-muted mb-1">{{ lista.descripcion }}</p>
+        {% endif %}
+
+        <div class="small text-muted">
+            Creada por <strong>{{ lista.usuario.get_full_name|default:lista.usuario.username }}</strong> (@{{ lista.usuario.username }})
+            · {{ items|length }} artículo{{ items|length|pluralize }}
+        </div>
+    </div>
+
+    {% if es_dueno %}
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'blog:mis_listas' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Mis listas
+            </a>
+            {% if not lista.es_guardados %}
+                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEditarLista">
+                    <i class="bi bi-pencil-square me-1"></i>Renombrar / Editar
+                </button>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+{% if es_dueno and form_editar and not lista.es_guardados %}
+    <div class="collapse mb-4" id="collapseEditarLista">
+        <div class="card border-0 shadow-sm p-4">
+            <h2 class="h6 fw-bold mb-3">Editar lista "{{ lista.nombre }}"</h2>
+            <form method="post" action="{% url 'blog:lista_editar' pk=lista.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label small fw-semibold">Nombre</label>
+                        {{ form_editar.nombre }}
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label small fw-semibold">Descripción</label>
+                        {{ form_editar.descripcion }}
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="form-check mb-2">
+                            {{ form_editar.publica }}
+                            <label class="form-check-label small" for="{{ form_editar.publica.id_for_label }}">Pública</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+<div class="row g-3">
+    {% for item in items %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    {% if item.post.estado == 'publicado' %}
+                        <div class="flex-grow-1">
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                {% if item.post.categoria %}
+                                    <a href="{{ item.post.categoria.get_absolute_url }}" class="badge bg-primary text-decoration-none">
+                                        {{ item.post.categoria.nombre }}
+                                    </a>
+                                {% endif %}
+                                <small class="text-muted">
+                                    Guardado el {{ item.agregado|date:"d M Y" }}
+                                </small>
+                            </div>
+                            <h2 class="h5 fw-bold mb-1">
+                                <a href="{{ item.post.get_absolute_url }}" class="text-decoration-none text-body">
+                                    {{ item.post.titulo }}
+                                </a>
+                            </h2>
+                            <div class="small text-muted d-flex align-items-center gap-1">
+                                <span>Por</span>
+                                <div class="author-meta-block d-inline-flex" style="flex: 0 1 auto;">
+                                    <a href="{{ item.post.autor.get_absolute_url }}" class="author-name-link">
+                                        <span class="author-name-text">{{ item.post.autor.nombre_mostrar }}</span>
+                                    </a>
+                                    <div class="author-badge-container">{% insignia item.post.autor %}</div>
+                                </div>
+                                <span class="flex-shrink-0">· Publicado el {{ item.post.publicado_en|date:"d M Y" }}</span>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="flex-grow-1">
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle mb-1">
+                                No disponible
+                            </span>
+                            <h2 class="h6 fw-bold text-muted mb-1">
+                                Este post ya no está disponible
+                            </h2>
+                            <small class="text-muted">
+                                El artículo "{{ item.post.titulo }}" pasó a estado borrador y no se muestra públicamente.
+                            </small>
+                        </div>
+                    {% endif %}
+
+                    {% if es_dueno %}
+                        <div>
+                            <form method="post" action="{% url 'blog:lista_quitar_item' pk=lista.pk post_id=item.post.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Quitar de la lista">
+                                    <i class="bi bi-x-lg me-1"></i>Quitar
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm empty-state my-4 p-5 text-center">
+                <div class="mb-3">
+                    <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning-subtle text-warning p-3" style="width: 80px; height: 80px;">
+                        {% if lista.es_guardados %}
+                            <i class="bi bi-bookmark-x fs-1" aria-hidden="true"></i>
+                        {% else %}
+                            <i class="bi bi-collection fs-1 text-secondary" aria-hidden="true"></i>
+                        {% endif %}
+                    </span>
+                </div>
+                {% if lista.es_guardados %}
+                    <h2 class="h4 fw-bold mb-2">No tienes nada guardado</h2>
+                    <p class="text-muted mb-4 mx-auto" style="max-width: 520px;">
+                        Aún no has guardado ningún artículo en tu lista. Cuando encuentres publicaciones que quieras leer más tarde, pulsa el botón <strong>Guardar</strong> (ícono de marcador <i class="bi bi-bookmark text-warning" aria-hidden="true"></i>) en cualquier tarjeta o artículo para tenerlas reunidas aquí.
+                    </p>
+                {% else %}
+                    <h2 class="h4 fw-bold mb-2">Esta lista está vacía</h2>
+                    <p class="text-muted mb-4 mx-auto" style="max-width: 520px;">
+                        Aún no se han añadido artículos a la lista «{{ lista.nombre }}». Puedes agregar artículos a esta lista desde el menú desplegable del botón de guardar en cualquier publicación.
+                    </p>
+                {% endif %}
+                <div>
+                    <a href="{% url 'blog:post_list' %}" class="btn btn-primary rounded-pill px-4 py-2">
+                        <i class="bi bi-compass me-1" aria-hidden="true"></i>Explorar artículos
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

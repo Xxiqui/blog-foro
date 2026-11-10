@@ -1,0 +1,93 @@
+{% load static blog_extras %}
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="{{ tema_bs|default:'light' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="robots" content="noindex">
+    <link rel="canonical" href="{{ url_post_absoluta }}">
+    <title>{{ post.titulo }} | {{ site_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            overflow: hidden;
+        }
+        .embed-card {
+            height: 256px;
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            background-color: var(--color-surface);
+            color: var(--color-text);
+            overflow: hidden;
+            display: flex;
+            flex-direction: row;
+        }
+        .embed-cover-col {
+            width: 34%;
+            min-width: 140px;
+            max-width: 240px;
+            position: relative;
+        }
+        .embed-cover-col .post-cover-wrapper {
+            height: 100%;
+            aspect-ratio: unset;
+            border-radius: 0;
+        }
+        @media (max-width: 480px) {
+            .embed-cover-col {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <article class="embed-card">
+        <div class="embed-cover-col">
+            <a href="{{ url_post_absoluta }}" target="_blank" rel="noopener noreferrer" class="d-block h-100 text-decoration-none" tabindex="-1" aria-hidden="true">
+                {% portada_post post "h-100" %}
+            </a>
+        </div>
+        <div class="p-3 d-flex flex-column justify-content-between flex-grow-1 min-w-0">
+            <div>
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                    {% if post.categoria %}
+                        <span class="badge-categoria">{{ post.categoria.nombre }}</span>
+                    {% else %}
+                        <span class="badge-categoria">General</span>
+                    {% endif %}
+                    <small class="text-muted">{{ post.publicado_en|default:post.creado|date:"d M Y" }} &bull; {{ post.tiempo_lectura }} min</small>
+                </div>
+
+                <h1 class="h6 fw-bold mb-1 line-clamp-2" title="{{ post.titulo }}">
+                    <a href="{{ url_post_absoluta }}" target="_blank" rel="noopener noreferrer" class="text-body text-decoration-none">
+                        {{ post.titulo }}
+                    </a>
+                </h1>
+
+                <p class="small text-secondary mb-2 line-clamp-2">
+                    {{ post.contenido|extracto_plano:140 }}
+                </p>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between gap-2 pt-2 border-top">
+                <div class="d-flex align-items-center gap-2 text-truncate small">
+                    {% avatar post.autor 28 %}
+                    <span class="fw-semibold text-truncate">{{ post.autor.nombre_mostrar }}</span>
+                </div>
+
+                <a href="{{ url_post_absoluta }}"
+                   target="_blank" rel="noopener noreferrer"
+                   class="btn btn-sm btn-primary rounded-pill px-3 flex-shrink-0">
+                    Leer en {{ site_name }} <i class="bi bi-box-arrow-up-right ms-1" aria-hidden="true"></i>
+                </a>
+            </div>
+        </div>
+    </article>
+</body>
+</html>
+

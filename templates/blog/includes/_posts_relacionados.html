@@ -1,0 +1,52 @@
+{% load blog_extras %}
+{% if posts_relacionados %}
+<div class="card border-0">
+    <div class="card-body p-3">
+        <h2 class="h6 fw-bold text-uppercase small mb-2">
+            <i class="bi bi-journals text-primary me-1" aria-hidden="true"></i>Posts relacionados
+        </h2>
+        <div class="vstack">
+            {% for rel in posts_relacionados %}
+                <div class="related-sidebar-item">
+                    <!-- Arriba: categoría y autor -->
+                    <div class="d-flex flex-wrap align-items-center gap-1 small text-muted mb-1">
+                        {% if rel.categoria %}
+                            <a href="{{ rel.categoria.get_absolute_url }}" class="fw-semibold text-decoration-none text-body">
+                                {{ rel.categoria.nombre }}
+                            </a>
+                            <span>&bull;</span>
+                        {% endif %}
+                        <span>{{ rel.autor.nombre_mostrar }}</span>
+                    </div>
+
+                    <!-- Centro: título a 2 líneas a la izquierda y miniatura 72x72 a la derecha -->
+                    <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                        <h3 class="h6 fw-semibold mb-0 flex-grow-1" style="font-size: 0.94rem;">
+                            <a href="{{ rel.get_absolute_url }}"
+                               class="text-body text-decoration-none line-clamp-2"
+                               title="{{ rel.titulo }}">
+                                {{ rel.titulo }}
+                            </a>
+                        </h3>
+                        <a href="{{ rel.get_absolute_url }}" class="flex-shrink-0 text-decoration-none" tabindex="-1" aria-hidden="true">
+                            {% miniatura_post rel 72 %}
+                        </a>
+                    </div>
+
+                    <!-- Abajo: ♥ likes · 💬 comentarios -->
+                    <div class="small text-muted d-flex align-items-center gap-2">
+                        <span title="Me gusta">
+                            <i class="bi bi-heart-fill text-danger me-1" aria-hidden="true"></i>{{ rel.total_likes|default:0 }}
+                        </span>
+                        <span>&bull;</span>
+                        <span title="Comentarios">
+                            <i class="bi bi-chat-left-text me-1" aria-hidden="true"></i>{{ rel.total_comentarios_aprobados|default:0 }} comentarios
+                        </span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+

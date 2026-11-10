@@ -1,0 +1,38 @@
+<main class="editor-canvas mx-auto px-3 py-4" id="editorCanvas" role="main" style="max-width: 760px;">
+    <!-- Portada del artículo -->
+    {% include "blog/panel/editor/_portada.html" %}
+
+    <!-- Campo de Título Autoextensible -->
+    <div class="editor-title-container mb-3 position-relative">
+        <textarea id="editorTitulo"
+                  name="titulo"
+                  class="editor-title-textarea w-100 border-0 bg-transparent fw-bold"
+                  placeholder="Título del artículo…"
+                  rows="1"
+                  maxlength="120"
+                  required
+                  aria-label="Título del artículo">{% if post %}{{ post.titulo }}{% elif form.titulo.value %}{{ form.titulo.value }}{% endif %}</textarea>
+        <div class="editor-title-counter small text-muted text-end mt-1">
+            <span id="tituloCharCount">0</span>/120 caracteres
+        </div>
+    </div>
+
+    <!-- Contenedor del Editor de Contenido (CKEditor 5) -->
+    <div class="editor-content-wrapper mb-4" id="editorContentWrapper">
+        {{ form.contenido }}
+    </div>
+
+    <!-- Barra de métricas inferior del lienzo -->
+    <footer class="editor-canvas-footer d-flex flex-wrap justify-content-between align-items-center py-2 px-3 border-top small text-muted" aria-label="Métricas del artículo">
+        <div class="d-flex align-items-center gap-3">
+            <span id="canvasWordCount"><i class="bi bi-file-text me-1" aria-hidden="true"></i>0 palabras</span>
+            <span id="canvasReadingTime"><i class="bi bi-clock me-1" aria-hidden="true"></i>1 min de lectura</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-body-secondary text-secondary border" id="offlineBackupBadge" style="display: none;">
+                <i class="bi bi-hdd-fill me-1" aria-hidden="true"></i>Copia local
+            </span>
+            <span class="text-secondary" id="editorLastSavedTime">Sin cambios pendientes</span>
+        </div>
+    </footer>
+</main>

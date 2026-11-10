@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Mis suscripciones por correo | Blog con Panel de Autor{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom">
+    <div>
+        <h1 class="h2 fw-bold mb-1">
+            <i class="bi bi-envelope-check-fill text-primary me-2"></i>Mis suscripciones por correo
+        </h1>
+        <p class="text-muted mb-0">
+            Administra los boletines de autores y categorías a los que te has suscrito.
+        </p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="list-group list-group-flush">
+        {% for sub in suscripciones %}
+            <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center py-3 gap-2">
+                <div>
+                    <div class="fw-bold d-flex align-items-center gap-2">
+                        {% if sub.autor %}
+                            <i class="bi bi-person-badge text-primary"></i>
+                            <a href="{{ sub.autor.get_absolute_url }}" class="text-decoration-none text-body">
+                                Autor: {{ sub.autor.nombre_visible }}
+                            </a>
+                        {% elif sub.categoria %}
+                            <i class="bi bi-folder2-open text-primary"></i>
+                            <a href="{{ sub.categoria.get_absolute_url }}" class="text-decoration-none text-body">
+                                Categoría: {{ sub.categoria.nombre }}
+                            </a>
+                        {% endif %}
+
+                        {% if sub.confirmada %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">Confirmada</span>
+                        {% else %}
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Pendiente de confirmación</span>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted">
+                        Correo: {{ sub.email }} · Suscrito el {{ sub.creado|date:"d M Y" }}
+                    </small>
+                </div>
+
+                <form method="post" action="{% url 'blog:suscripcion_baja' token=sub.token %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'blog:mis_suscripciones' %}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-envelope-dash me-1"></i>Darme de baja
+                    </button>
+                </form>
+            </div>
+        {% empty %}
+            <div class="p-5 text-center">
+                <i class="bi bi-envelope-open fs-1 text-muted mb-2 d-block"></i>
+                <h2 class="h5 fw-bold">No tienes suscripciones activas</h2>
+                <p class="text-muted mb-3">
+                    Puedes suscribirte por correo desde la página de cualquier autor, categoría o desde el pie de página del blog.
+                </p>
+                <a href="{% url 'blog:post_list' %}" class="btn btn-primary btn-sm">Explorar artículos</a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+<div class="editor-tab-pane py-2" id="pane-publicacion">
+    <!-- Checklist / Requisitos previos -->
+    {% include "blog/panel/editor/_checklist.html" %}
+
+    <!-- Categoría -->
+    <div class="mb-3">
+        <label for="selectCategoria" class="form-label small fw-bold">
+            <i class="bi bi-folder2-open me-1 text-primary" aria-hidden="true"></i>Categoría <span class="text-danger">*</span>
+        </label>
+        <select class="form-select form-select-sm" id="selectCategoria" name="categoria" required>
+            <option value="" {% if not post or not post.categoria_id %}{% if not form.categoria.value %}selected{% endif %}{% endif %} disabled>Selecciona una categoría…</option>
+            {% for cat in categorias %}
+                <option value="{{ cat.pk }}"
+                        {% if post and post.categoria_id == cat.pk %}selected{% elif form.categoria.value|stringformat:"s" == cat.pk|stringformat:"s" %}selected{% endif %}>
+                    {{ cat.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+        <div class="form-text small">La categoría agrupa tu publicación en su respectivo hub.</div>
+    </div>
+
+    <!-- Etiquetas (Chips dinámicos) -->
+    <div class="mb-4" id="etiquetasContainer">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <label class="form-label small fw-bold mb-0">
+                <i class="bi bi-tags me-1 text-primary" aria-hidden="true"></i>Etiquetas
+            </label>
+            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none small"
+                    data-bs-toggle="modal" data-bs-target="#modalNuevaEtiqueta"
+                    id="btnNuevaEtiquetaModal">
+                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Nueva etiqueta
+            </button>
+        </div>
+
+        <!-- Buscador / filtro rápido de chips -->
+        <input type="search" class="form-control form-control-sm mb-2" id="inputFiltroEtiquetas"
+               placeholder="Buscar o filtrar etiquetas…" aria-label="Filtrar etiquetas">
+
+        <div class="editor-tags-chips-cloud d-flex flex-wrap gap-1 p-2 rounded border bg-body"
+             id="editorTagsCloud"
+             style="max-height: 180px; overflow-y: auto;">
+            {% for tag in todas_etiquetas %}
+                <button type="button"
+                        class="badge rounded-pill border tag-chip transition-all {% if post and tag in post.etiquetas.all %}bg-primary text-white border-primary active{% else %}bg-body-secondary text-body border-secondary-subtle{% endif %}"
+                        data-tag-id="{{ tag.pk }}"
+                        data-tag-name="{{ tag.nombre }}"
+                        aria-pressed="{% if post and tag in post.etiquetas.all %}true{% else %}false{% endif %}">
+                    #{{ tag.nombre }}
+                </button>
+            {% endfor %}
+        </div>
+        <div class="form-text small mt-1">
+            <span id="etiquetasSeleccionadasCount">0</span> seleccionada(s).
+        </div>
+    </div>
+</div>

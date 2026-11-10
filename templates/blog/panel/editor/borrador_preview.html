@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load blog_extras %}
+
+{% block title %}Vista previa: {{ post.titulo }} | {{ MARCA }}{% endblock %}
+
+{% block content %}
+<div class="alert alert-warning d-flex align-items-center justify-content-between p-3 mb-4 rounded-3 shadow-sm" role="alert">
+    <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-eye-fill fs-5"></i>
+        <div>
+            <strong>Modo Vista Previa:</strong> Estás previsualizando un borrador no publicado.
+        </div>
+    </div>
+    <div>
+        <a href="{% url 'blog:panel_post_update' post.slug %}" class="btn btn-sm btn-dark">
+            <i class="bi bi-pencil-square me-1"></i>Volver al editor
+        </a>
+    </div>
+</div>
+
+{% include "blog/includes/_articulo.html" with post=post es_vista_previa=True %}
+
+{% endblock %}
+

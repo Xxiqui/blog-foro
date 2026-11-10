@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load blog_extras %}
+
+{% block title %}Más populares | {{ site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom gap-3">
+    <div>
+        <h1 class="h2 fw-bold mb-1">
+            <i class="bi bi-fire text-danger me-2" aria-hidden="true"></i>Artículos más populares
+        </h1>
+        <p class="text-muted mb-0">
+            Los artículos más leídos y valorados por la comunidad.
+        </p>
+    </div>
+
+    <!-- Pestañas Semana / Mes / Siempre con pestaña activa marcada claramente -->
+    <ul class="nav nav-pills bg-body-tertiary p-1 rounded-pill border" role="tablist" aria-label="Período de popularidad">
+        <li class="nav-item" role="presentation">
+            <a class="nav-link rounded-pill px-3 py-1 {% if periodo_actual == 'semana' %}active fw-bold shadow-sm{% endif %}"
+               {% if periodo_actual == 'semana' %}aria-current="page"{% endif %}
+               href="{% url 'blog:posts_populares' %}?periodo=semana">
+                Semana
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link rounded-pill px-3 py-1 {% if periodo_actual == 'mes' %}active fw-bold shadow-sm{% endif %}"
+               {% if periodo_actual == 'mes' %}aria-current="page"{% endif %}
+               href="{% url 'blog:posts_populares' %}?periodo=mes">
+                Mes
+            </a>
+        </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link rounded-pill px-3 py-1 {% if periodo_actual == 'siempre' %}active fw-bold shadow-sm{% endif %}"
+               {% if periodo_actual == 'siempre' %}aria-current="page"{% endif %}
+               href="{% url 'blog:posts_populares' %}?periodo=siempre">
+                Siempre
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="row g-4">
+    {% for post in posts %}
+        {% with pos=forloop.counter0|add:page_obj.start_index %}
+        <div class="col-12">
+            <article class="card post-card border-0">
+                <div class="card-body p-4 d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 min-w-0">
+                    <div class="flex-grow-1 min-w-0">
+                        <!-- Fila de categoría y métricas (vistas con ícono de ojo si existen datos, sin duplicar "N me gusta") -->
+                        <div class="d-flex flex-wrap align-items-center gap-3 mb-2">
+                            {% if post.categoria %}
+                                <a href="{{ post.categoria.get_absolute_url }}" class="badge-categoria">
+                                    {{ post.categoria.nombre }}
+                                </a>
+                            {% endif %}
+                            <div class="small text-muted d-flex flex-wrap align-items-center gap-3">
+                                {% if post.vistas_periodo > 0 %}
+                                    <span title="Vistas en este período">
+                                        <i class="bi bi-eye me-1" aria-hidden="true"></i>{{ post.vistas_periodo }} vista{{ post.vistas_periodo|pluralize }}
+                                    </span>
+                                {% elif post.total_vistas > 0 %}
+                                    <span title="Vistas totales">
+                                        <i class="bi bi-eye me-1" aria-hidden="true"></i>{{ post.total_vistas }} vista{{ post.total_vistas|pluralize }}
+                                    </span>
+                                {% endif %}
+                                <span title="Comentarios aprobados">
+                                    <i class="bi bi-chat-left-text me-1" aria-hidden="true"></i>{{ post.comentarios_periodo|default:post.total_comentarios_aprobados }} coment.
+                                </span>
+                                <span title="Tiempo de lectura">
+                                    <i class="bi bi-clock me-1" aria-hidden="true"></i>{{ post.tiempo_lectura }} min
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Medalla del podio (#1 oro, #2 plata, #3 bronce y neutro) alineada verticalmente con la fila del título -->
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <span class="podium-badge {% if pos == 1 %}podium-gold{% elif pos == 2 %}podium-silver{% elif pos == 3 %}podium-bronze{% else %}podium-neutral{% endif %}"
+                                  title="Posición #{{ pos }}">
+                                #{{ pos }}
+                            </span>
+                            <h2 class="h5 fw-bold mb-0 card-title-mobile-clamp min-w-0">
+                                <a href="{{ post.get_absolute_url }}"
+                                   class="text-decoration-none text-body line-clamp-3"
+                                   title="{{ post.titulo }}">
+                                    {{ post.titulo }}
+                                </a>
+                            </h2>
+                        </div>
+
+                        <p class="text-secondary small mb-2">
+                            {{ post.contenido|extracto_plano:160 }}
+                        </p>
+
+                        <div class="d-flex align-items-center gap-2 small flex-wrap">
+                            <div class="author-meta-block min-w-0 flex-grow-1">
+                                <a href="{{ post.autor.get_absolute_url }}" class="author-name-link min-w-0 flex-grow-1">
+                                    {% avatar post.autor 28 %}
+                                    <span class="author-name-text text-truncate">{{ post.autor.nombre_mostrar }}</span>
+                                </a>
+                                <div class="author-badge-container flex-shrink-0 ms-2">{% insignia post.autor %}</div>
+                            </div>
+                            <span class="text-muted flex-shrink-0">&bull; {{ post.publicado_en|date:"d M Y" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="card-actions-row d-flex align-items-center justify-content-between justify-content-lg-end gap-2 flex-shrink-0 pt-2 pt-lg-0 border-top border-lg-0 w-100 w-lg-auto post-card-footer">
+                        <form method="post"
+                              action="{% url 'blog:post_like_toggle' slug=post.slug %}"
+                              data-ajax-like
+                              class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit"
+                                    class="btn btn-sm {% if post.ya_dio_like %}btn-danger{% else %}btn-outline-danger{% endif %} rounded-pill px-3 d-inline-flex align-items-center"
+                                    aria-label="Me gusta en {{ post.titulo }}"
+                                    aria-pressed="{% if post.ya_dio_like %}true{% else %}false{% endif %}">
+                                <i class="bi {% if post.ya_dio_like %}bi-heart-fill{% else %}bi-heart{% endif %}" data-like-icon aria-hidden="true"></i>
+                                <span data-like-count aria-live="polite" class="ms-1">{{ post.total_likes|default:0 }}</span>
+                            </button>
+                        </form>
+
+                        <div class="btn-group btn-group-sm save-btn-group" role="group" aria-label="Guardar artículo">
+                            <form method="post"
+                                  action="{% url 'blog:post_guardar_toggle' slug=post.slug %}"
+                                  data-ajax-guardar>
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit"
+                                        class="btn btn-sm {% if post.ya_guardado %}btn-warning{% else %}btn-outline-secondary{% endif %}"
+                                        aria-label="Guardar {{ post.titulo }} en Guardados"
+                                        aria-pressed="{% if post.ya_guardado %}true{% else %}false{% endif %}"
+                                        title="Guardar en Guardados">
+                                    <i class="bi {% if post.ya_guardado %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}" data-guardar-icon aria-hidden="true"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        {% include "blog/includes/share_dropdown.html" with post=post %}
+                    </div>
+                </div>
+            </article>
+        </div>
+        {% endwith %}
+    {% empty %}
+        <div class="col-12">
+            <div class="empty-state">
+                <p class="text-muted mb-0">No hay artículos publicados para mostrar en este período.</p>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{% include "blog/includes/pagination.html" %}
+{% endblock %}

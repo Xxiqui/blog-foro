@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Acerca de | Blog con Panel de Autor{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 p-4 p-md-5">
+            <span class="badge-categoria mb-3 align-self-start">Sobre el proyecto</span>
+            <h1 class="h2 fw-bold mb-3">Acerca de Blog con Panel de Autor</h1>
+            <p class="lead text-secondary mb-4">
+                Una plataforma editorial diseñada para compartir conocimiento técnico sobre desarrollo de software, arquitectura backend, bases de datos y seguridad web.
+            </p>
+
+            <h2 class="h5 fw-bold mt-2 mb-3">Nuestra misión</h2>
+            <p class="text-secondary mb-4">
+                Facilitar a cada autor un espacio limpio, accesible y seguro donde redactar artículos técnicos con formato enriquecido, bloques de código resaltados, tablas de contenidos automáticas y herramientas de interacción con sus lectores.
+            </p>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="p-3 rounded-3 border h-100">
+                        <i class="bi bi-pencil-square text-primary fs-4 d-block mb-2" aria-hidden="true"></i>
+                        <h3 class="h6 fw-bold">Panel de Autor</h3>
+                        <p class="small text-muted mb-0">
+                            Gestión privada de borradores, publicaciones, métricas de lectura y moderación de comentarios.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 rounded-3 border h-100">
+                        <i class="bi bi-people text-success fs-4 d-block mb-2" aria-hidden="true"></i>
+                        <h3 class="h6 fw-bold">Comunidad</h3>
+                        <p class="small text-muted mb-0">
+                            Sigue a tus autores favoritos, guarda lecturas en colecciones y recibe boletines por correo.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 rounded-3 border h-100">
+                        <i class="bi bi-shield-check text-info fs-4 d-block mb-2" aria-hidden="true"></i>
+                        <h3 class="h6 fw-bold">Calidad y Seguridad</h3>
+                        <p class="small text-muted mb-0">
+                            Saneado estricto de HTML, protección anti-spam y búsqueda de texto completo en español.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 pt-3 border-top">
+                <a href="{% url 'blog:post_list' %}" class="btn btn-primary">
+                    <i class="bi bi-journal-richtext me-1" aria-hidden="true"></i>Explorar artículos
+                </a>
+                <a href="{% url 'blog:autores_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-award me-1" aria-hidden="true"></i>Conocer a los autores
+                </a>
+                <a href="{% url 'blog:contacto' %}" class="btn btn-outline-primary ms-md-auto">
+                    <i class="bi bi-envelope me-1" aria-hidden="true"></i>Contactar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

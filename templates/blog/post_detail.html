@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% load blog_extras %}
+
+{% block title %}{{ post.titulo }} | {{ site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+
+{% block meta_tags %}
+<meta name="description" content="{{ post.contenido|extracto_plano:160 }}">
+<meta property="og:title" content="{{ post.titulo }}">
+<meta property="og:description" content="{{ post.contenido|extracto_plano:160 }}">
+<meta property="og:type" content="article">
+<meta property="og:url" content="{{ url_absoluta }}">
+{% if post.portada_url %}
+<meta property="og:image" content="{{ post.portada_url }}">
+{% endif %}
+{% endblock %}
+
+{% block extra_head %}
+<!-- Highlight.js (cdnjs) con cambio dinámico de tema claro / oscuro según data-bs-theme -->
+<link id="hljs-theme-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<link id="hljs-theme-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" disabled>
+<script>
+    (function() {
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        const l = document.getElementById('hljs-theme-light');
+        const d = document.getElementById('hljs-theme-dark');
+        if (l && d) {
+            l.disabled = isDark;
+            d.disabled = !isDark;
+        }
+    })();
+</script>
+{% endblock %}
+
+{% block top_progress %}
+<!-- Barra de progreso de lectura fina y fija en la parte superior -->
+<div class="reading-progress-container" aria-hidden="true">
+    <div id="reading-progress-bar" class="reading-progress-bar"></div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center g-4">
+    <!-- Columna Principal de Lectura -->
+    <div class="col-lg-8">
+        <div class="article-column">
+            <!-- Encabezado y Cuerpo del Post extraído en parcial reutilizable -->
+            {% include "blog/includes/_articulo.html" with post=post %}
+
+            <!-- Cuadro del Autor al final del artículo -->
+            <div class="card border-0 mb-4">
+                <div class="card-body p-4 d-flex flex-column flex-sm-row align-items-center gap-3">
+                    <a href="{% url 'blog:autor_detail' post.autor.usuario.username %}" class="text-decoration-none flex-shrink-0">
+                        {% avatar post.autor 64 %}
+                    </a>
+                    <div class="text-center text-sm-start flex-grow-1 min-w-0">
+                        <div class="author-meta-block mb-1 justify-content-center justify-content-sm-start flex-wrap">
+                            <h2 class="h6 fw-bold mb-0 text-truncate">
+                                Escrito por
+                                <a href="{% url 'blog:autor_detail' post.autor.usuario.username %}" class="author-name-link d-inline">
+                                    <span class="author-name-text">{{ post.autor.nombre_mostrar }}</span>
+                                </a>
+                            </h2>
+                            <span class="small text-muted flex-shrink-0">@{{ post.autor.usuario.username }}</span>
+                            <div class="author-badge-container flex-shrink-0">{% insignia post.autor %}</div>
+                        </div>
+                        <p class="text-muted small mb-2">
+                            {{ post.autor.bio|default:"Autor en Blog con Panel de Autor." }}
+                        </p>
+                        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-sm-start gap-2">
+                            <span class="small text-muted">
+                                <strong data-seguidores-count="{{ post.autor.usuario.username }}" aria-live="polite">{{ total_seguidores_autor }}</strong> seguidor(es)
+                            </span>
+                            {% if user.id != post.autor.usuario_id %}
+                                <form method="post" action="{% url 'blog:autor_seguir_toggle' post.autor.usuario.username %}"
+                                      data-ajax-seguir data-autor-username="{{ post.autor.usuario.username }}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit"
+                                            class="btn btn-sm {% if siguiendo_autor %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill px-3"
+                                            aria-label="{% if siguiendo_autor %}Dejar de seguir a {{ post.autor.nombre_mostrar }}{% else %}Seguir a {{ post.autor.nombre_mostrar }}{% endif %}"
+                                            aria-pressed="{{ siguiendo_autor|yesno:'true,false' }}">
+                                        <i data-seguir-icon class="bi {% if siguiendo_autor %}bi-person-check-fill{% else %}bi-person-plus{% endif %} me-1" aria-hidden="true"></i>
+                                        <span data-seguir-label>{% if siguiendo_autor %}Siguiendo{% else %}Seguir{% endif %}</span>
+                                    </button>
+                                </form>
+                            {% endif %}
+                            <a href="{% url 'blog:autor_detail' post.autor.usuario.username %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                Ver perfil y artículos
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Artículos relacionados en pantallas menores a lg (< lg), antes de los comentarios -->
+            {% if posts_relacionados %}
+            <section class="d-lg-none mb-4" aria-label="Artículos relacionados">
+                {% include "blog/includes/_posts_relacionados.html" %}
+            </section>
+            {% endif %}
+
+            <!-- Sección de Comentarios Aprobados (Anidados hasta profundidad 4) -->
+            <section class="card border-0 mb-4" id="comentarios" aria-label="Comentarios">
+                <div class="card-body p-4">
+                    <h2 class="h5 fw-bold mb-4">
+                        <i class="bi bi-chat-left-text me-2 text-primary" aria-hidden="true"></i>Comentarios ({{ total_comentarios_visibles|default:0 }})
+                    </h2>
+
+                    {% if comentarios_raiz %}
+                        <div class="vstack gap-3 mb-4">
+                            {% for comentario in comentarios_raiz %}
+                                {% include "blog/includes/_comentario.html" with comentario=comentario post=post form_reporte=form_reporte responder_id=responder_id %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted small mb-4">Aún no hay comentarios aprobados. ¡Sé el primero en comentar!</p>
+                    {% endif %}
+
+                    <hr class="my-4">
+
+                    <!-- Formulario para nuevo comentario principal -->
+                    <h3 class="h6 fw-bold mb-2">Deja un comentario</h3>
+                    <p class="text-muted small mb-3">
+                        Tu dirección de correo no será publicada. Los comentarios quedan pendientes de moderación antes de mostrarse.
+                        Puedes mencionar a otros usuarios escribiendo <code>@usuario</code>.
+                    </p>
+                    <form method="post" action="{% url 'blog:post_detail' post.slug %}#comentarios" novalidate>
+                        {% csrf_token %}
+                        {{ form_comentario.padre_id }}
+                        <div class="d-none" aria-hidden="true">
+                            {{ form_comentario.sitio_web }}
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form_comentario.nombre.id_for_label }}" class="form-label small fw-semibold">Nombre *</label>
+                                {{ form_comentario.nombre }}
+                                {% if form_comentario.nombre.errors %}
+                                    <div class="text-danger small mt-1">{{ form_comentario.nombre.errors|striptags }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form_comentario.email.id_for_label }}" class="form-label small fw-semibold">Correo electrónico *</label>
+                                {{ form_comentario.email }}
+                                {% if form_comentario.email.errors %}
+                                    <div class="text-danger small mt-1">{{ form_comentario.email.errors|striptags }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-12">
+                                <label for="{{ form_comentario.texto.id_for_label }}" class="form-label small fw-semibold">Comentario * (máx. 1000 caracteres)</label>
+                                {{ form_comentario.texto }}
+                                {% if form_comentario.texto.errors %}
+                                    <div class="text-danger small mt-1">{{ form_comentario.texto.errors|striptags }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send me-1" aria-hidden="true"></i>Enviar comentario
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Barra lateral derecha en pantallas grandes (>= lg): Tabla de Contenidos + Posts relacionados -->
+    <aside class="col-lg-4 d-none d-lg-block" aria-label="Barra lateral del artículo">
+        <div class="toc-sticky vstack gap-3">
+            {% if toc_items %}
+            <div class="card border-0">
+                <div class="card-body p-3">
+                    <h2 class="h6 fw-bold text-uppercase small mb-3">
+                        <i class="bi bi-list-nested text-primary me-1" aria-hidden="true"></i>En este artículo
+                    </h2>
+                    <nav aria-label="Índice de secciones">
+                        <ul class="toc-list">
+                            {% for item in toc_items %}
+                                <li>
+                                    <a href="#{{ item.id }}"
+                                       class="toc-link {% if item.nivel == 3 %}toc-link-h3{% endif %}"
+                                       data-toc-target="{{ item.id }}">
+                                        {{ item.texto }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            {% endif %}
+
+            {% include "blog/includes/_posts_relacionados.html" %}
+        </div>
+    </aside>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function() {
+    'use strict';
+
+    // 1. Barra de progreso de lectura
+    const progressBar = document.getElementById('reading-progress-bar');
+    const articleEl = document.getElementById('articulo-lectura');
+    if (progressBar && articleEl) {
+        function updateReadingProgress() {
+            const rect = articleEl.getBoundingClientRect();
+            const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+            const totalScrollable = Math.max(1, articleEl.offsetHeight - windowHeight * 0.5);
+            const scrolled = Math.min(Math.max(0, -rect.top), totalScrollable);
+            const pct = Math.min(100, Math.max(0, (scrolled / totalScrollable) * 100));
+            progressBar.style.width = pct.toFixed(1) + '%';
+        }
+        window.addEventListener('scroll', updateReadingProgress, { passive: true });
+        updateReadingProgress();
+    }
+
+    // 2. Envolver tablas del artículo en contenedor con scroll horizontal
+    const postBody = document.getElementById('post-article-body');
+    if (postBody) {
+        postBody.querySelectorAll('table').forEach((table) => {
+            if (!table.parentElement.classList.contains('table-responsive-wrapper')) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'table-responsive-wrapper';
+                table.parentNode.insertBefore(wrapper, table);
+                wrapper.appendChild(table);
+            }
+        });
+
+        // 3. Resaltado de código con highlight.js y botón "Copiar" en cada bloque <pre>
+        if (window.hljs) {
+            postBody.querySelectorAll('pre code').forEach((block) => {
+                window.hljs.highlightElement(block);
+            });
+        }
+
+        postBody.querySelectorAll('pre').forEach((pre) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'code-block-wrapper';
+            pre.parentNode.insertBefore(wrapper, pre);
+            wrapper.appendChild(pre);
+
+            const copyBtn = document.createElement('button');
+            copyBtn.type = 'button';
+            copyBtn.className = 'btn-copy-code';
+            copyBtn.setAttribute('aria-label', 'Copiar bloque de código');
+            copyBtn.innerHTML = '<i class="bi bi-clipboard me-1" aria-hidden="true"></i><span>Copiar</span>';
+
+            copyBtn.addEventListener('click', async () => {
+                const codeText = pre.innerText || pre.textContent || '';
+                try {
+                    await navigator.clipboard.writeText(codeText);
+                } catch (_) {
+                    const ta = document.createElement('textarea');
+                    ta.value = codeText;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    ta.remove();
+                }
+                const span = copyBtn.querySelector('span');
+                if (span) span.textContent = '¡Copiado!';
+                if (window.BlogInteracciones && window.BlogInteracciones.mostrarToast) {
+                    window.BlogInteracciones.mostrarToast('¡Copiado! Código copiado al portapapeles.', 'success');
+                }
+                setTimeout(() => {
+                    if (span) span.textContent = 'Copiar';
+                }, 2000);
+            });
+
+            wrapper.appendChild(copyBtn);
+        });
+    }
+
+    // 4. Tabla de Contenidos: marcar sección activa con IntersectionObserver
+    const tocLinks = document.querySelectorAll('[data-toc-target]');
+    if (tocLinks.length && 'IntersectionObserver' in window) {
+        const headings = [];
+        tocLinks.forEach((link) => {
+            const id = link.getAttribute('data-toc-target');
+            const h = document.getElementById(id);
+            if (h && !headings.includes(h)) {
+                headings.push(h);
+            }
+        });
+
+        function activarLink(idActivo) {
+            tocLinks.forEach((link) => {
+                const coincide = link.getAttribute('data-toc-target') === idActivo;
+                link.classList.toggle('active', coincide);
+            });
+        }
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        activarLink(entry.target.id);
+                    }
+                });
+            },
+            { rootMargin: '-80px 0px -70% 0px', threshold: 0.1 }
+        );
+
+        headings.forEach((h) => observer.observe(h));
+    }
+})();
+</script>
+{% endblock %}

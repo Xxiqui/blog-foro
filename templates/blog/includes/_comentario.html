@@ -1,0 +1,198 @@
+{% load blog_extras %}
+<div class="comment-node" id="comentario-{{ comentario.pk }}">
+    <div class="p-3 rounded-3 bg-body-tertiary border">
+        {% if comentario.eliminado %}
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted fst-italic small">
+                    <i class="bi bi-trash3 me-1" aria-hidden="true"></i>[comentario eliminado]
+                </span>
+                <span class="text-muted small">{{ comentario.creado|date:"d M Y, H:i" }}</span>
+            </div>
+        {% elif comentario.oculto_por_reportes %}
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted fst-italic small">
+                    <i class="bi bi-eye-slash me-1" aria-hidden="true"></i>[comentario oculto por reportes]
+                </span>
+                <span class="text-muted small">{{ comentario.creado|date:"d M Y, H:i" }}</span>
+            </div>
+        {% else %}
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    {% if comentario.autor %}
+                        <a href="{% url 'blog:autor_detail' comentario.autor.username %}" class="fw-bold text-decoration-none text-body d-inline-flex align-items-center gap-2">
+                            {% if comentario.autor.perfil %}
+                                {% avatar comentario.autor.perfil 26 %}
+                            {% endif %}
+                            <span>{{ comentario.nombre }}</span>
+                            <span class="text-muted fw-normal small">(@{{ comentario.autor.username }})</span>
+                        </a>
+                        {% if comentario.autor_id == post.autor.usuario_id %}
+                            <span class="badge bg-primary-subtle text-primary-emphasis small">Autor</span>
+                        {% endif %}
+                    {% else %}
+                        <strong class="text-body">{{ comentario.nombre }}</strong>
+                    {% endif %}
+                    {% if comentario.editado %}
+                        <span class="badge bg-secondary-subtle text-secondary-emphasis small">(editado)</span>
+                    {% endif %}
+                </div>
+                <span class="text-muted small">{{ comentario.creado|date:"d M Y, H:i" }}</span>
+            </div>
+
+            <!-- Texto del comentario con escape XSS y menciones @usuario -->
+            <p class="mb-3 text-secondary">{{ comentario.texto|renderizar_menciones }}</p>
+
+            <!-- Acciones del comentario: Me gusta, Responder, Editar, Borrar, Reportar -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pt-2 border-top">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <form method="post" action="{% url 'blog:comentario_like_toggle' comentario.pk %}" data-ajax-like class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}#comentario-{{ comentario.pk }}">
+                        <button type="submit"
+                                class="btn btn-sm {% if comentario.ya_dio_like %}btn-danger{% else %}btn-outline-danger{% endif %} py-0 px-2"
+                                aria-label="Me gusta en el comentario de {{ comentario.nombre }}"
+                                aria-pressed="{{ comentario.ya_dio_like|yesno:'true,false' }}">
+                            <i data-like-icon class="bi {% if comentario.ya_dio_like %}bi-heart-fill{% else %}bi-heart{% endif %}" aria-hidden="true"></i>
+                            <span data-like-count aria-live="polite">{{ comentario.total_likes|default:0 }}</span>
+                        </button>
+                    </form>
+
+                    <a href="?responder={{ comentario.pk }}#comentario-{{ comentario.pk }}"
+                       class="btn btn-sm btn-outline-secondary py-0 px-2"
+                       data-toggle-reply="{{ comentario.pk }}"
+                       aria-expanded="{% if responder_id == comentario.pk %}true{% else %}false{% endif %}"
+                       aria-controls="reply-form-{{ comentario.pk }}">
+                        <i class="bi bi-reply me-1" aria-hidden="true"></i>Responder
+                    </a>
+
+                    {% if comentario.puede_editar_actual %}
+                        <a href="{% url 'blog:comentario_editar' comentario.pk %}" class="btn btn-sm btn-outline-primary py-0 px-2">
+                            <i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar
+                        </a>
+                    {% endif %}
+
+                    {% if comentario.puede_borrar_actual %}
+                        <form method="post" action="{% url 'blog:comentario_eliminar' comentario.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}#comentarios">
+                            <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">
+                                <i class="bi bi-trash me-1" aria-hidden="true"></i>Borrar
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+
+                {% if user.is_authenticated and comentario.autor_id != user.id %}
+                    <button class="btn btn-sm btn-link text-muted text-decoration-none p-0"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#reporteForm-{{ comentario.pk }}"
+                            aria-expanded="false">
+                        <i class="bi bi-flag me-1" aria-hidden="true"></i>Reportar
+                    </button>
+                {% endif %}
+            </div>
+
+            <!-- Formulario inline de respuesta (funciona con JS o con ?responder=<id>) -->
+            <div id="reply-form-{{ comentario.pk }}"
+                 data-reply-form-container
+                 class="mt-3 {% if responder_id != comentario.pk %}d-none{% endif %}">
+                <form method="post" action="{% url 'blog:post_detail' post.slug %}#comentario-{{ comentario.pk }}" class="p-3 rounded border bg-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="padre_id" value="{{ comentario.pk }}">
+                    <div class="d-none" aria-hidden="true">
+                        <input type="text" name="sitio_web" tabindex="-1" autocomplete="off">
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="small fw-semibold text-muted">
+                            <i class="bi bi-Corner-down-right me-1" aria-hidden="true"></i>Respondiendo a <strong>{{ comentario.nombre }}</strong>
+                        </span>
+                    </div>
+                    <div class="row g-2">
+                        {% if user.is_authenticated %}
+                            <input type="hidden" name="nombre" value="{{ user.perfil.nombre_mostrar|default:user.username }}">
+                            <input type="hidden" name="email" value="{{ user.email|default:'usuario@blog.local' }}">
+                        {% else %}
+                            <div class="col-sm-6">
+                                <input type="text" name="nombre" class="form-control form-control-sm" placeholder="Tu nombre *" aria-label="Tu nombre" required maxlength="80">
+                            </div>
+                            <div class="col-sm-6">
+                                <input type="email" name="email" class="form-control form-control-sm" placeholder="Tu correo *" aria-label="Tu correo electrónico" required>
+                            </div>
+                        {% endif %}
+                        <div class="col-12">
+                            <textarea name="texto" rows="2" class="form-control form-control-sm"
+                                      placeholder="Escribe tu respuesta a {{ comentario.nombre }}... (máx. 1000 caracteres)"
+                                      aria-label="Respuesta a {{ comentario.nombre }}"
+                                      required maxlength="1000"></textarea>
+                        </div>
+                        <div class="col-12 d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-cancel-reply="{{ comentario.pk }}">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-send me-1" aria-hidden="true"></i>Responder
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            {% if user.is_authenticated and comentario.autor_id != user.id %}
+                <div class="collapse mt-3" id="reporteForm-{{ comentario.pk }}">
+                    <form method="post" action="{% url 'blog:comentario_reportar' comentario.pk %}" class="p-3 rounded border bg-body">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}#comentarios">
+                        <h4 class="h6 fw-bold mb-2">
+                            <i class="bi bi-flag-fill text-danger me-1" aria-hidden="true"></i>Reportar este comentario
+                        </h4>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold">Motivo *</label>
+                                {{ form_reporte.motivo }}
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label small fw-semibold">Detalle (máx. 300 caracteres)</label>
+                                {{ form_reporte.detalle }}
+                            </div>
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    Enviar reporte
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    {% if comentario.hijos %}
+        <div class="mt-1">
+            <button class="comment-toggle-replies"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#respuestas-{{ comentario.pk }}"
+                    data-reply-collapse-btn
+                    data-reply-count="{{ comentario.total_descendientes }}"
+                    aria-expanded="{% if comentario.plegado_por_defecto %}false{% else %}true{% endif %}"
+                    aria-controls="respuestas-{{ comentario.pk }}">
+                {% if comentario.plegado_por_defecto %}
+                    <span>{{ comentario.total_descendientes }} {% if comentario.total_descendientes == 1 %}respuesta más{% else %}respuestas más{% endif %}</span>
+                    <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                {% else %}
+                    <span>Ocultar respuestas ({{ comentario.total_descendientes }})</span>
+                    <i class="bi bi-chevron-up" aria-hidden="true"></i>
+                {% endif %}
+            </button>
+            <div class="collapse {% if not comentario.plegado_por_defecto %}show{% endif %}" id="respuestas-{{ comentario.pk }}">
+                <div class="comment-children vstack gap-2">
+                    {% for hijo in comentario.hijos %}
+                        {% include "blog/includes/_comentario.html" with comentario=hijo post=post form_reporte=form_reporte responder_id=responder_id %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+

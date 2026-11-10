@@ -1,0 +1,49 @@
+<div class="editor-cover-section mb-3 mb-md-4" id="editorCoverSection">
+    <!-- Estado 1: Con portada (miniatura en proporción 16:9) -->
+    <div class="editor-cover-preview-wrapper position-relative rounded-3 overflow-hidden border ratio ratio-16x9 {% if not post or not post.imagen_portada %}d-none{% endif %}" id="editorCoverPreviewWrapper" style="max-height: 380px;">
+        <img src="{% if post and post.imagen_portada %}{{ post.imagen_portada.url }}{% endif %}"
+             alt="Portada del artículo"
+             class="editor-cover-img w-100 h-100 object-fit-cover"
+             id="editorCoverImg">
+        <div class="editor-cover-actions position-absolute bottom-0 end-0 p-2 p-sm-3 d-flex gap-2 bg-dark bg-opacity-75 rounded-top-start-3 z-2">
+            <button type="button" class="btn btn-sm btn-light d-flex align-items-center gap-1" id="btnCambiarPortada">
+                <i class="bi bi-camera" aria-hidden="true"></i><span>Cambiar</span>
+            </button>
+            <button type="button" class="btn btn-sm btn-danger d-flex align-items-center gap-1" id="btnQuitarPortada">
+                <i class="bi bi-trash" aria-hidden="true"></i><span>Quitar</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Estado 2: Sin portada -->
+    <div class="editor-cover-dropzone border border-dashed rounded-3 p-2 p-sm-4 text-center cursor-pointer transition-all {% if post and post.imagen_portada %}d-none{% endif %}"
+         id="editorCoverDropzone"
+         tabindex="0"
+         role="button"
+         aria-label="Subir imagen de portada para el post">
+        <input type="file" id="inputPortadaArchivo" class="d-none" accept="image/jpeg,image/png,image/webp">
+        <!-- En móvil: fila delgada de 48 px con "+ Añadir portada" -->
+        <div class="d-sm-none d-flex align-items-center justify-content-center gap-2 py-2" style="min-height: 48px;">
+            <i class="bi bi-image text-primary fs-5" aria-hidden="true"></i>
+            <span class="fw-semibold small text-body">+ Añadir portada</span>
+        </div>
+        <!-- En pantallas medianas y escritorio: dropzone amplia -->
+        <div class="d-none d-sm-block editor-cover-dropzone-inner py-2">
+            <div class="mb-2">
+                <i class="bi bi-image fs-1 text-muted" aria-hidden="true"></i>
+            </div>
+            <div class="fw-semibold mb-1">
+                <span>Haz clic o arrastra una imagen de portada</span>
+            </div>
+            <p class="small text-muted mb-0">
+                JPG, PNG o WebP. Máximo 5 MB. Recomendado: 1200 × 630 px.
+            </p>
+        </div>
+        <div class="editor-cover-uploading d-none py-2" id="editorCoverUploading">
+            <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                <span class="visually-hidden">Subiendo…</span>
+            </div>
+            <span class="small fw-semibold">Procesando y optimizando portada…</span>
+        </div>
+    </div>
+</div>

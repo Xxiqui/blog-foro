@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Moderación de Comentarios | Panel de Autor{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Moderación de Comentarios</h1>
+        <p class="text-muted mb-0">Aprueba o rechaza los comentarios enviados a tus artículos.</p>
+    </div>
+    <a href="{% url 'blog:panel_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Volver al Dashboard
+    </a>
+</div>
+
+<div class="mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="d-flex gap-2">
+        <a href="{% url 'blog:panel_comentario_list' %}?estado=pendientes{% if tipo_filtro %}&tipo={{ tipo_filtro }}{% endif %}"
+           class="btn btn-sm {% if estado_filtro == 'pendientes' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+            Pendientes
+        </a>
+        <a href="{% url 'blog:panel_comentario_list' %}?estado=aprobados{% if tipo_filtro %}&tipo={{ tipo_filtro }}{% endif %}"
+           class="btn btn-sm {% if estado_filtro == 'aprobados' %}btn-success{% else %}btn-outline-success{% endif %}">
+            Aprobados
+        </a>
+        <a href="{% url 'blog:panel_comentario_list' %}?estado=todos{% if tipo_filtro %}&tipo={{ tipo_filtro }}{% endif %}"
+           class="btn btn-sm {% if estado_filtro == 'todos' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+            Todos
+        </a>
+    </div>
+
+    <div class="btn-group btn-group-sm" role="group" aria-label="Filtrar por tipo de comentario">
+        <a href="{% url 'blog:panel_comentario_list' %}?estado={{ estado_filtro }}&tipo=todos"
+           class="btn {% if not tipo_filtro or tipo_filtro == 'todos' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+            Todos los tipos
+        </a>
+        <a href="{% url 'blog:panel_comentario_list' %}?estado={{ estado_filtro }}&tipo=principales"
+           class="btn {% if tipo_filtro == 'principales' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+            Principales
+        </a>
+        <a href="{% url 'blog:panel_comentario_list' %}?estado={{ estado_filtro }}&tipo=respuestas"
+           class="btn {% if tipo_filtro == 'respuestas' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">
+            Respuestas
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        {% if comentarios %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Autor / Email</th>
+                            <th>Post</th>
+                            <th>Comentario</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for com in comentarios %}
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">{{ com.nombre }}</div>
+                                    <div class="small text-muted">{{ com.email }}</div>
+                                </td>
+                                <td>
+                                    <a href="{% url 'blog:post_detail' com.post.slug %}" class="text-decoration-none small fw-semibold">
+                                        {{ com.post.titulo|truncatechars:35 }}
+                                    </a>
+                                </td>
+                                <td style="max-width: 340px;">
+                                    {% if com.padre %}
+                                        <div class="small text-muted mb-1">
+                                            <i class="bi bi-reply me-1" aria-hidden="true"></i>En respuesta a <strong>{{ com.padre.nombre }}</strong>: «{{ com.padre.texto|truncatechars:40 }}»
+                                        </div>
+                                    {% endif %}
+                                    <div class="small text-secondary">{{ com.texto }}</div>
+                                </td>
+                                <td>
+                                    {% if com.aprobado %}
+                                        <span class="badge bg-success">Aprobado</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark">Pendiente</span>
+                                    {% endif %}
+                                </td>
+                                <td class="small text-muted">{{ com.creado|date:"d/m/Y H:i" }}</td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-1">
+                                        {% if not com.aprobado %}
+                                            <form method="post" action="{% url 'blog:panel_comentario_accion' com.pk %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="accion" value="aprobar">
+                                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                                <button type="submit" class="btn btn-sm btn-success" title="Aprobar comentario">
+                                                    <i class="bi bi-check-lg"></i> Aprobar
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        <form method="post" action="{% url 'blog:panel_comentario_accion' com.pk %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="accion" value="rechazar">
+                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Rechazar y eliminar">
+                                                <i class="bi bi-trash"></i> Rechazar
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="p-5 text-center text-muted">
+                No hay comentarios que coincidan con este filtro.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% include "blog/includes/pagination.html" %}
+{% endblock %}
+

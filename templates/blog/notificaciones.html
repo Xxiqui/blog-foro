@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Notificaciones | Blog con Panel de Autor{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-2">
+            <div>
+                <h1 class="h3 fw-bold mb-1">
+                    <i class="bi bi-bell me-2 text-primary"></i>Mis Notificaciones
+                </h1>
+                <p class="text-muted mb-0 small">
+                    Revisa la actividad en tus artículos, comentarios, menciones y reportes.
+                </p>
+            </div>
+            {% if notificaciones %}
+                <form method="post" action="{% url 'blog:notificaciones_marcar_todas' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-check2-all me-1"></i>Marcar todas como leídas
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="list-group list-group-flush">
+                {% for notif in notificaciones %}
+                    <div class="list-group-item d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 py-3 {% if not notif.leida %}bg-primary-subtle{% endif %}">
+                        <div class="flex-grow-1 min-w-0 w-100 w-sm-auto">
+                            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                <span class="badge bg-secondary">{{ notif.get_tipo_display }}</span>
+                                {% if not notif.leida %}
+                                    <span class="badge bg-primary">No leída</span>
+                                {% endif %}
+                                <span class="text-muted small">{{ notif.creado|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            <a href="{% url 'blog:notificacion_ir' notif.pk %}" class="text-decoration-none fw-semibold d-block text-break">
+                                {{ notif.mensaje }}
+                            </a>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 flex-shrink-0 w-100 w-sm-auto justify-content-end pt-2 pt-sm-0 border-top border-sm-0">
+                            <a href="{% url 'blog:notificacion_ir' notif.pk %}" class="btn btn-sm btn-primary">
+                                Ir <i class="bi bi-arrow-right"></i>
+                            </a>
+                            {% if not notif.leida %}
+                                <form method="post" action="{% url 'blog:notificacion_leer' notif.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary touch-target-44"
+                                            aria-label="Marcar notificación como leída"
+                                            title="Marcar como leída">
+                                        <i class="bi bi-check2" aria-hidden="true"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state border-0 shadow-none my-3">
+                        <svg width="104" height="104" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                        </svg>
+                        <h2 class="h6 fw-bold text-body">No tienes notificaciones por ahora</h2>
+                        <p class="small text-muted mb-0">Cuando recibas comentarios, menciones o nuevos seguidores aparecerán aquí.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% include "blog/includes/pagination.html" %}
+    </div>
+</div>
+{% endblock %}
+

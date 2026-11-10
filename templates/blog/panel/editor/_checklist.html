@@ -1,0 +1,66 @@
+<div class="editor-checklist-card card border-0 bg-body-tertiary mb-3 p-3 rounded-3" id="editorChecklistCard">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="h6 fw-bold mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-list-check text-primary" aria-hidden="true"></i>
+            <span>Antes de publicar</span>
+        </h3>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-semibold" id="checklistScoreBadge">
+            0 / 6
+        </span>
+    </div>
+
+    <!-- Barra de progreso -->
+    <div class="progress mb-3" style="height: 6px;">
+        <div class="progress-bar bg-primary" role="progressbar" id="checklistProgressBar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+
+    <!-- Lista de verificación -->
+    <ul class="list-unstyled mb-0 small" id="checklistItemsList">
+        <!-- Requisitos Obligatorios -->
+        <li class="d-flex align-items-center justify-content-between py-1 border-bottom" data-check-rule="titulo">
+            <span class="d-flex align-items-center gap-2 text-muted check-item-label">
+                <i class="bi bi-circle text-secondary check-icon" aria-hidden="true"></i>
+                <span>Título (5 a 120 letras)</span>
+            </span>
+            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none btn-checklist-jump" data-jump-to="#editorTitulo">Ir</button>
+        </li>
+        <li class="d-flex align-items-center justify-content-between py-1 border-bottom" data-check-rule="contenido">
+            <span class="d-flex align-items-center gap-2 text-muted check-item-label">
+                <i class="bi bi-circle text-secondary check-icon" aria-hidden="true"></i>
+                <span>Contenido (mínimo 100 caracteres)</span>
+            </span>
+            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none btn-checklist-jump" data-jump-to="#editorContentWrapper">Ir</button>
+        </li>
+        <li class="d-flex align-items-center justify-content-between py-1 border-bottom" data-check-rule="categoria">
+            <span class="d-flex align-items-center gap-2 text-muted check-item-label">
+                <i class="bi bi-circle text-secondary check-icon" aria-hidden="true"></i>
+                <span>Categoría seleccionada</span>
+            </span>
+            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none btn-checklist-jump" data-jump-to="#selectCategoria" data-jump-tab="tab-publicacion">Ir</button>
+        </li>
+
+        <!-- Recomendados -->
+        <li class="d-flex align-items-center justify-content-between py-1 border-bottom" data-check-rule="portada">
+            <span class="d-flex align-items-center gap-2 text-muted check-item-label">
+                <i class="bi bi-circle text-secondary check-icon" aria-hidden="true"></i>
+                <span>Imagen de portada</span>
+            </span>
+            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none btn-checklist-jump" data-jump-to="#editorCoverSection">Ir</button>
+        </li>
+        <li class="d-flex align-items-center justify-content-between py-1 border-bottom" data-check-rule="etiquetas">
+            <span class="d-flex align-items-center gap-2 text-muted check-item-label">
+                <i class="bi bi-circle text-secondary check-icon" aria-hidden="true"></i>
+                <span>Al menos 1 etiqueta</span>
+            </span>
+            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none btn-checklist-jump" data-jump-to="#etiquetasContainer" data-jump-tab="tab-publicacion">Ir</button>
+        </li>
+        <li class="d-flex align-items-center justify-content-between py-1" data-check-rule="extracto">
+            <span class="d-flex align-items-center gap-2 text-muted check-item-label">
+                <i class="bi bi-circle text-secondary check-icon" aria-hidden="true"></i>
+                <span>Extracto manual SEO</span>
+            </span>
+            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none btn-checklist-jump" data-jump-to="#inputExtracto" data-jump-tab="tab-seo">Ir</button>
+        </li>
+    </ul>
+</div>
+

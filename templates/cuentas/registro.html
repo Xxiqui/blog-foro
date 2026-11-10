@@ -1,0 +1,384 @@
+{% extends "base_auth.html" %}
+
+{% block title %}Crear cuenta de Autor | {{ marca|default:site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-9">
+        <div class="card border-0 shadow-sm overflow-hidden auth-split-card">
+            <div class="row g-0">
+                <!-- Panel lateral decorativo (oculto en móvil) -->
+                <div class="col-lg-5 d-none d-lg-flex flex-column justify-content-between p-4 p-xl-5 auth-decorative-panel text-white">
+                    <div>
+                        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white bg-opacity-10 small fw-semibold mb-3">
+                            <i class="bi bi-stars" aria-hidden="true"></i>
+                            <span>Comunidad de Autores</span>
+                        </div>
+                        <h2 class="h3 fw-bold mb-2">Crea tu espacio técnico</h2>
+                        <p class="small text-white text-opacity-75 mb-0">
+                            Publica artículos con editor enriquecido, únete a comunidades temáticas y conecta con otros desarrolladores.
+                        </p>
+                    </div>
+
+                    <div class="my-4 text-center">
+                        <svg width="220" height="170" viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" class="img-fluid">
+                            <circle cx="88" cy="78" r="30" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.45)" stroke-width="2"/>
+                            <circle cx="88" cy="70" r="11" fill="#ffffff"/>
+                            <path d="M68 98C72 88 104 88 108 98" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+                            <circle cx="156" cy="78" r="30" fill="rgba(56,189,248,0.22)" stroke="#38bdf8" stroke-width="2"/>
+                            <circle cx="156" cy="70" r="11" fill="#38bdf8"/>
+                            <path d="M136 98C140 88 172 88 176 98" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+                            <rect x="52" y="126" width="136" height="28" rx="14" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+                            <circle cx="74" cy="140" r="5" fill="#34d399"/>
+                            <rect x="88" y="136" width="78" height="8" rx="4" fill="rgba(255,255,255,0.8)"/>
+                        </svg>
+                    </div>
+
+                    <div class="small text-white text-opacity-75">
+                        <i class="bi bi-check2-circle me-1" aria-hidden="true"></i>Perfil de autor listo en segundos.
+                    </div>
+                </div>
+
+                <!-- Panel del formulario -->
+                <div class="col-lg-7">
+                    <div class="card-body p-4 p-md-5">
+                        <h1 class="h3 fw-bold mb-2 text-center text-lg-start">Crear cuenta de Autor</h1>
+                        <p class="text-muted small mb-4 text-center text-lg-start">
+                            Regístrate para publicar artículos, unirte a comunidades y administrar tu propio espacio en el blog.
+                        </p>
+
+                        {% if hay_proveedores_sociales %}
+                            {% include "cuentas/includes/botones_sociales.html" with next=next %}
+
+                            <div class="auth-divider my-3">
+                                <span>o</span>
+                            </div>
+
+                            <button class="btn btn-outline-secondary rounded-pill w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold mb-3"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseRegistroCorreo"
+                                    aria-expanded="{% if form.errors or form.non_field_errors %}true{% else %}false{% endif %}"
+                                    aria-controls="collapseRegistroCorreo"
+                                    aria-label="Continuar con correo electrónico para registrarse">
+                                <i class="bi bi-envelope" aria-hidden="true"></i>
+                                <span>Continuar con correo electrónico</span>
+                            </button>
+                        {% endif %}
+
+                        <div class="collapse {% if form.errors or form.non_field_errors or not hay_proveedores_sociales %}show{% endif %}" id="collapseRegistroCorreo">
+                            <form method="post" action="{% url 'cuentas:registro' %}" id="form-registro" novalidate>
+                                {% csrf_token %}
+                                {% if form.non_field_errors %}
+                                    <div class="alert alert-danger py-2">
+                                        {% for error in form.non_field_errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                <div class="row g-2 mb-3">
+                                    <div class="col-sm-6">
+                                        <label for="{{ form.first_name.id_for_label }}" class="form-label fw-semibold">
+                                            {{ form.first_name.label }}
+                                        </label>
+                                        {{ form.first_name }}
+                                        {% if form.first_name.errors %}
+                                            <div class="text-danger small mt-1">{{ form.first_name.errors|striptags }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label for="{{ form.last_name.id_for_label }}" class="form-label fw-semibold">
+                                            {{ form.last_name.label }}
+                                        </label>
+                                        {{ form.last_name }}
+                                        {% if form.last_name.errors %}
+                                            <div class="text-danger small mt-1">{{ form.last_name.errors|striptags }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold mb-0">
+                                            {{ form.username.label }} *
+                                        </label>
+                                        <span id="username-feedback" class="small text-muted" aria-live="polite"></span>
+                                    </div>
+                                    {{ form.username }}
+                                    <div class="form-text small" id="username-help">
+                                        Letras, números y guiones (_ o -). Mínimo 3 caracteres. Se sugiere automáticamente al escribir tu nombre.
+                                    </div>
+                                    {% if form.username.errors %}
+                                        <div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">
+                                        {{ form.email.label }} *
+                                    </label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}
+                                        <div class="text-danger small mt-1">{{ form.email.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.password1.id_for_label }}" class="form-label fw-semibold">
+                                        {{ form.password1.label }} *
+                                    </label>
+                                    <div class="input-group">
+                                        {{ form.password1 }}
+                                        <button type="button" class="btn btn-outline-secondary toggle-password-btn"
+                                                aria-label="Mostrar contraseña" aria-pressed="false"
+                                                data-target="{{ form.password1.id_for_label }}">
+                                            <i class="bi bi-eye" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    {% if form.password1.errors %}
+                                        <div class="text-danger small mt-1">{{ form.password1.errors|striptags }}</div>
+                                    {% endif %}
+
+                                    <!-- Lista de requisitos dinámica -->
+                                    <div class="card bg-body-tertiary border-0 p-2 mt-2" id="password-checklist-box">
+                                        <div class="small fw-semibold text-secondary mb-1">Requisitos de la contraseña:</div>
+                                        <ul class="list-unstyled small mb-0 vstack gap-1" id="password-checklist">
+                                            <li id="req-len" class="text-muted">
+                                                <i class="bi bi-circle me-1" aria-hidden="true"></i>Mínimo 8 caracteres
+                                            </li>
+                                            <li id="req-not-num" class="text-muted">
+                                                <i class="bi bi-circle me-1" aria-hidden="true"></i>No totalmente numérica
+                                            </li>
+                                            <li id="req-not-common" class="text-muted">
+                                                <i class="bi bi-circle me-1" aria-hidden="true"></i>No ser una contraseña común o predecible
+                                            </li>
+                                            <li id="req-not-similar" class="text-muted">
+                                                <i class="bi bi-circle me-1" aria-hidden="true"></i>No similar a tus datos personales (nombre, usuario o correo)
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.password2.id_for_label }}" class="form-label fw-semibold">
+                                        {{ form.password2.label }} *
+                                    </label>
+                                    <div class="input-group">
+                                        {{ form.password2 }}
+                                        <button type="button" class="btn btn-outline-secondary toggle-password-btn"
+                                                aria-label="Mostrar confirmación de contraseña" aria-pressed="false"
+                                                data-target="{{ form.password2.id_for_label }}">
+                                            <i class="bi bi-eye" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    <div id="password-match-feedback" class="small mt-1" aria-live="polite"></div>
+                                    {% if form.password2.errors %}
+                                        <div class="text-danger small mt-1">{{ form.password2.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <button type="submit"
+                                        class="btn btn-primary rounded-pill w-100 py-2 fw-semibold mt-2"
+                                        aria-label="Crear cuenta con correo electrónico">
+                                    <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Crear cuenta
+                                </button>
+                            </form>
+                        </div>
+
+                        <hr class="my-4">
+                        <p class="text-center mb-0 small">
+                            ¿Ya tienes cuenta?
+                            <a href="{% url 'cuentas:login' %}" class="fw-semibold text-decoration-none">Inicia sesión</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // 1. Mostrar/ocultar contraseñas accesible
+    document.querySelectorAll('.toggle-password-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            if (!input) return;
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            this.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+            this.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
+            const icon = this.querySelector('i');
+            if (icon) {
+                icon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+            }
+        });
+    });
+
+    // 2. Sugerencia automática de nombre de usuario desde Nombre y Apellidos
+    const inputNombre = document.getElementById('{{ form.first_name.id_for_label }}');
+    const inputApellidos = document.getElementById('{{ form.last_name.id_for_label }}');
+    const inputUsername = document.getElementById('{{ form.username.id_for_label }}');
+    const usernameFeedback = document.getElementById('username-feedback');
+
+    let usernameEditadoManualmente = false;
+
+    if (inputUsername) {
+        if (inputUsername.value && inputUsername.value.trim() !== '') {
+            usernameEditadoManualmente = true;
+        }
+
+        inputUsername.addEventListener('input', function () {
+            usernameEditadoManualmente = true;
+            validarUsernameEnTiempoReal();
+        });
+    }
+
+    function limpiarCadenaParaUsername(str) {
+        if (!str) return '';
+        // Quitar acentos
+        const sinAcentos = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        // Minúsculas y reemplazar espacios o caracteres no permitidos por guion bajo
+        return sinAcentos.toLowerCase()
+            .replace(/[^a-z0-9_.-]/g, '_')
+            .replace(/_+/g, '_')
+            .replace(/^_+|_+$/g, '');
+    }
+
+    function sugerirUsername() {
+        if (usernameEditadoManualmente || !inputUsername) return;
+        const nombre = inputNombre ? inputNombre.value.trim() : '';
+        const apellidos = inputApellidos ? inputApellidos.value.trim() : '';
+        if (!nombre && !apellidos) return;
+
+        let base = '';
+        if (nombre && apellidos) {
+            base = nombre + '_' + apellidos;
+        } else {
+            base = nombre || apellidos;
+        }
+
+        const sugerido = limpiarCadenaParaUsername(base).slice(0, 30);
+        if (sugerido.length >= 2) {
+            inputUsername.value = sugerido;
+            validarUsernameEnTiempoReal();
+        }
+    }
+
+    const USERNAME_REGEX = /^[A-Za-z0-9_.-]{3,30}$/;
+
+    function validarUsernameEnTiempoReal() {
+        if (!inputUsername || !usernameFeedback) return;
+        const val = inputUsername.value.trim();
+        if (!val) {
+            usernameFeedback.innerHTML = '';
+            inputUsername.classList.remove('is-valid', 'is-invalid');
+            return;
+        }
+
+        if (USERNAME_REGEX.test(val)) {
+            usernameFeedback.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Válido</span>';
+            inputUsername.classList.remove('is-invalid');
+            inputUsername.classList.add('is-valid');
+        } else {
+            usernameFeedback.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle me-1"></i>3-30 caracteres alfanuméricos</span>';
+            inputUsername.classList.remove('is-valid');
+            inputUsername.classList.add('is-invalid');
+        }
+    }
+
+    if (inputNombre) inputNombre.addEventListener('input', sugerirUsername);
+    if (inputApellidos) inputApellidos.addEventListener('input', sugerirUsername);
+
+    // 3. Lista de requisitos dinámica para la contraseña
+    const inputPwd1 = document.getElementById('{{ form.password1.id_for_label }}');
+    const inputPwd2 = document.getElementById('{{ form.password2.id_for_label }}');
+    const inputEmail = document.getElementById('{{ form.email.id_for_label }}');
+
+    const reqLen = document.getElementById('req-len');
+    const reqNotNum = document.getElementById('req-not-num');
+    const reqNotCommon = document.getElementById('req-not-common');
+    const reqNotSimilar = document.getElementById('req-not-similar');
+    const matchFeedback = document.getElementById('password-match-feedback');
+
+    const PASSWORDS_COMUNES = new Set([
+        '12345678', '123456789', '1234567890', 'password', 'password123',
+        'admin123', 'qwerty123', 'contraseña', 'contrasena', 'abcdefgh'
+    ]);
+
+    function marcarRequisito(el, cumple) {
+        if (!el) return;
+        if (cumple) {
+            el.className = 'text-success fw-medium';
+            el.innerHTML = el.innerHTML.replace('bi-circle', 'bi-check-circle-fill text-success').replace('bi-x-circle', 'bi-check-circle-fill text-success');
+        } else {
+            el.className = 'text-muted';
+            el.innerHTML = el.innerHTML.replace('bi-check-circle-fill text-success', 'bi-circle').replace('bi-x-circle', 'bi-circle');
+        }
+    }
+
+    function validarContrasena() {
+        if (!inputPwd1) return;
+        const val = inputPwd1.value || '';
+        const username = inputUsername ? inputUsername.value.trim().toLowerCase() : '';
+        const email = inputEmail ? inputEmail.value.trim().toLowerCase() : '';
+        const nombre = inputNombre ? inputNombre.value.trim().toLowerCase() : '';
+        const apellidos = inputApellidos ? inputApellidos.value.trim().toLowerCase() : '';
+
+        // Req 1: Mínimo 8 caracteres
+        marcarRequisito(reqLen, val.length >= 8);
+
+        // Req 2: No totalmente numérica
+        const noEsNumerica = val.length > 0 && !/^\d+$/.test(val);
+        marcarRequisito(reqNotNum, noEsNumerica);
+
+        // Req 3: No común
+        const noComun = val.length > 0 && !PASSWORDS_COMUNES.has(val.toLowerCase());
+        marcarRequisito(reqNotCommon, noComun);
+
+        // Req 4: No similar a datos personales
+        let similar = false;
+        const emailUser = email ? email.split('@')[0] : '';
+        const fragmentos = [username, emailUser, nombre, apellidos].filter(f => f && f.length >= 3);
+        const lowerVal = val.toLowerCase();
+        for (let i = 0; i < fragmentos.length; i++) {
+            if (lowerVal.includes(fragmentos[i])) {
+                similar = true;
+                break;
+            }
+        }
+        marcarRequisito(reqNotSimilar, val.length > 0 && !similar);
+
+        // Confirmación
+        if (inputPwd2 && inputPwd2.value) {
+            validarCoincidenciaContrasena();
+        }
+    }
+
+    function validarCoincidenciaContrasena() {
+        if (!inputPwd1 || !inputPwd2 || !matchFeedback) return;
+        if (!inputPwd2.value) {
+            matchFeedback.innerHTML = '';
+            inputPwd2.classList.remove('is-valid', 'is-invalid');
+            return;
+        }
+        if (inputPwd1.value === inputPwd2.value) {
+            matchFeedback.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Las contraseñas coinciden</span>';
+            inputPwd2.classList.remove('is-invalid');
+            inputPwd2.classList.add('is-valid');
+        } else {
+            matchFeedback.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle me-1"></i>Las contraseñas no coinciden</span>';
+            inputPwd2.classList.remove('is-valid');
+            inputPwd2.classList.add('is-invalid');
+        }
+    }
+
+    if (inputPwd1) inputPwd1.addEventListener('input', validarContrasena);
+    if (inputPwd2) inputPwd2.addEventListener('input', validarCoincidenciaContrasena);
+});
+</script>
+{% endblock %}

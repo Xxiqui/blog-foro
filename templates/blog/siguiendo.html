@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% load blog_extras %}
+
+{% block title %}Siguiendo | {{ site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom gap-3">
+    <div>
+        <h1 class="h2 fw-bold mb-1">
+            <i class="bi bi-people-fill text-primary me-2" aria-hidden="true"></i>Tu feed personalizado
+        </h1>
+        <p class="text-secondary-token mb-0">Artículos publicados recientemente por los autores que sigues y las comunidades a las que te uniste.</p>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <!-- Filtros: Todo | Autores | Comunidades -->
+        <div class="btn-group btn-group-sm" role="group" aria-label="Filtrar feed personalizado">
+            <a href="{% query_transform filtro='todo' page=None %}"
+               class="btn {% if filtro_actual == 'todo' or not filtro_actual %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                Todo
+            </a>
+            <a href="{% query_transform filtro='autores' page=None %}"
+               class="btn {% if filtro_actual == 'autores' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                <i class="bi bi-person-check me-1" aria-hidden="true"></i>Autores
+            </a>
+            <a href="{% query_transform filtro='comunidades' page=None %}"
+               class="btn {% if filtro_actual == 'comunidades' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                <i class="bi bi-collection me-1" aria-hidden="true"></i>Comunidades
+            </a>
+        </div>
+
+        <a href="{% url 'blog:autores_list' %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-compass me-1" aria-hidden="true"></i>Descubrir autores
+        </a>
+    </div>
+</div>
+
+{% if tiene_suscripciones_feed %}
+<div class="row g-4">
+    <!-- Columna principal: Feed de posts de autores seguidos y comunidades unidas -->
+    <div class="col-lg-8">
+        {% if posts %}
+            <div class="row row-cols-1 row-cols-md-2 g-4">
+                {% for post in posts %}
+                    <div class="col">
+                        <article class="card h-100 border-0 shadow-sm post-card">
+                            <a href="{{ post.get_absolute_url }}" class="text-decoration-none d-block" tabindex="-1" aria-hidden="true">
+                                {% portada_post post %}
+                            </a>
+                            <div class="card-body d-flex flex-column p-4">
+                                <div class="mb-2 d-flex flex-wrap gap-1 align-items-center">
+                                    {% if post.categoria %}
+                                        <a href="{{ post.categoria.get_absolute_url }}" class="badge-categoria">
+                                            {{ post.categoria.nombre }}
+                                        </a>
+                                    {% else %}
+                                        <span class="badge-categoria">Sin categoría</span>
+                                    {% endif %}
+                                    <small class="text-secondary-token ms-auto">
+                                        {{ post.publicado_en|date:"d M Y" }}
+                                    </small>
+                                </div>
+
+                                <h2 class="h5 card-title fw-bold mb-2 line-clamp-3 card-title-mobile-clamp" title="{{ post.titulo }}">
+                                    <a href="{{ post.get_absolute_url }}" class="text-decoration-none text-body">
+                                        {{ post.titulo }}
+                                    </a>
+                                </h2>
+
+                                <p class="card-text text-secondary-token small flex-grow-1">
+                                    {{ post.contenido|extracto_plano:150 }}
+                                </p>
+
+                                <div class="mt-3 pt-3 border-top post-card-footer d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-2">
+                                    <div class="author-meta-block w-100 w-md-auto d-flex align-items-center justify-content-between justify-content-md-start">
+                                        <a href="{{ post.autor.get_absolute_url }}" class="author-name-link small min-w-0 flex-grow-1">
+                                            {% avatar post.autor 28 %}
+                                            <span class="author-name-text text-truncate">{{ post.autor.nombre_mostrar }}</span>
+                                        </a>
+                                        <div class="author-badge-container flex-shrink-0 ms-2">{% insignia post.autor %}</div>
+                                    </div>
+
+                                    <div class="card-actions-row d-flex align-items-center justify-content-between justify-content-md-end gap-1 flex-grow-1 flex-md-grow-0">
+                                        <form method="post"
+                                              action="{% url 'blog:post_like_toggle' slug=post.slug %}"
+                                              data-ajax-like
+                                              class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                            <button type="submit"
+                                                    class="btn btn-sm {% if post.ya_dio_like %}btn-danger{% else %}btn-outline-danger{% endif %} rounded-pill px-2 py-1 d-inline-flex align-items-center"
+                                                    aria-pressed="{% if post.ya_dio_like %}true{% else %}false{% endif %}"
+                                                    aria-label="Me gusta ({{ post.total_likes|default:0 }})"
+                                                    title="{% if post.ya_dio_like %}Ya te gusta{% else %}Me gusta{% endif %}">
+                                                <i class="bi {% if post.ya_dio_like %}bi-heart-fill{% else %}bi-heart{% endif %}" data-like-icon aria-hidden="true"></i>
+                                                <span data-like-count class="ms-1 small">{{ post.total_likes|default:0 }}</span>
+                                            </button>
+                                        </form>
+
+                                        <form method="post"
+                                              action="{% url 'blog:post_guardar_toggle' slug=post.slug %}"
+                                              data-ajax-guardar
+                                              class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                            <button type="submit"
+                                                    class="btn btn-sm {% if post.ya_guardado %}btn-warning{% else %}btn-outline-secondary{% endif %} rounded-pill px-2 py-1"
+                                                    aria-pressed="{% if post.ya_guardado %}true{% else %}false{% endif %}"
+                                                    aria-label="{% if post.ya_guardado %}Quitar de guardados{% else %}Guardar para leer después{% endif %}"
+                                                    title="{% if post.ya_guardado %}Guardado en tu lista{% else %}Guardar para leer después{% endif %}">
+                                                <i class="bi {% if post.ya_guardado %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}" data-guardar-icon aria-hidden="true"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% include "blog/includes/pagination.html" %}
+        {% else %}
+            <div class="empty-state my-3">
+                <svg width="104" height="104" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                </svg>
+                <h2 class="h5 fw-bold">Aún no hay publicaciones para este filtro</h2>
+                <p class="text-secondary-token mb-3">
+                    Todavía no se han publicado artículos que coincidan con el filtro seleccionado.
+                </p>
+                <a href="{% url 'blog:post_list' %}" class="btn btn-primary btn-sm">
+                    Explorar todos los artículos
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Barra lateral: Autores seguidos y Comunidades unidas -->
+    <div class="col-lg-4">
+        {% if autores_seguidos %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h2 class="h6 fw-bold mb-0">
+                    <i class="bi bi-person-check-fill text-primary me-1" aria-hidden="true"></i>Autores seguidos ({{ autores_seguidos|length }})
+                </h2>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for autor in autores_seguidos %}
+                    <div class="list-group-item d-flex align-items-center justify-content-between py-3">
+                        <div class="d-flex align-items-center gap-2 me-2 min-w-0" style="min-width: 0; flex: 1 1 auto;">
+                            {% avatar autor 36 %}
+                            <div class="min-w-0" style="min-width: 0; flex: 1 1 auto;">
+                                <div class="author-meta-block">
+                                    <a href="{{ autor.get_absolute_url }}" class="author-name-link">
+                                        <span class="author-name-text">{{ autor.nombre_mostrar }}</span>
+                                    </a>
+                                    <div class="author-badge-container">{% insignia autor %}</div>
+                                </div>
+                                <div class="mt-1">
+                                    <small class="text-secondary-token">
+                                        <span data-seguidores-count="{{ autor.usuario.username }}">{{ autor.total_seguidores }}</span> seg.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form method="post"
+                              action="{% url 'blog:autor_seguir_toggle' username=autor.usuario.username %}"
+                              data-ajax-seguir
+                              data-autor-username="{{ autor.usuario.username }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit"
+                                    class="btn btn-sm btn-primary rounded-pill px-3"
+                                    aria-pressed="true">
+                                <i class="bi bi-person-check-fill me-1" data-seguir-icon aria-hidden="true"></i>
+                                <span data-seguir-label>Siguiendo</span>
+                            </button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if comunidades_unidas %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-bottom py-3 d-flex justify-content-between align-items-center">
+                <h2 class="h6 fw-bold mb-0">
+                    <i class="bi bi-collection-fill text-primary me-1" aria-hidden="true"></i>Mis comunidades ({{ comunidades_unidas|length }})
+                </h2>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for com in comunidades_unidas %}
+                    <div class="list-group-item d-flex align-items-center justify-content-between py-3">
+                        <div class="d-flex align-items-center gap-2 text-truncate me-2">
+                            {% avatar_categoria com 36 %}
+                            <div class="text-truncate">
+                                <a href="{{ com.get_absolute_url }}" class="fw-bold text-body text-decoration-none d-block text-truncate small">
+                                    {{ com.nombre }}
+                                </a>
+                                <small class="text-secondary-token">
+                                    <span data-miembros-count="{{ com.slug }}">{{ com.total_miembros }}</span> miembro{{ com.total_miembros|pluralize }}
+                                </small>
+                            </div>
+                        </div>
+
+                        <form method="post"
+                              action="{% url 'blog:categoria_unirse_toggle' com.slug %}"
+                              data-ajax-unirse
+                              data-categoria-slug="{{ com.slug }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit"
+                                    class="btn btn-sm btn-primary rounded-pill px-3"
+                                    aria-pressed="true">
+                                <i class="bi bi-check-lg me-1" data-unirse-icon aria-hidden="true"></i>
+                                <span data-unirse-label>Unido</span>
+                            </button>
+                        </form>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<!-- Si el usuario no sigue a nadie ni se ha unido a comunidades, muestra estado vacío centrado -->
+<div class="row justify-content-center my-4">
+    <div class="col-lg-8">
+        <div class="empty-state">
+            <svg width="104" height="104" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <h2 class="h5 fw-bold">Aún no sigues a ningún autor ni comunidad</h2>
+            <p class="text-secondary-token mb-3">
+                Sigue a tus autores favoritos o únete a comunidades temáticas para ver sus artículos aquí.
+            </p>
+            <a href="{% url 'blog:autores_list' %}" class="btn btn-primary btn-sm">
+                Explorar autores destacados
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Política de Privacidad | {{ site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <article class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-lg-5">
+                <h1 class="h2 fw-bold mb-3">
+                    <i class="bi bi-shield-check text-primary me-2" aria-hidden="true"></i>Política de Privacidad
+                </h1>
+                <p class="text-muted small mb-4">
+                    Última actualización: {% now "d \d\e F \d\e Y" %}
+                </p>
+
+                <h2 class="h5 fw-bold mt-4">1. Datos que recopilamos</h2>
+                <p class="text-secondary">
+                    En <strong>{{ site_name|default:"Blog con Panel de Autor" }}</strong> recopilamos únicamente los datos necesarios para crear tu cuenta de autor o lector (nombre de usuario, nombre visible, correo electrónico y, opcionalmente, tu foto de perfil pública cuando accedes mediante proveedores OAuth como Google o GitHub).
+                </p>
+
+                <h2 class="h5 fw-bold mt-4">2. Uso de la información</h2>
+                <p class="text-secondary">
+                    Utilizamos tu información exclusivamente para autenticar tu sesión, mostrar tu autoría en artículos y comentarios, gestionar tus listas de lectura y enviarte notificaciones o boletines a los que te hayas suscrito mediante confirmación expresa (doble opt-in).
+                </p>
+
+                <h2 class="h5 fw-bold mt-4">3. Acceso con cuentas sociales (OAuth 2.0)</h2>
+                <p class="text-secondary">
+                    Cuando eliges «Continuar con Google» o «Continuar con GitHub», solicitamos únicamente tu perfil básico y correo electrónico verificado. Nunca almacenamos tus contraseñas de terceros ni publicamos en tu nombre.
+                </p>
+
+                <h2 class="h5 fw-bold mt-4">4. Tus derechos y control</h2>
+                <p class="text-secondary mb-4">
+                    Puedes editar tu perfil, darte de baja de cualquier suscripción por correo con un clic o solicitar la eliminación de tu cuenta desde la página de <a href="{% url 'blog:contacto' %}">Contacto</a>.
+                </p>
+
+                <div class="pt-3 border-top d-flex flex-wrap gap-3 small">
+                    <a href="{% url 'blog:acerca' %}" class="text-decoration-none">Acerca de</a>
+                    <a href="{% url 'blog:terminos' %}" class="text-decoration-none">Términos de uso</a>
+                    <a href="{% url 'blog:contacto' %}" class="text-decoration-none">Contacto</a>
+                </div>
+            </div>
+        </article>
+    </div>
+</div>
+{% endblock %}
+

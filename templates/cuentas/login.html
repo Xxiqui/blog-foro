@@ -1,0 +1,158 @@
+{% extends "base_auth.html" %}
+
+{% block title %}Iniciar sesión | {{ marca|default:site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-9">
+        <div class="card border-0 shadow-sm overflow-hidden auth-split-card">
+            <div class="row g-0">
+                <!-- Panel lateral decorativo (oculto en móvil) -->
+                <div class="col-lg-5 d-none d-lg-flex flex-column justify-content-between p-4 p-xl-5 auth-decorative-panel text-white">
+                    <div>
+                        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white bg-opacity-10 small fw-semibold mb-3">
+                            <i class="bi bi-journal-richtext" aria-hidden="true"></i>
+                            <span>{{ marca|default:site_name|default:"Blog con Panel de Autor" }}</span>
+                        </div>
+                        <h2 class="h3 fw-bold mb-2">Únete a la conversación técnica</h2>
+                        <p class="small text-white text-opacity-75 mb-0">
+                            Comparte conocimiento, participa en comunidades especializadas y gestiona tus artículos desde el Panel de Autor.
+                        </p>
+                    </div>
+
+                    <div class="my-4 text-center">
+                        <svg width="220" height="170" viewBox="0 0 240 180" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" class="img-fluid">
+                            <rect x="18" y="20" width="204" height="140" rx="16" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.28)" stroke-width="2"/>
+                            <circle cx="42" cy="40" r="5" fill="#f87171"/>
+                            <circle cx="58" cy="40" r="5" fill="#fbbf24"/>
+                            <circle cx="74" cy="40" r="5" fill="#34d399"/>
+                            <rect x="38" y="64" width="90" height="12" rx="6" fill="rgba(255,255,255,0.85)"/>
+                            <rect x="38" y="86" width="164" height="8" rx="4" fill="rgba(255,255,255,0.45)"/>
+                            <rect x="38" y="102" width="140" height="8" rx="4" fill="rgba(255,255,255,0.45)"/>
+                            <rect x="38" y="124" width="68" height="20" rx="10" fill="#38bdf8"/>
+                            <circle cx="184" cy="128" r="18" fill="rgba(56,189,248,0.25)" stroke="#38bdf8" stroke-width="2"/>
+                            <path d="M177 128L182 133L192 123" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+
+                    <div class="small text-white text-opacity-75">
+                        <i class="bi bi-shield-lock-fill me-1" aria-hidden="true"></i>Acceso seguro con verificación de identidad.
+                    </div>
+                </div>
+
+                <!-- Panel del formulario -->
+                <div class="col-lg-7">
+                    <div class="card-body p-4 p-md-5">
+                        <h1 class="h3 fw-bold mb-2 text-center text-lg-start">Iniciar sesión</h1>
+                        <p class="text-muted small mb-4 text-center text-lg-start">
+                            Accede a tu Panel de Autor con tu usuario o correo electrónico.
+                        </p>
+
+                        {% if hay_proveedores_sociales %}
+                            {% include "cuentas/includes/botones_sociales.html" with next=next %}
+
+                            <div class="auth-divider my-3">
+                                <span>o</span>
+                            </div>
+
+                            <button class="btn btn-outline-secondary rounded-pill w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold mb-3"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapseLoginCorreo"
+                                    aria-expanded="{% if form.errors or form.non_field_errors %}true{% else %}false{% endif %}"
+                                    aria-controls="collapseLoginCorreo"
+                                    aria-label="Continuar con correo electrónico">
+                                <i class="bi bi-envelope" aria-hidden="true"></i>
+                                <span>Continuar con correo electrónico</span>
+                            </button>
+                        {% endif %}
+
+                        <div class="collapse {% if form.errors or form.non_field_errors or not hay_proveedores_sociales %}show{% endif %}" id="collapseLoginCorreo">
+                            <form method="post" action="{% url 'cuentas:login' %}" novalidate>
+                                {% csrf_token %}
+                                {% if form.non_field_errors %}
+                                    <div class="alert alert-danger py-2">
+                                        {% for error in form.non_field_errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                <div class="mb-3">
+                                    <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold">
+                                        {{ form.username.label }}
+                                    </label>
+                                    {{ form.username }}
+                                    {% if form.username.errors %}
+                                        <div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="{{ form.password.id_for_label }}" class="form-label fw-semibold mb-0">
+                                            Contraseña
+                                        </label>
+                                        <a href="{% url 'cuentas:password_reset' %}" class="small text-decoration-none">
+                                            ¿Olvidaste tu contraseña?
+                                        </a>
+                                    </div>
+                                    <div class="input-group">
+                                        {{ form.password }}
+                                        <button type="button" class="btn btn-outline-secondary toggle-password-btn"
+                                                aria-label="Mostrar contraseña" aria-pressed="false"
+                                                data-target="{{ form.password.id_for_label }}">
+                                            <i class="bi bi-eye" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    {% if form.password.errors %}
+                                        <div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+
+                                {% if next %}
+                                    <input type="hidden" name="next" value="{{ next }}">
+                                {% endif %}
+
+                                <button type="submit"
+                                        class="btn btn-primary rounded-pill w-100 py-2 fw-semibold mt-2"
+                                        aria-label="Entrar a tu cuenta">
+                                    <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>Entrar
+                                </button>
+                            </form>
+                        </div>
+
+                        <hr class="my-4">
+                        <p class="text-center mb-0 small">
+                            ¿No tienes una cuenta?
+                            <a href="{% url 'cuentas:registro' %}" class="fw-semibold text-decoration-none">Regístrate aquí</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.toggle-password-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            if (!input) return;
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            this.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+            this.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
+            const icon = this.querySelector('i');
+            if (icon) {
+                icon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

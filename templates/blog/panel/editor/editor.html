@@ -1,0 +1,99 @@
+{% extends "blog/panel/editor/base_editor.html" %}
+{% load static %}
+
+{% block title %}
+    {% if post and post.pk %}Editando: {{ post.titulo }} | Estudio de Escritura{% else %}Nuevo artículo | Estudio de Escritura{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="editor-studio-wrapper d-flex flex-column min-vh-100" id="editorStudioWrapper">
+    <!-- Barra superior de acciones -->
+    {% include "blog/panel/editor/_barra.html" %}
+
+    <!-- Espacio de trabajo principal (Lienzo + Barra lateral) -->
+    <div class="editor-workspace flex-grow-1 d-flex overflow-hidden position-relative">
+        <!-- Columna de edición (Lienzo) -->
+        <div class="editor-canvas-column flex-grow-1 overflow-y-auto" id="editorCanvasColumn">
+            {% include "blog/panel/editor/_lienzo.html" %}
+        </div>
+
+        <!-- Columna de configuración (Lateral) -->
+        {% include "blog/panel/editor/_lateral.html" %}
+    </div>
+
+    <!-- Botón flotante para salir del modo enfoque -->
+    <button type="button" class="btn btn-sm btn-dark position-fixed bottom-0 end-0 m-3 shadow-lg d-none z-3"
+            id="btnSalirModoEnfoque"
+            title="Salir del modo concentración (Esc o Ctrl+Shift+F)">
+        <i class="bi bi-fullscreen-exit me-1" aria-hidden="true"></i>Salir de modo enfoque
+    </button>
+</div>
+
+<!-- Modales del Estudio -->
+{% include "blog/panel/editor/_modal_publicar.html" %}
+{% include "blog/panel/editor/_modal_historial.html" %}
+{% include "blog/panel/editor/_modal_vista_previa.html" %}
+{% include "blog/panel/editor/_atajos.html" %}
+
+<!-- Modal para Crear Nueva Etiqueta por AJAX -->
+<div class="modal fade" id="modalNuevaEtiqueta" tabindex="-1" aria-labelledby="modalNuevaEtiquetaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom py-2">
+                <h5 class="modal-title h6 fw-bold mb-0" id="modalNuevaEtiquetaLabel">
+                    <i class="bi bi-tag-fill text-primary me-1"></i>Nueva etiqueta
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-3">
+                <form id="formNuevaEtiquetaAjax">
+                    <label for="inputNuevaEtiquetaNombre" class="form-label small fw-semibold">Nombre de la etiqueta</label>
+                    <input type="text" class="form-control form-control-sm" id="inputNuevaEtiquetaNombre"
+                           placeholder="Ej. tutorial, django, web…" maxlength="40" required>
+                    <div class="form-text small">Sin espacios raros. Se convertirá a slug automáticamente.</div>
+                    <div class="text-danger small mt-1 d-none" id="errorNuevaEtiqueta"></div>
+                </form>
+            </div>
+            <div class="modal-footer border-top py-2 px-3">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btnGuardarNuevaEtiqueta">Crear y seleccionar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmar Eliminación -->
+{% if post and post.pk %}
+<div class="modal fade" id="modalEliminarConfirmar" tabindex="-1" aria-labelledby="modalEliminarConfirmarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title h6 fw-bold text-danger mb-0" id="modalEliminarConfirmarLabel">
+                    <i class="bi bi-trash3-fill me-1"></i>¿Eliminar definitivamente este artículo?
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="mb-2">Estás a punto de eliminar <strong>«{{ post.titulo }}»</strong>.</p>
+                <p class="small text-muted mb-0">Esta acción no se puede deshacer. Los datos de lectura, likes y comentarios también se suprimirán.</p>
+            </div>
+            <div class="modal-footer border-top py-2 px-3">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" action="{% url 'blog:panel_post_delete' post.slug %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger fw-semibold px-3">Eliminar definitivamente</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Configuración inyectada al frontend mediante json_script -->
+{{ editor_config|json_script:"editorConfigData" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script type="module" src="{% static 'js/editor/editor.js' %}"></script>
+{% endblock %}

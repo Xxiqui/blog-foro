@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Términos de Uso | {{ site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <article class="card border-0 shadow-sm">
+            <div class="card-body p-4 p-lg-5">
+                <h1 class="h2 fw-bold mb-3">
+                    <i class="bi bi-file-earmark-text text-primary me-2" aria-hidden="true"></i>Términos y Condiciones de Uso
+                </h1>
+                <p class="text-muted small mb-4">
+                    Última actualización: {% now "d \d\e F \d\e Y" %}
+                </p>
+
+                <h2 class="h5 fw-bold mt-4">1. Aceptación de los términos</h2>
+                <p class="text-secondary">
+                    Al acceder y participar en <strong>{{ site_name|default:"Blog con Panel de Autor" }}</strong>, aceptas mantener un trato respetuoso en las comunidades temáticas, comentarios y artículos publicados.
+                </p>
+
+                <h2 class="h5 fw-bold mt-4">2. Contenido y autoría</h2>
+                <p class="text-secondary">
+                    Cada autor conserva la titularidad de los artículos que publica en la plataforma y es responsable de que su contenido sea original o cite adecuadamente sus fuentes técnicas.
+                </p>
+
+                <h2 class="h5 fw-bold mt-4">3. Normas de convivencia y moderación</h2>
+                <p class="text-secondary">
+                    No se permite el envío de spam, acoso, desinformación ni contenido ofensivo. Los autores y administradores pueden moderar comentarios y aplicar las reglas específicas de cada comunidad.
+                </p>
+
+                <div class="pt-3 border-top d-flex flex-wrap gap-3 small mt-4">
+                    <a href="{% url 'blog:acerca' %}" class="text-decoration-none">Acerca de</a>
+                    <a href="{% url 'blog:privacidad' %}" class="text-decoration-none">Política de privacidad</a>
+                    <a href="{% url 'blog:contacto' %}" class="text-decoration-none">Contacto</a>
+                </div>
+            </div>
+        </article>
+    </div>
+</div>
+{% endblock %}
+

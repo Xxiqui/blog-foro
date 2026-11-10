@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Comentario | Blog con Panel de Autor{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <h1 class="h4 fw-bold mb-2">Editar tu comentario</h1>
+                <p class="text-muted small mb-4">
+                    En el artículo: <strong>{{ comentario.post.titulo }}</strong>.
+                    Al guardar los cambios, el comentario quedará marcado como <em>(editado)</em> y volverá a moderación antes de mostrarse públicamente.
+                </p>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.texto.id_for_label }}" class="form-label fw-semibold">Texto del comentario *</label>
+                        {{ form.texto }}
+                        {% if form.texto.errors %}
+                            <div class="text-danger small mt-1">{{ form.texto.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check2 me-1"></i>Guardar y enviar a moderación
+                        </button>
+                        <a href="{% url 'blog:post_detail' comentario.post.slug %}" class="btn btn-outline-secondary">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

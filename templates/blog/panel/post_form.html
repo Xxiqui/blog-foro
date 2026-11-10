@@ -1,0 +1,766 @@
+{% extends "base.html" %}
+{% load blog_extras %}
+
+{% block title %}{% if object %}Editar Post{% else %}Nuevo Post{% endif %} | Panel de Autor{% endblock %}
+
+{% block extra_head %}
+    {{ form.media }}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center pb-5">
+    <div class="col-xl-11">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+                <h1 class="h3 fw-bold mb-1">
+                    {% if object %}Editar Post: {{ object.titulo }}{% else %}Crear Nuevo Post{% endif %}
+                </h1>
+                <p class="text-secondary-token mb-0">Redacta tu artículo con el editor enriquecido CKEditor 5.</p>
+            </div>
+            <a href="{% url 'blog:panel_post_list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver a mis posts
+            </a>
+        </div>
+
+        <!-- Banner de restauración de autoguardado localStorage -->
+        <div id="autosave-restore-banner" class="alert alert-warning d-none d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4" role="status" aria-live="polite">
+            <div>
+                <i class="bi bi-clock-history me-1" aria-hidden="true"></i>
+                <strong>Borrador local encontrado:</strong> Se guardó una copia automática en este navegador (<span id="autosave-timestamp">hace unos momentos</span>).
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" id="btn-restore-draft" class="btn btn-sm btn-warning fw-semibold">
+                    <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Restaurar borrador
+                </button>
+                <button type="button" id="btn-discard-draft" class="btn btn-sm btn-outline-secondary">
+                    Descartar
+                </button>
+            </div>
+        </div>
+
+        <form id="post-editor-form" method="post" enctype="multipart/form-data" novalidate
+              data-draft-key="post_draft_{% if object %}{{ object.slug }}{% else %}nuevo{% endif %}">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger mb-4">
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <!-- Título -->
+                                <div class="col-md-8">
+                                    <label for="{{ form.titulo.id_for_label }}" class="form-label fw-semibold">Título *</label>
+                                    {{ form.titulo }}
+                                    {% if form.titulo.errors %}
+                                        <div class="text-danger small mt-1">{{ form.titulo.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Estado inicial / selección -->
+                                <div class="col-md-4">
+                                    <label for="{{ form.estado.id_for_label }}" class="form-label fw-semibold">Estado *</label>
+                                    {{ form.estado }}
+                                    {% if form.estado.errors %}
+                                        <div class="text-danger small mt-1">{{ form.estado.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Categoría con empty_label -->
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="{{ form.categoria.id_for_label }}" class="form-label fw-semibold mb-0">Categoría</label>
+                                        <a href="{% url 'blog:panel_taxonomias' %}" class="small text-decoration-none">+ Gestionar</a>
+                                    </div>
+                                    {{ form.categoria }}
+                                    {% if form.categoria.errors %}
+                                        <div class="text-danger small mt-1">{{ form.categoria.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Imagen de portada con drag-and-drop y previsualización -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold mb-1">Imagen de portada</label>
+                                    <div id="cover-dropzone" class="cover-dropzone">
+                                        <input type="file" name="imagen_portada" id="id_imagen_portada"
+                                               class="d-none" accept="image/jpeg,image/png,image/webp">
+                                        <input type="hidden" name="eliminar_portada" id="id_eliminar_portada" value="0">
+
+                                        <!-- Vista de portada existente si hay -->
+                                        {% if object and object.imagen_portada %}
+                                            <div id="existing-cover-box" class="d-flex align-items-center gap-3 text-start mb-2">
+                                                <img src="{{ object.imagen_portada.url }}" alt="Portada actual"
+                                                     id="existing-cover-thumb"
+                                                     style="width: 72px; height: 50px; object-fit: cover; border-radius: 6px;">
+                                                <div class="flex-grow-1 min-w-0">
+                                                    <div class="small fw-semibold text-truncate">Portada actual</div>
+                                                    <button type="button" id="btn-remove-existing-cover" class="btn btn-sm btn-link text-danger p-0 small">
+                                                        <i class="bi bi-trash me-1" aria-hidden="true"></i>Quitar portada
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+
+                                        <!-- Contenedor interactivo de carga/preview -->
+                                        <div id="dropzone-prompt">
+                                            <i class="bi bi-cloud-arrow-up fs-2 text-primary d-block mb-1" aria-hidden="true"></i>
+                                            <span class="small fw-semibold d-block">Arrastra una imagen aquí o <span class="text-primary text-decoration-underline">explora</span></span>
+                                            <span class="text-muted" style="font-size: 0.75rem;">1200x630 px recomendado. JPG, PNG o WebP (máx. 5 MB)</span>
+                                        </div>
+
+                                        <!-- Preview de nueva imagen seleccionada -->
+                                        <div id="new-cover-preview-box" class="d-none text-start">
+                                            <div class="d-flex align-items-center gap-3">
+                                                <img id="new-cover-thumb" src="" alt="Nueva portada"
+                                                     style="width: 72px; height: 50px; object-fit: cover; border-radius: 6px;">
+                                                <div class="flex-grow-1 min-w-0">
+                                                    <div id="new-cover-filename" class="small fw-semibold text-truncate">archivo.jpg</div>
+                                                    <button type="button" id="btn-clear-new-cover" class="btn btn-sm btn-link text-danger p-0 small">
+                                                        <i class="bi bi-x-circle me-1" aria-hidden="true"></i>Eliminar selección
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="cover-client-error" class="text-danger small mt-1 d-none" aria-live="polite"></div>
+                                    {% if form.imagen_portada.errors %}
+                                        <div class="text-danger small mt-1">{{ form.imagen_portada.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Selector de etiquetas interactivo con chips y modal AJAX -->
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label fw-semibold mb-0">Etiquetas</label>
+                                        <button type="button" class="btn btn-sm btn-link text-decoration-none p-0"
+                                                data-bs-toggle="modal" data-bs-target="#modalNuevaEtiqueta">
+                                            <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Crear nueva etiqueta
+                                        </button>
+                                    </div>
+
+                                    <!-- Campo select multiple original (oculto visualmente pero sincronizado para el formulario) -->
+                                    <div class="d-none">
+                                        {{ form.etiquetas }}
+                                    </div>
+
+                                    <!-- Barra de filtro de etiquetas -->
+                                    <div class="input-group input-group-sm mb-2">
+                                        <span class="input-group-text bg-body-tertiary border-end-0">
+                                            <i class="bi bi-search text-muted" aria-hidden="true"></i>
+                                        </span>
+                                        <input type="text" id="tag-filter-input" class="form-control border-start-0"
+                                               placeholder="Escribe para filtrar etiquetas..." aria-label="Filtrar etiquetas">
+                                    </div>
+
+                                    <!-- Contenedor de chips clicables -->
+                                    <div id="tag-chips-container" class="d-flex flex-wrap gap-1 p-2 border rounded bg-body-tertiary" style="max-height: 140px; overflow-y: auto;">
+                                        <!-- Se puebla dinámicamente con las opciones de form.etiquetas -->
+                                    </div>
+                                    {% if form.etiquetas.errors %}
+                                        <div class="text-danger small mt-1">{{ form.etiquetas.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Extracto manual opcional con contador de caracteres -->
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="{{ form.extracto_manual.id_for_label }}" class="form-label fw-semibold mb-0">
+                                            {{ form.extracto_manual.label }}
+                                        </label>
+                                        <span class="small text-muted" id="extracto-char-counter">0 / 160</span>
+                                    </div>
+                                    {{ form.extracto_manual }}
+                                    <div class="form-text small">
+                                        {{ form.extracto_manual.help_text }}
+                                    </div>
+                                    {% if form.extracto_manual.errors %}
+                                        <div class="text-danger small mt-1">{{ form.extracto_manual.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Contenido con contador unificado arriba -->
+                                <div class="col-12">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                                        <label for="{{ form.contenido.id_for_label }}" class="form-label fw-semibold mb-0">Contenido *</label>
+                                        <div class="small text-secondary-token d-flex align-items-center gap-3" aria-live="polite">
+                                            <span><i class="bi bi-fonts me-1" aria-hidden="true"></i><strong id="live-word-count">0</strong> palabras</span>
+                                            <span><i class="bi bi-clock me-1" aria-hidden="true"></i>~<strong id="live-reading-time">1</strong> min de lectura</span>
+                                            <span id="autosave-status" class="text-muted"></span>
+                                        </div>
+                                    </div>
+                                    {{ form.contenido }}
+                                    {% if form.contenido.errors %}
+                                        <div class="text-danger small mt-1">{{ form.contenido.errors|striptags }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna lateral: Vista previa de tarjeta al compartir -->
+                <div class="col-lg-4" id="seccion-vista-previa">
+                    <div class="card shadow-sm border-0 sticky-lg-top" style="top: 5rem;">
+                        <div class="card-header bg-transparent border-bottom py-3">
+                            <h2 class="h6 fw-bold mb-0">
+                                <i class="bi bi-eye me-1 text-primary" aria-hidden="true"></i>Vista previa de tarjeta
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <p class="small text-secondary-token mb-3">
+                                Así se verá tu publicación en el inicio y al compartirse en redes sociales.
+                            </p>
+                            <div class="card overflow-hidden border">
+                                <div id="preview-cover-wrapper" style="height: 180px; position: relative; overflow: hidden; background-color: #0f172a;">
+                                    <div id="preview-cover-gradient" class="post-cover-gradient grad-0 d-flex align-items-center justify-content-center h-100 text-white">
+                                        <div class="text-center">
+                                            <i class="bi bi-journal-richtext d-block mb-1" style="font-size: 1.75rem;" aria-hidden="true"></i>
+                                            <span id="preview-cover-cat" class="small fw-bold text-uppercase" style="letter-spacing: 0.05em;">Categoría</span>
+                                        </div>
+                                    </div>
+                                    <img id="preview-cover-img" src="" alt="Vista previa de portada"
+                                         class="w-100 h-100 object-fit-cover d-none" style="object-fit: cover;">
+                                </div>
+                                <div class="card-body p-3">
+                                    <div class="mb-2">
+                                        <span id="preview-badge-cat" class="badge-categoria">Sin categoría</span>
+                                    </div>
+                                    <h3 id="preview-title" class="h6 fw-bold mb-2 line-clamp-2">
+                                        {% if object %}{{ object.titulo }}{% else %}Título de tu artículo{% endif %}
+                                    </h3>
+                                    <p id="preview-excerpt" class="small text-secondary-token mb-2">
+                                        {% if object %}{{ object.extracto }}{% else %}Escribe el contenido o extracto de tu artículo para verlo reflejado aquí…{% endif %}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center small text-secondary-token pt-2 border-top">
+                                        <span class="text-truncate">{{ user.perfil.nombre_mostrar|default:user.get_full_name|default:user.username }}</span>
+                                        <span><i class="bi bi-clock me-1" aria-hidden="true"></i><span id="preview-read-time">1</span> min</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Barra de acciones fija en la parte inferior (Sticky bottom) -->
+            <div class="sticky-bottom bg-body border-top py-3 px-4 shadow-lg rounded-3 mt-4 z-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <button type="submit" name="accion_guardar" value="borrador" class="btn btn-outline-secondary">
+                        <i class="bi bi-save me-1" aria-hidden="true"></i>Guardar borrador
+                    </button>
+                    <button type="submit" name="accion_guardar" value="publicado" class="btn btn-primary px-3">
+                        <i class="bi bi-send-check me-1" aria-hidden="true"></i>Publicar
+                    </button>
+                    <button type="button" id="btn-scroll-preview" class="btn btn-outline-info">
+                        <i class="bi bi-eye me-1" aria-hidden="true"></i>Vista previa
+                    </button>
+                    <a href="{% url 'blog:panel_post_list' %}" class="btn btn-link text-muted text-decoration-none">
+                        Cancelar
+                    </a>
+                </div>
+                <div>
+                    <span id="autosave-bottom-indicator" class="small text-muted" aria-live="polite">
+                        <i class="bi bi-clock me-1" aria-hidden="true"></i>Autoguardado local activo
+                    </span>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para Crear Nueva Etiqueta vía AJAX -->
+<div class="modal fade" id="modalNuevaEtiqueta" tabindex="-1" aria-labelledby="modalNuevaEtiquetaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title h6 fw-bold" id="modalNuevaEtiquetaLabel">
+                    <i class="bi bi-tag-fill text-primary me-2" aria-hidden="true"></i>Nueva etiqueta
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <label for="ajax-tag-name" class="form-label small fw-semibold">Nombre de la etiqueta</label>
+                <input type="text" id="ajax-tag-name" class="form-control" placeholder="Ej. Docker, Tailwind, Testing...">
+                <div id="ajax-tag-error" class="text-danger small mt-1 d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="btn-guardar-etiqueta-ajax" class="btn btn-sm btn-primary">
+                    <i class="bi bi-check2 me-1" aria-hidden="true"></i>Crear y seleccionar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('post-editor-form');
+    if (!form) return;
+
+    const draftKey = form.getAttribute('data-draft-key') || 'post_draft_nuevo';
+    const inputTitulo = document.getElementById('{{ form.titulo.id_for_label }}');
+    const selectCategoria = document.getElementById('{{ form.categoria.id_for_label }}');
+    const selectEstado = document.getElementById('{{ form.estado.id_for_label }}');
+    const selectEtiquetas = document.getElementById('id_etiquetas');
+    const textareaContenido = document.getElementById('{{ form.contenido.id_for_label }}');
+    const inputExtractoManual = document.getElementById('id_extracto_manual');
+    const extractoCounter = document.getElementById('extracto-char-counter');
+
+    const wordCountEl = document.getElementById('live-word-count');
+    const readingTimeEl = document.getElementById('live-reading-time');
+    const previewReadTimeEl = document.getElementById('preview-read-time');
+    const previewTitleEl = document.getElementById('preview-title');
+    const previewExcerptEl = document.getElementById('preview-excerpt');
+    const previewBadgeCatEl = document.getElementById('preview-badge-cat');
+    const previewCoverCatEl = document.getElementById('preview-cover-cat');
+    const previewCoverImg = document.getElementById('preview-cover-img');
+    const previewCoverGrad = document.getElementById('preview-cover-gradient');
+    const autosaveStatusEl = document.getElementById('autosave-status');
+    const autosaveBottomIndicator = document.getElementById('autosave-bottom-indicator');
+    const restoreBanner = document.getElementById('autosave-restore-banner');
+    const restoreTimestamp = document.getElementById('autosave-timestamp');
+    const btnRestore = document.getElementById('btn-restore-draft');
+    const btnDiscard = document.getElementById('btn-discard-draft');
+
+    // 1. Selector de etiquetas con chips interactivos y filtro
+    const chipsContainer = document.getElementById('tag-chips-container');
+    const tagFilterInput = document.getElementById('tag-filter-input');
+
+    function renderizarChips() {
+        if (!selectEtiquetas || !chipsContainer) return;
+        chipsContainer.innerHTML = '';
+        Array.from(selectEtiquetas.options).forEach(opt => {
+            const chip = document.createElement('span');
+            chip.className = 'tag-chip' + (opt.selected ? ' active' : '');
+            chip.setAttribute('data-val', opt.value);
+            chip.innerHTML = '<i class="bi ' + (opt.selected ? 'bi-check2' : 'bi-hash') + '"></i>' + opt.text;
+
+            chip.addEventListener('click', function () {
+                opt.selected = !opt.selected;
+                chip.classList.toggle('active', opt.selected);
+                const icon = chip.querySelector('i');
+                if (icon) {
+                    icon.className = 'bi ' + (opt.selected ? 'bi-check2' : 'bi-hash');
+                }
+            });
+            chipsContainer.appendChild(chip);
+        });
+    }
+
+    renderizarChips();
+
+    if (tagFilterInput) {
+        tagFilterInput.addEventListener('input', function () {
+            const query = this.value.toLowerCase().trim();
+            const chips = chipsContainer.querySelectorAll('.tag-chip');
+            chips.forEach(chip => {
+                const text = chip.textContent.toLowerCase();
+                chip.style.display = text.includes(query) ? 'inline-flex' : 'none';
+            });
+        });
+    }
+
+    // Modal para crear nueva etiqueta vía AJAX
+    const btnGuardarEtiquetaAjax = document.getElementById('btn-guardar-etiqueta-ajax');
+    const inputNombreEtiquetaAjax = document.getElementById('ajax-tag-name');
+    const errorEtiquetaAjax = document.getElementById('ajax-tag-error');
+
+    if (btnGuardarEtiquetaAjax && inputNombreEtiquetaAjax) {
+        btnGuardarEtiquetaAjax.addEventListener('click', function () {
+            const nombre = inputNombreEtiquetaAjax.value.trim();
+            if (nombre.length < 2) {
+                if (errorEtiquetaAjax) {
+                    errorEtiquetaAjax.textContent = 'El nombre debe tener al menos 2 caracteres.';
+                    errorEtiquetaAjax.classList.remove('d-none');
+                }
+                return;
+            }
+
+            const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+            const formData = new FormData();
+            formData.append('nombre', nombre);
+
+            fetch("{% url 'blog:etiqueta_crear_ajax' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    let opt = Array.from(selectEtiquetas.options).find(o => o.value == data.id);
+                    if (!opt) {
+                        opt = new Option(data.nombre, data.id, true, true);
+                        selectEtiquetas.add(opt);
+                    } else {
+                        opt.selected = true;
+                    }
+                    renderizarChips();
+                    inputNombreEtiquetaAjax.value = '';
+                    if (errorEtiquetaAjax) errorEtiquetaAjax.classList.add('d-none');
+                    const modalEl = document.getElementById('modalNuevaEtiqueta');
+                    const modalInst = bootstrap.Modal.getInstance(modalEl);
+                    if (modalInst) modalInst.hide();
+                } else {
+                    if (errorEtiquetaAjax) {
+                        errorEtiquetaAjax.textContent = data.error || 'Error al crear la etiqueta.';
+                        errorEtiquetaAjax.classList.remove('d-none');
+                    }
+                }
+            })
+            .catch(() => {
+                if (errorEtiquetaAjax) {
+                    errorEtiquetaAjax.textContent = 'Error de conexión al crear etiqueta.';
+                    errorEtiquetaAjax.classList.remove('d-none');
+                }
+            });
+        });
+    }
+
+    // 2. Drag & Drop y vista previa de portada
+    const dropzone = document.getElementById('cover-dropzone');
+    const fileInput = document.getElementById('id_imagen_portada');
+    const promptBox = document.getElementById('dropzone-prompt');
+    const newPreviewBox = document.getElementById('new-cover-preview-box');
+    const newThumb = document.getElementById('new-cover-thumb');
+    const newFilename = document.getElementById('new-cover-filename');
+    const btnClearNewCover = document.getElementById('btn-clear-new-cover');
+    const clientError = document.getElementById('cover-client-error');
+    const existingCoverBox = document.getElementById('existing-cover-box');
+    const btnRemoveExisting = document.getElementById('btn-remove-existing-cover');
+    const inputEliminarPortada = document.getElementById('id_eliminar_portada');
+
+    let portadaObjectUrl = null;
+
+    if (dropzone && fileInput) {
+        dropzone.addEventListener('click', function (e) {
+            if (e.target.closest('#btn-clear-new-cover') || e.target.closest('#btn-remove-existing-cover')) {
+                return;
+            }
+            fileInput.click();
+        });
+
+        ['dragenter', 'dragover'].forEach(evtName => {
+            dropzone.addEventListener(evtName, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(evtName => {
+            dropzone.addEventListener(evtName, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('dragover');
+            });
+        });
+
+        dropzone.addEventListener('drop', function (e) {
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                procesarArchivoPortada(fileInput.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', function () {
+            if (fileInput.files && fileInput.files.length > 0) {
+                procesarArchivoPortada(fileInput.files[0]);
+            }
+        });
+    }
+
+    function procesarArchivoPortada(file) {
+        if (!file) return;
+        if (clientError) {
+            clientError.textContent = '';
+            clientError.classList.add('d-none');
+        }
+
+        // Validación de tipo
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+            if (clientError) {
+                clientError.textContent = 'Formato no válido. Debe ser JPG, PNG o WebP.';
+                clientError.classList.remove('d-none');
+            }
+            fileInput.value = '';
+            return;
+        }
+
+        // Validación de tamaño: máx 5 MB
+        if (file.size > 5 * 1024 * 1024) {
+            if (clientError) {
+                clientError.textContent = 'El archivo supera el tamaño máximo permitido de 5 MB.';
+                clientError.classList.remove('d-none');
+            }
+            fileInput.value = '';
+            return;
+        }
+
+        if (portadaObjectUrl) {
+            URL.revokeObjectURL(portadaObjectUrl);
+        }
+        portadaObjectUrl = URL.createObjectURL(file);
+
+        if (newThumb) newThumb.src = portadaObjectUrl;
+        if (newFilename) newFilename.textContent = file.name + ' (' + Math.round(file.size / 1024) + ' KB)';
+        if (newPreviewBox) newPreviewBox.classList.remove('d-none');
+        if (promptBox) promptBox.classList.add('d-none');
+        if (existingCoverBox) existingCoverBox.classList.add('d-none');
+        if (inputEliminarPortada) inputEliminarPortada.value = '0';
+
+        updateLiveMetricsAndPreview();
+    }
+
+    if (btnClearNewCover) {
+        btnClearNewCover.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (fileInput) fileInput.value = '';
+            if (portadaObjectUrl) {
+                URL.revokeObjectURL(portadaObjectUrl);
+                portadaObjectUrl = null;
+            }
+            if (newPreviewBox) newPreviewBox.classList.add('d-none');
+            if (promptBox) promptBox.classList.remove('d-none');
+            if (existingCoverBox && inputEliminarPortada && inputEliminarPortada.value !== '1') {
+                existingCoverBox.classList.remove('d-none');
+            }
+            updateLiveMetricsAndPreview();
+        });
+    }
+
+    if (btnRemoveExisting) {
+        btnRemoveExisting.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (inputEliminarPortada) inputEliminarPortada.value = '1';
+            if (existingCoverBox) existingCoverBox.classList.add('d-none');
+            updateLiveMetricsAndPreview();
+        });
+    }
+
+    // 3. Extracto manual con contador de caracteres
+    if (inputExtractoManual && extractoCounter) {
+        function actualizarContadorExtracto() {
+            const len = inputExtractoManual.value.length;
+            extractoCounter.textContent = len + ' / 160';
+            updateLiveMetricsAndPreview();
+        }
+        inputExtractoManual.addEventListener('input', actualizarContadorExtracto);
+        actualizarContadorExtracto();
+    }
+
+    // 4. CKEditor integration and metrics
+    function getEditorHtml() {
+        const ckEditable = document.querySelector('.ck-editor__editable');
+        if (ckEditable && ckEditable.ckeditorInstance) {
+            return ckEditable.ckeditorInstance.getData();
+        }
+        if (ckEditable) {
+            return ckEditable.innerHTML;
+        }
+        return textareaContenido ? textareaContenido.value : '';
+    }
+
+    function setEditorHtml(html) {
+        const ckEditable = document.querySelector('.ck-editor__editable');
+        if (ckEditable && ckEditable.ckeditorInstance) {
+            ckEditable.ckeditorInstance.setData(html);
+        } else if (ckEditable) {
+            ckEditable.innerHTML = html;
+        }
+        if (textareaContenido) {
+            textareaContenido.value = html;
+        }
+    }
+
+    function computePlainExcerpt(html, maxChars) {
+        const temp = document.createElement('div');
+        temp.innerHTML = html || '';
+        temp.querySelectorAll('h1, h2, h3, h4, h5, h6, script, style').forEach(el => el.remove());
+
+        let text = '';
+        const paragraphs = temp.querySelectorAll('p');
+        if (paragraphs.length > 0) {
+            const parts = [];
+            paragraphs.forEach(p => {
+                const t = (p.textContent || '').replace(/\s+/g, ' ').trim();
+                if (t) parts.push(t);
+            });
+            text = parts.join(' ');
+        }
+        if (!text) {
+            text = (temp.textContent || '').replace(/\s+/g, ' ').trim();
+        }
+        if (!text) return '';
+        if (text.length <= maxChars) return text;
+        let cut = text.slice(0, maxChars);
+        const lastSpace = cut.lastIndexOf(' ');
+        if (lastSpace > 0) cut = cut.slice(0, lastSpace);
+        cut = cut.replace(/[.,;:!?…\-\s]+$/, '');
+        return cut + '…';
+    }
+
+    function updateLiveMetricsAndPreview() {
+        const html = getEditorHtml();
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        const plainText = (temp.textContent || '').replace(/\s+/g, ' ').trim();
+        const words = plainText ? plainText.split(/\s+/).length : 0;
+        const minutes = Math.max(1, Math.round(words / 200));
+
+        if (wordCountEl) wordCountEl.textContent = words;
+        if (readingTimeEl) readingTimeEl.textContent = minutes;
+        if (previewReadTimeEl) previewReadTimeEl.textContent = minutes;
+
+        const titleVal = inputTitulo && inputTitulo.value.trim() ? inputTitulo.value.trim() : 'Título de tu artículo';
+        if (previewTitleEl) previewTitleEl.textContent = titleVal;
+
+        // Si hay extracto manual escrito, se usa prioritariamente en la vista previa
+        let excerptText = '';
+        if (inputExtractoManual && inputExtractoManual.value.trim()) {
+            excerptText = inputExtractoManual.value.trim();
+        } else {
+            excerptText = computePlainExcerpt(html, 140);
+        }
+        if (previewExcerptEl) {
+            previewExcerptEl.textContent = excerptText || 'Escribe el contenido o extracto de tu artículo para verlo reflejado aquí…';
+        }
+
+        if (selectCategoria) {
+            const selectedOpt = selectCategoria.options[selectCategoria.selectedIndex];
+            const catName = selectedOpt && selectedOpt.value ? selectedOpt.text : 'Sin categoría';
+            if (previewBadgeCatEl) previewBadgeCatEl.textContent = catName;
+            if (previewCoverCatEl) previewCoverCatEl.textContent = catName;
+        }
+
+        // Portada en preview
+        let coverSrc = null;
+        if (portadaObjectUrl) {
+            coverSrc = portadaObjectUrl;
+        } else if (existingCoverBox && !existingCoverBox.classList.contains('d-none')) {
+            const exThumb = document.getElementById('existing-cover-thumb');
+            if (exThumb) coverSrc = exThumb.src;
+        } else {
+            const firstImg = temp.querySelector('img');
+            if (firstImg && firstImg.getAttribute('src')) {
+                coverSrc = firstImg.getAttribute('src');
+            }
+        }
+
+        if (coverSrc) {
+            if (previewCoverImg) {
+                previewCoverImg.src = coverSrc;
+                previewCoverImg.classList.remove('d-none');
+            }
+            if (previewCoverGrad) previewCoverGrad.classList.add('d-none');
+        } else {
+            if (previewCoverImg) previewCoverImg.classList.add('d-none');
+            if (previewCoverGrad) previewCoverGrad.classList.remove('d-none');
+        }
+    }
+
+    // 5. Autoguardado local en navegador
+    function saveDraftToLocalStorage() {
+        try {
+            const html = getEditorHtml();
+            const title = inputTitulo ? inputTitulo.value : '';
+            if (!title.trim() && !html.trim()) return;
+            const payload = {
+                titulo: title,
+                categoria: selectCategoria ? selectCategoria.value : '',
+                estado: selectEstado ? selectEstado.value : '',
+                extracto_manual: inputExtractoManual ? inputExtractoManual.value : '',
+                contenido: html,
+                savedAt: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+            };
+            localStorage.setItem(draftKey, JSON.stringify(payload));
+            const msg = 'Borrador guardado automáticamente en este navegador a las ' + payload.savedAt;
+            if (autosaveStatusEl) {
+                autosaveStatusEl.innerHTML = '<i class="bi bi-check2-circle text-success me-1"></i>' + payload.savedAt;
+            }
+            if (autosaveBottomIndicator) {
+                autosaveBottomIndicator.innerHTML = '<i class="bi bi-check2-circle text-success me-1"></i>' + msg;
+            }
+        } catch (e) {}
+    }
+
+    try {
+        const raw = localStorage.getItem(draftKey);
+        if (raw) {
+            const saved = JSON.parse(raw);
+            const currentTitle = inputTitulo ? inputTitulo.value : '';
+            const currentHtml = textareaContenido ? textareaContenido.value : '';
+            if (saved && (saved.titulo !== currentTitle || saved.contenido !== currentHtml)) {
+                if (restoreBanner) restoreBanner.classList.remove('d-none');
+                if (restoreTimestamp && saved.savedAt) {
+                    restoreTimestamp.textContent = 'a las ' + saved.savedAt;
+                }
+            }
+        }
+    } catch (e) {}
+
+    if (btnRestore) {
+        btnRestore.addEventListener('click', function () {
+            try {
+                const raw = localStorage.getItem(draftKey);
+                if (!raw) return;
+                const saved = JSON.parse(raw);
+                if (inputTitulo && saved.titulo !== undefined) inputTitulo.value = saved.titulo;
+                if (selectCategoria && saved.categoria !== undefined) selectCategoria.value = saved.categoria;
+                if (selectEstado && saved.estado !== undefined) selectEstado.value = saved.estado;
+                if (inputExtractoManual && saved.extracto_manual !== undefined) inputExtractoManual.value = saved.extracto_manual;
+                if (saved.contenido !== undefined) setEditorHtml(saved.contenido);
+                if (restoreBanner) restoreBanner.classList.add('d-none');
+                updateLiveMetricsAndPreview();
+            } catch (e) {}
+        });
+    }
+
+    if (btnDiscard) {
+        btnDiscard.addEventListener('click', function () {
+            try {
+                localStorage.removeItem(draftKey);
+            } catch (e) {}
+            if (restoreBanner) restoreBanner.classList.add('d-none');
+        });
+    }
+
+    // Botón "Vista previa" con scroll suave
+    const btnScrollPreview = document.getElementById('btn-scroll-preview');
+    if (btnScrollPreview) {
+        btnScrollPreview.addEventListener('click', function () {
+            const previewSection = document.getElementById('seccion-vista-previa');
+            if (previewSection) {
+                previewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    }
+
+    form.addEventListener('submit', function () {
+        try {
+            localStorage.removeItem(draftKey);
+        } catch (e) {}
+    });
+
+    if (inputTitulo) inputTitulo.addEventListener('input', updateLiveMetricsAndPreview);
+    if (selectCategoria) selectCategoria.addEventListener('change', updateLiveMetricsAndPreview);
+    if (textareaContenido) textareaContenido.addEventListener('input', updateLiveMetricsAndPreview);
+
+    setInterval(updateLiveMetricsAndPreview, 1500);
+    setInterval(saveDraftToLocalStorage, 30000);
+    updateLiveMetricsAndPreview();
+});
+</script>
+{% endblock %}

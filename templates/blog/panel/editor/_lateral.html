@@ -1,0 +1,77 @@
+<!-- Barra Lateral del Editor (Desktop fija y Offcanvas en móvil) -->
+<aside class="editor-sidebar-container" id="editorSidebarContainer" aria-label="Panel de configuración del artículo">
+    <!-- Versión de escritorio (visible en lg+) -->
+    <div class="editor-sidebar d-none d-lg-flex flex-column border-start bg-body h-100" style="width: 340px;">
+        <!-- Cabecera de pestañas accesible role="tablist" -->
+        <div class="editor-sidebar-header px-3 pt-3 border-bottom">
+            <ul class="nav nav-underline nav-fill small fw-semibold" id="editorTabsList" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active py-2" id="tab-publicacion" data-bs-toggle="tab" data-bs-target="#pane-publicacion-wrap" type="button" role="tab" aria-controls="pane-publicacion-wrap" aria-selected="true">
+                        <i class="bi bi-send me-1"></i>Publicación
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-2" id="tab-seo" data-bs-toggle="tab" data-bs-target="#pane-seo-wrap" type="button" role="tab" aria-controls="pane-seo-wrap" aria-selected="false">
+                        <i class="bi bi-search me-1"></i>SEO
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link py-2" id="tab-avanzado" data-bs-toggle="tab" data-bs-target="#pane-avanzado-wrap" type="button" role="tab" aria-controls="pane-avanzado-wrap" aria-selected="false">
+                        <i class="bi bi-gear me-1"></i>Avanzado
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Contenido scrolleable de las pestañas -->
+        <div class="editor-sidebar-content flex-grow-1 p-3 overflow-y-auto">
+            <div class="tab-content" id="editorTabsContent">
+                <div class="tab-pane fade show active" id="pane-publicacion-wrap" role="tabpanel" aria-labelledby="tab-publicacion" tabindex="0">
+                    {% include "blog/panel/editor/_tab_publicacion.html" %}
+                </div>
+                <div class="tab-pane fade" id="pane-seo-wrap" role="tabpanel" aria-labelledby="tab-seo" tabindex="0">
+                    {% include "blog/panel/editor/_tab_seo.html" %}
+                </div>
+                <div class="tab-pane fade" id="pane-avanzado-wrap" role="tabpanel" aria-labelledby="tab-avanzado" tabindex="0">
+                    {% include "blog/panel/editor/_tab_avanzado.html" %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Offcanvas inferior para dispositivos móviles y tablets (< lg) -->
+    <div class="offcanvas offcanvas-bottom d-lg-none rounded-top-4 border-top" tabindex="-1" id="offcanvasLateral" aria-labelledby="offcanvasLateralLabel" style="height: 85vh; height: 85dvh; max-height: 85dvh;">
+        <!-- Tirador táctil / Drag handle -->
+        <div class="text-center pt-2 pb-1" aria-hidden="true">
+            <span class="d-inline-block bg-secondary rounded-pill opacity-50" style="width: 44px; height: 5px;"></span>
+        </div>
+        <div class="offcanvas-header pt-1 pb-2 border-bottom d-flex align-items-center justify-content-between">
+            <h5 class="offcanvas-title h6 fw-bold mb-0" id="offcanvasLateralLabel">
+                <i class="bi bi-sliders me-1 text-primary"></i>Configuración del post
+            </h5>
+            <button type="button" class="btn btn-primary px-4 fw-semibold rounded-pill touch-target-44" data-bs-dismiss="offcanvas" aria-label="Cerrar panel de ajustes">Listo</button>
+        </div>
+        <div class="offcanvas-body p-3 overflow-y-auto" id="offcanvasBodyMount">
+            <!-- Pestañas deslizables -->
+            <ul class="nav nav-underline nav-fill small fw-semibold mb-3 border-bottom flex-nowrap overflow-x-auto" id="editorTabsListMobile" role="tablist">
+                <li class="nav-item text-nowrap" role="presentation">
+                    <button class="nav-link active py-2 px-3" data-bs-toggle="tab" data-bs-target="#pane-publicacion-wrap" type="button" role="tab">
+                        <i class="bi bi-send me-1"></i>Publicación
+                    </button>
+                </li>
+                <li class="nav-item text-nowrap" role="presentation">
+                    <button class="nav-link py-2 px-3" data-bs-toggle="tab" data-bs-target="#pane-seo-wrap" type="button" role="tab">
+                        <i class="bi bi-search me-1"></i>SEO
+                    </button>
+                </li>
+                <li class="nav-item text-nowrap" role="presentation">
+                    <button class="nav-link py-2 px-3" data-bs-toggle="tab" data-bs-target="#pane-avanzado-wrap" type="button" role="tab">
+                        <i class="bi bi-gear me-1"></i>Avanzado
+                    </button>
+                </li>
+            </ul>
+            <div id="mobileTabsMountPoint"></div>
+        </div>
+    </div>
+</aside>
+

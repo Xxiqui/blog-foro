@@ -1,0 +1,42 @@
+<div class="editor-tab-pane py-2" id="pane-avanzado">
+    <div class="card border-0 bg-body-tertiary p-3 rounded-3 mb-3">
+        <h4 class="h6 fw-bold mb-2">
+            <i class="bi bi-clock-history me-1 text-primary" aria-hidden="true"></i>Control de versiones
+        </h4>
+        <p class="small text-muted mb-3">
+            Cada vez que guardas, publicas o actualizas se conserva un punto de restauración histórico (hasta 20 revisiones).
+        </p>
+        <button type="button" class="btn btn-sm btn-outline-primary w-100 {% if not post or not post.pk %}disabled{% endif %}"
+                data-bs-toggle="modal" data-bs-target="#modalHistorial">
+            <i class="bi bi-clock me-1" aria-hidden="true"></i>Abrir historial de versiones
+        </button>
+    </div>
+
+    <div class="card border-0 bg-body-tertiary p-3 rounded-3 mb-3">
+        <h4 class="h6 fw-bold mb-2">
+            <i class="bi bi-copy me-1 text-info" aria-hidden="true"></i>Duplicación
+        </h4>
+        <p class="small text-muted mb-3">
+            Crea una copia idéntica de este artículo como un nuevo borrador independiente.
+        </p>
+        <button type="button" class="btn btn-sm btn-outline-secondary w-100 {% if not post or not post.pk %}disabled{% endif %}"
+                id="btnDuplicarAvanzado">
+            <i class="bi bi-files me-1" aria-hidden="true"></i>Duplicar artículo
+        </button>
+    </div>
+
+    <!-- Zona de Peligro -->
+    <div class="card border-danger-subtle bg-danger-subtle bg-opacity-10 p-3 rounded-3">
+        <h4 class="h6 fw-bold text-danger mb-2">
+            <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>Zona de peligro
+        </h4>
+        <p class="small text-danger-emphasis mb-3">
+            La eliminación de un artículo es definitiva y suprimirá también sus comentarios y métricas asociadas.
+        </p>
+        <button type="button" class="btn btn-sm btn-outline-danger w-100 {% if not post or not post.pk %}disabled{% endif %}"
+                data-bs-toggle="modal" data-bs-target="#modalEliminarConfirmar">
+            <i class="bi bi-trash3-fill me-1" aria-hidden="true"></i>Eliminar este artículo…
+        </button>
+    </div>
+</div>
+

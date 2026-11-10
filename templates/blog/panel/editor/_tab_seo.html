@@ -1,0 +1,90 @@
+<div class="editor-tab-pane py-2" id="pane-seo">
+    <!-- Extracto Manual -->
+    <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <label for="inputExtracto" class="form-label small fw-bold mb-0">
+                <i class="bi bi-card-text me-1 text-primary" aria-hidden="true"></i>Extracto manual (SEO)
+            </label>
+            <span class="small text-muted"><span id="extractoCharCount">0</span>/160</span>
+        </div>
+        <textarea class="form-control form-control-sm" id="inputExtracto" name="extracto"
+                  rows="3" maxlength="160"
+                  placeholder="Escribe un resumen atractivo para motores de búsqueda y redes sociales…">{% if post %}{{ post.extracto|default:'' }}{% endif %}</textarea>
+        <div class="form-text small">
+            Si se deja en blanco, se generará automáticamente a partir del contenido del artículo.
+        </div>
+    </div>
+
+    <!-- Slug (URL) -->
+    <div class="mb-4">
+        <label for="inputSlug" class="form-label small fw-bold mb-1">
+            <i class="bi bi-link-45deg me-1 text-primary" aria-hidden="true"></i>Slug de la URL
+        </label>
+        <div class="input-group input-group-sm">
+            <span class="input-group-text text-muted">/post/</span>
+            <input type="text" class="form-control" id="inputSlug" name="slug"
+                   value="{% if post %}{{ post.slug|default:'' }}{% endif %}"
+                   {% if post and post.publicado_en %}readonly disabled title="El slug es permanente una vez publicado para preservar los enlaces."{% endif %}>
+            {% if not post or not post.publicado_en %}
+                <button class="btn btn-outline-secondary" type="button" id="btnRegenerarSlug" title="Regenerar a partir del título actual">
+                    <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+                </button>
+            {% endif %}
+        </div>
+        <div class="form-text small">
+            {% if post and post.publicado_en %}
+                <span class="text-warning"><i class="bi bi-lock-fill me-1" aria-hidden="true"></i>Inmutable porque el artículo ya fue publicado.</span>
+            {% else %}
+                Identificador amigable para la URL. Se actualizará si cambias el título.
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Vista previa de Google (SERP) -->
+    <div class="mb-4">
+        <label class="form-label small fw-bold mb-1">
+            <i class="bi bi-google me-1 text-primary" aria-hidden="true"></i>Vista previa en Google
+        </label>
+        <div class="card border rounded-3 p-3 bg-white text-dark shadow-sm serp-preview-box">
+            <div class="d-flex align-items-center gap-2 mb-1" style="font-size: 0.78rem; color: #4d5156;">
+                <span class="rounded-circle bg-light border p-1 d-inline-flex align-items-center justify-content-center" style="width: 20px; height: 20px;">
+                    <i class="bi bi-globe2 text-secondary" style="font-size: 11px;"></i>
+                </span>
+                <span class="text-truncate serp-domain">https://{{ SITE_DOMAIN|default:'example.com' }}/post/<span id="serpSlugText">{% if post %}{{ post.slug|default:'tu-slug' }}{% else %}tu-slug{% endif %}</span></span>
+            </div>
+            <div class="fw-semibold text-primary text-truncate serp-title mb-1" id="serpTitleText" style="color: #1a0dab !important; font-size: 1.05rem;">
+                {% if post %}{{ post.titulo|default:'Título de tu artículo' }}{% else %}Título de tu artículo{% endif %} - {{ MARCA }}
+            </div>
+            <div class="serp-snippet small text-secondary line-clamp-2" id="serpSnippetText" style="color: #4d5156; font-size: 0.85rem;">
+                {% if post %}{{ post.extracto|default:'El resumen de tu artículo aparecerá aquí tal como lo verán los usuarios en los resultados de búsqueda de Google.' }}{% else %}El resumen de tu artículo aparecerá aquí tal como lo verán los usuarios en los resultados de búsqueda de Google.{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Vista previa en Redes Sociales (Twitter / Open Graph Card) -->
+    <div class="mb-3">
+        <label class="form-label small fw-bold mb-1">
+            <i class="bi bi-share me-1 text-primary" aria-hidden="true"></i>Tarjeta para redes sociales (Open Graph)
+        </label>
+        <div class="card border rounded-3 overflow-hidden bg-body shadow-sm social-card-preview">
+            <div class="social-card-img-placeholder bg-secondary-subtle d-flex align-items-center justify-content-center" style="height: 140px;" id="socialCardImgPlaceholder">
+                {% if post and post.imagen_portada %}
+                    <img src="{{ post.imagen_portada.url }}" alt="Vista previa de portada" class="w-100 h-100 object-fit-cover" id="socialCardImg">
+                {% else %}
+                    <span class="text-muted small"><i class="bi bi-image me-1"></i>Sin portada</span>
+                {% endif %}
+            </div>
+            <div class="p-2 border-top">
+                <div class="text-uppercase text-muted" style="font-size: 0.7rem;" id="socialCardDomain">
+                    {{ SITE_DOMAIN|default:'example.com' }}
+                </div>
+                <div class="fw-bold small text-truncate" id="socialCardTitle">
+                    {% if post %}{{ post.titulo|default:'Título del artículo' }}{% else %}Título del artículo{% endif %}
+                </div>
+                <div class="text-muted small line-clamp-2" style="font-size: 0.78rem;" id="socialCardExcerpt">
+                    {% if post %}{{ post.extracto|default:'Resumen del artículo compartido en Twitter, LinkedIn o WhatsApp…' }}{% else %}Resumen del artículo compartido en Twitter, LinkedIn o WhatsApp…{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

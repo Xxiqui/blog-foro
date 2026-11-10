@@ -1,0 +1,70 @@
+<!-- Modal Historial de Versiones y Revisiones -->
+<div class="modal fade" id="modalHistorial" tabindex="-1" aria-labelledby="modalHistorialLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-clock-history fs-5 text-primary"></i>
+                    <h5 class="modal-title h6 fw-bold mb-0" id="modalHistorialLabel">
+                        Historial de versiones y revisiones
+                    </h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body p-0">
+                <div class="row g-0 h-100" style="min-height: 480px;">
+                    <!-- Columna izquierda: Lista de versiones -->
+                    <div class="col-md-4 border-end bg-body-tertiary p-3 overflow-y-auto" style="max-height: 520px;" id="historialListaColumn">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small fw-bold text-uppercase text-muted">Puntos de guardado</span>
+                            <span class="badge bg-secondary-subtle text-secondary" id="historialTotalBadge">0</span>
+                        </div>
+
+                        <div class="list-group list-group-flush rounded-3" id="historialRevisonesList">
+                            <div class="text-center py-4 text-muted small" id="historialCargandoState">
+                                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                                <div>Cargando historial…</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna derecha: Detalle / Vista previa de la revisión seleccionada -->
+                    <div class="col-md-8 p-4 overflow-y-auto" style="max-height: 520px;" id="historialDetalleColumn">
+                        <div id="historialDetalleVacio" class="text-center py-5 text-muted">
+                            <i class="bi bi-file-earmark-diff fs-1 text-secondary mb-2 d-block"></i>
+                            <p class="small">Selecciona una versión de la izquierda para ver su contenido.</p>
+                        </div>
+
+                        <div id="historialDetalleContenido" class="d-none">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-3 border-bottom gap-2">
+                                <div>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle mb-1" id="revisionDetalleOrigen"></span>
+                                    <div class="small text-muted" id="revisionDetalleFecha"></div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-warning fw-semibold d-flex align-items-center gap-1" id="btnRestaurarRevision">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                    <span>Restaurar esta versión</span>
+                                </button>
+                            </div>
+
+                            <h4 class="h5 fw-bold mb-3" id="revisionDetalleTitulo"></h4>
+
+                            <div class="mb-3 p-2 bg-body-tertiary rounded border small text-muted d-none" id="revisionDetalleExtractoBox">
+                                <strong>Extracto:</strong> <span id="revisionDetalleExtracto"></span>
+                            </div>
+
+                            <div class="revision-cuerpo-html border rounded p-3 bg-body" id="revisionDetalleCuerpo" style="max-height: 320px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer border-top py-2 px-3">
+                <span class="small text-muted me-auto">Se conservan automáticamente las últimas 20 revisiones de cada artículo.</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,109 @@
+<!-- Modal Publicar / Programar -->
+<div class="modal fade" id="modalPublicar" tabindex="-1" aria-labelledby="modalPublicarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title h6 fw-bold mb-0" id="modalPublicarLabel">
+                    <i class="bi bi-send-check text-primary me-2"></i>
+                    {% if post and post.estado == 'publicado' %}Actualizar artículo publicado{% else %}Publicar artículo{% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body p-4" id="modalPublicarBody">
+                <!-- Alerta de requisitos obligatorios pendientes (bloqueante) -->
+                <div class="alert alert-danger d-none mb-3" id="modalPublicarBloqueoAlert" role="alert">
+                    <div class="fw-bold mb-1"><i class="bi bi-x-octagon-fill me-2"></i>Faltan requisitos obligatorios:</div>
+                    <ul class="mb-0 ps-3 small" id="modalPublicarBloqueoList"></ul>
+                </div>
+
+                <!-- Resumen previo a la publicación -->
+                <div id="modalPublicarContenido">
+                    <p class="small text-muted mb-3">
+                        {% if post and post.estado == 'publicado' %}
+                            Los cambios guardados se aplicarán de inmediato a la versión pública del artículo.
+                        {% else %}
+                            Estás a punto de lanzar tu artículo. Revisa las opciones antes de confirmar.
+                        {% endif %}
+                    </p>
+
+                    <!-- Aviso de destinatarios (Seguidores + Suscriptores) -->
+                    {% if not post or not post.publicado_en %}
+                        <div class="card bg-info-subtle border-info-subtle p-3 rounded-3 mb-3" id="avisoDestinatariosCard">
+                            <div class="d-flex align-items-center gap-2 small fw-semibold text-info-emphasis mb-1">
+                                <i class="bi bi-bell-fill"></i>
+                                <span>Difusión de la primera publicación</span>
+                            </div>
+                            <p class="small text-info-emphasis mb-0" id="destinatariosNoticeText">
+                                Se enviará una notificación a tus seguidores y un correo de boletín a los suscriptores activos de la categoría.
+                            </p>
+                        </div>
+                    {% endif %}
+
+                    <!-- Selección de momento de publicación -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold mb-2">Momento de publicación</label>
+                        <div class="d-flex flex-column gap-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="modoPublicacion" id="radioPublicarAhora" value="ahora" checked>
+                                <label class="form-check-label small" for="radioPublicarAhora">
+                                    <strong>Publicar ahora</strong> (visible de inmediato)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="modoPublicacion" id="radioProgramar" value="programar">
+                                <label class="form-check-label small" for="radioProgramar">
+                                    <strong>Programar publicación</strong> para una fecha futura
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selector de fecha y hora programada (visible solo si elige radioProgramar) -->
+                    <div class="mb-3 d-none p-3 border rounded-3 bg-body-tertiary" id="campoFechaProgramada">
+                        <label for="inputFechaProgramada" class="form-label small fw-semibold">
+                            <i class="bi bi-calendar-event me-1"></i>Fecha y hora (mínimo 5 min en el futuro)
+                        </label>
+                        <input type="datetime-local" class="form-control form-control-sm" id="inputFechaProgramada"
+                               value="{% if post and post.programado_para %}{{ post.programado_para|date:'Y-m-d\TH:i' }}{% endif %}">
+                        <div class="form-text small text-muted">
+                            Zona horaria local del navegador. El post cambiará automáticamente a publicado cuando llegue la fecha fijada.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pantalla de Éxito tras publicar/programar -->
+                <div class="d-none text-center py-3" id="modalPublicarExito">
+                    <div class="mb-3">
+                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success-subtle text-success p-3" style="width: 72px; height: 72px;">
+                            <i class="bi bi-check-lg fs-1" aria-hidden="true"></i>
+                        </span>
+                    </div>
+                    <h3 class="h5 fw-bold mb-2" id="modalPublicarExitoTitulo">¡Artículo publicado con éxito!</h3>
+                    <p class="small text-muted mb-4" id="modalPublicarExitoMsg">
+                        Tu publicación ya se encuentra disponible para la comunidad.
+                    </p>
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                        <a href="#" class="btn btn-sm btn-primary px-3" id="btnExitoVerPost" target="_blank" rel="noopener">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>Ver artículo
+                        </a>
+                        <a href="{% url 'blog:panel_post_list' %}" class="btn btn-sm btn-outline-secondary px-3">
+                            <i class="bi bi-speedometer2 me-1"></i>Volver al panel
+                        </a>
+                        <button type="button" class="btn btn-sm btn-link text-decoration-none" data-bs-dismiss="modal">
+                            Seguir editando
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer border-top d-flex gap-2" id="modalPublicarFooter">
+                <button type="button" class="btn btn-outline-secondary px-3 py-2" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary fw-semibold px-4 py-2" id="btnConfirmarPublicarAccion">
+                    <span class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true" id="spinnerPublicarBtn"></span>
+                    <span id="txtConfirmarPublicarBtn">Publicar ahora</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

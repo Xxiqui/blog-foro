@@ -1,0 +1,68 @@
+{% load blog_extras %}
+{% if comunidades_descubrir %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h6 fw-bold text-uppercase mb-0">
+                <i class="bi bi-People-fill bi-compass text-primary me-1" aria-hidden="true"></i>Descubrir comunidades
+            </h2>
+        </div>
+
+        <div class="vstack gap-3">
+            {% for com in comunidades_descubrir %}
+                <div class="pb-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div class="d-flex align-items-center justify-content-between gap-2">
+                        <div class="d-flex align-items-center gap-2 text-truncate">
+                            <a href="{{ com.get_absolute_url }}" class="text-decoration-none flex-shrink-0">
+                                {% avatar_categoria com 40 %}
+                            </a>
+                            <div class="text-truncate">
+                                <a href="{{ com.get_absolute_url }}"
+                                   class="fw-bold text-body text-decoration-none d-block text-truncate small">
+                                    {{ com.nombre }}
+                                </a>
+                                <div class="text-muted" style="font-size: 0.76rem;">
+                                    {{ com.vistas_semana|default:0 }} vista{{ com.vistas_semana|default:0|pluralize }} esta semana
+                                    &bull; <span data-miembros-count="{{ com.slug }}">{{ com.total_miembros|default:0 }}</span> miembro{{ com.total_miembros|default:0|pluralize }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if user.is_authenticated %}
+                            <form method="post"
+                                  action="{% url 'blog:categoria_unirse_toggle' com.slug %}"
+                                  data-ajax-unirse
+                                  data-categoria-slug="{{ com.slug }}"
+                                  class="flex-shrink-0">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit"
+                                        class="btn btn-sm {% if com.ya_unido %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill px-3 py-1 fw-semibold"
+                                        aria-label="{% if com.ya_unido %}Salir de la comunidad {{ com.nombre }}{% else %}Unirse a la comunidad {{ com.nombre }}{% endif %}"
+                                        aria-pressed="{% if com.ya_unido %}true{% else %}false{% endif %}">
+                                    <i class="bi {% if com.ya_unido %}bi-check-lg{% else %}bi-plus-lg{% endif %} me-1" data-unirse-icon aria-hidden="true"></i>
+                                    <span data-unirse-label class="small">{% if com.ya_unido %}Unido{% else %}Únete{% endif %}</span>
+                                </button>
+                            </form>
+                        {% else %}
+                            <a href="{% url 'cuentas:login' %}?next={{ com.get_absolute_url|urlencode }}"
+                               class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-semibold flex-shrink-0"
+                               aria-label="Iniciar sesión para unirte a {{ com.nombre }}">
+                                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>
+                                <span class="small">Únete</span>
+                            </a>
+                        {% endif %}
+                    </div>
+
+                    {% if com.descripcion %}
+                        <p class="text-muted small mb-0 mt-2 line-clamp-2" style="font-size: 0.8rem;">
+                            {{ com.descripcion }}
+                        </p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+

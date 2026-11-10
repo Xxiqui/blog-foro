@@ -1,0 +1,61 @@
+databases:
+  - name: blog-db
+    databaseName: blog_db
+    user: blog_user
+    plan: free
+
+services:
+  - type: web
+    name: blog-panel-autor
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 3"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: blog-db
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com,localhost,127.0.0.1"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://*.onrender.com"
+      - key: MEDIA_ROOT
+        value: "/var/data/media"
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+    disk:
+      name: blog-media-disk
+      mountPath: /var/data/media
+      sizeGB: 1
+
+  - type: cron
+    name: publicar-posts-programados
+    runtime: python
+    schedule: "*/5 * * * *"
+    buildCommand: "./build.sh"
+    startCommand: "python manage.py publicar_programados"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DATABASE_URL
+        fromDatabase:
+          name: blog-db
+          property: connectionString
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: blog-panel-autor
+          envVarKey: SECRET_KEY
+

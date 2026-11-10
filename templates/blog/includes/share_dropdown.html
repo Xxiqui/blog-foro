@@ -1,0 +1,72 @@
+{% load blog_extras %}
+{% url_absoluta_post post as post_abs_url %}
+<div class="dropdown d-inline-block">
+    <button type="button"
+            class="btn {{ btn_class|default:'btn-sm btn-outline-secondary rounded-pill px-3' }} dropdown-toggle"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            aria-label="Compartir {{ post.titulo }}">
+        <i class="bi bi-share{% if not hide_label %} me-1{% endif %}" aria-hidden="true"></i>
+        {% if not hide_label %}<span class="d-none d-sm-inline">Compartir</span>{% endif %}
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end shadow border py-1 dropdown-menu-mobile-sheet" style="min-width: 215px;">
+        <li class="d-sm-none text-center pt-2 pb-1 border-bottom mb-1">
+            <span class="d-inline-block bg-secondary rounded-pill opacity-50" style="width: 36px; height: 4px;"></span>
+            <div class="small fw-semibold text-secondary mt-1">Compartir artículo</div>
+        </li>
+        <li>
+            <button type="button"
+                    class="dropdown-item d-flex align-items-center gap-2 py-2 small"
+                    data-copy-url="{{ post_abs_url }}">
+                <i class="bi bi-link-45deg fs-6 text-primary" aria-hidden="true"></i>
+                <span data-copy-label>Copiar enlace</span>
+            </button>
+        </li>
+        <li>
+            <button type="button"
+                    class="dropdown-item d-flex align-items-center gap-2 py-2 small"
+                    data-embed-modal-trigger
+                    data-embed-url="{{ post_abs_url }}embed/"
+                    data-embed-title="{{ post.titulo }}">
+                <i class="bi bi-code-slash fs-6 text-secondary" aria-hidden="true"></i>
+                <span>Insertar <code>&lt;/&gt;</code></span>
+            </button>
+        </li>
+        <li><hr class="dropdown-divider my-1"></li>
+        <li>
+            <a href="https://twitter.com/intent/tweet?text={{ post.titulo|urlencode }}&url={{ post_abs_url|urlencode }}"
+               target="_blank" rel="noopener noreferrer"
+               class="dropdown-item d-flex align-items-center gap-2 py-2 small">
+                <i class="bi bi-twitter-x fs-6" aria-hidden="true"></i>
+                <span>X</span>
+            </a>
+        </li>
+        <li>
+            <a href="https://wa.me/?text={{ post.titulo|urlencode }}%20{{ post_abs_url|urlencode }}"
+               target="_blank" rel="noopener noreferrer"
+               class="dropdown-item d-flex align-items-center gap-2 py-2 small">
+                <i class="bi bi-whatsapp fs-6 text-success" aria-hidden="true"></i>
+                <span>WhatsApp</span>
+            </a>
+        </li>
+        <li>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ post_abs_url|urlencode }}"
+               target="_blank" rel="noopener noreferrer"
+               class="dropdown-item d-flex align-items-center gap-2 py-2 small">
+                <i class="bi bi-linkedin fs-6 text-primary" aria-hidden="true"></i>
+                <span>LinkedIn</span>
+            </a>
+        </li>
+        <li>
+            <button type="button"
+                    class="dropdown-item d-flex align-items-center gap-2 py-2 small d-none"
+                    data-web-share
+                    data-share-title="{{ post.titulo }}"
+                    data-share-url="{{ post_abs_url }}">
+                <i class="bi bi-three-dots fs-6" aria-hidden="true"></i>
+                <span>Más opciones…</span>
+            </button>
+        </li>
+    </ul>
+</div>
+

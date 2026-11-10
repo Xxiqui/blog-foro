@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>{% block title %}{{ marca|default:site_name|default:"Blog con Panel de Autor" }}{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+    <link rel="stylesheet" href="{% static 'css/movil.css' %}">
+    <script>
+        (function () {
+            const guardado = localStorage.getItem('blog-tema');
+            const preferidoOscuro = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const t = guardado || (preferidoOscuro ? 'dark' : 'light');
+            if (t === 'dark' || t === 'light') {
+                document.documentElement.setAttribute('data-bs-theme', t);
+            }
+        })();
+    </script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100 bg-body-tertiary">
+    <!-- Barra superior mínima: Marca al inicio y botón de cambio de tema -->
+    <header class="border-bottom bg-body shadow-sm">
+        <div class="container py-2 d-flex justify-content-between align-items-center">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2 text-decoration-none text-body" href="{% url 'blog:post_list' %}">
+                <i class="bi bi-journal-richtext text-primary fs-4" aria-hidden="true"></i>
+                <span class="fs-5">{{ marca|default:site_name|default:"Blog con Panel de Autor" }}</span>
+            </a>
+
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" id="theme-toggle-btn"
+                        class="btn btn-sm btn-outline-secondary border-0 px-2 touch-target-44"
+                        aria-label="Cambiar entre modo claro y oscuro"
+                        aria-pressed="false"
+                        title="Cambiar modo claro / oscuro">
+                    <i id="theme-toggle-icon" class="bi bi-moon-stars-fill" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido principal centrado -->
+    <main class="flex-grow-1 d-flex align-items-center py-4 py-md-5">
+        <div class="container">
+            {% if messages %}
+                <div class="row justify-content-center mb-3">
+                    <div class="col-lg-10 col-xl-9">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Pie de página mínimo: Marca y enlaces legales -->
+    <footer class="border-top py-3 bg-body mt-auto">
+        <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 text-muted small">
+            <div>
+                <span class="fw-semibold">{{ marca|default:site_name|default:"Blog con Panel de Autor" }}</span> &copy; {% now "Y" %}.
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'blog:acerca' %}" class="text-muted text-decoration-none">Acerca de</a>
+                <span>&bull;</span>
+                <a href="{% url 'blog:privacidad' %}" class="text-muted text-decoration-none">Privacidad</a>
+                <span>&bull;</span>
+                <a href="{% url 'blog:terminos' %}" class="text-muted text-decoration-none">Términos</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/interacciones.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

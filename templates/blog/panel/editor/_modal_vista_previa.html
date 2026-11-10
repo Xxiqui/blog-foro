@@ -1,0 +1,56 @@
+<!-- Modal Vista Previa en Vivo Multidispositivo -->
+<div class="modal fade" id="modalVistaPrevia" tabindex="-1" aria-labelledby="modalVistaPreviaLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content border-0">
+            <!-- Barra superior del modal de vista previa -->
+            <div class="modal-header py-2 px-3 bg-body-tertiary border-bottom d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-bold small text-muted text-uppercase me-2 d-none d-sm-inline">
+                        <i class="bi bi-eye text-primary me-1"></i>Vista Previa
+                    </span>
+                    <span class="badge bg-secondary-subtle text-secondary border">Sin guardar en BD</span>
+                </div>
+
+                <!-- Selector de Viewports responsive (por defecto Móvil) -->
+                <div class="btn-group btn-group-sm" role="group" aria-label="Cambiar dispositivo de vista previa">
+                    <button type="button" class="btn btn-outline-secondary active" data-viewport="mobile" title="Vista móvil (375px)" aria-pressed="true">
+                        <i class="bi bi-phone me-1"></i><span class="d-none d-md-inline">Móvil</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-viewport="tablet" title="Vista tableta (768px)" aria-pressed="false">
+                        <i class="bi bi-tablet me-1"></i><span class="d-none d-md-inline">Tableta</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-viewport="desktop" title="Vista escritorio (1200px)" aria-pressed="false">
+                        <i class="bi bi-display me-1"></i><span class="d-none d-md-inline">Escritorio</span>
+                    </button>
+                </div>
+
+                <!-- Opciones: Alternar tema claro/oscuro dentro de la vista previa y Cerrar -->
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnPreviewToggleTheme" title="Alternar tema de la vista previa">
+                        <i class="bi bi-moon-stars" id="previewThemeIcon"></i>
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar vista previa"></button>
+                </div>
+            </div>
+
+            <!-- Contenedor central con iframe responsivo -->
+            <div class="modal-body p-0 bg-dark-subtle d-flex justify-content-center align-items-center overflow-auto position-relative" id="vistaPreviaFrameContainer">
+                <div class="preview-spinner-overlay position-absolute d-flex align-items-center justify-content-center w-100 h-100 bg-body bg-opacity-75 z-3" id="previewSpinnerOverlay">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary mb-2" role="status"></div>
+                        <div class="small fw-semibold">Generando vista previa en tiempo real…</div>
+                    </div>
+                </div>
+
+                <!-- Iframe aislado en sandbox con ancho inicial móvil (375px) -->
+                <iframe id="iframeVistaPrevia"
+                        class="border shadow-sm rounded-bottom transition-all bg-body"
+                        sandbox="allow-same-origin allow-scripts"
+                        style="width: 100%; max-width: 375px; height: 100%; min-height: 100%; border: none;"
+                        title="Renderizado en vivo del artículo">
+                </iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
