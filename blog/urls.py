@@ -28,6 +28,7 @@ urlpatterns = [
     path('etiqueta/<slug:slug>/', views.PostPorEtiquetaView.as_view(), name='posts_por_etiqueta'),
     path('autor/<str:username>/', views.AutorDetailView.as_view(), name='autor_detail'),
     path('post/<slug:slug>/', views.PostDetailView.as_view(), name='post_detail'),
+    path('post/<slug:slug>/comentarios/novedades/', views.ComentariosNovedadesView.as_view(), name='comentarios_novedades'),
     path('post/<slug:slug>/embed/', views.PostEmbedView.as_view(), name='post_embed'),
 
     # Notificaciones

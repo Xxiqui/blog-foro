@@ -1,0 +1,12 @@
+{% load blog_extras %}
+<div id="comentarios-tree" class="vstack gap-3">
+    {% for comentario in comentarios_raiz %}
+        {% include "blog/includes/_comentario.html" with comentario=comentario post=post form_reporte=form_reporte responder_id=responder_id %}
+    {% empty %}
+        <div class="text-center py-5 text-muted bg-surface rounded border">
+            <i class="bi bi-chat-square-text fs-2 d-block mb-2 text-muted"></i>
+            <p class="mb-1 fw-semibold text-body">Aún no hay comentarios aprobados.</p>
+            <p class="small text-muted mb-0">¡Sé el primero en compartir tu opinión o hacer una pregunta!</p>
+        </div>
+    {% endfor %}
+</div>

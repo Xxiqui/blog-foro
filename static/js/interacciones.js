@@ -572,6 +572,96 @@
     }
 
     function inicializarComentariosAnidados() {
+        // Colapsar hilo estilo Reddit [–]
+        document.addEventListener('click', function (e) {
+            const btnCollapse = e.target.closest('.btn-collapse-thread');
+            if (btnCollapse) {
+                e.preventDefault();
+                const node = btnCollapse.closest('.comment-node');
+                if (!node) return;
+                const pk = node.getAttribute('data-comment-id');
+                const exp = document.getElementById('expanded-content-' + pk);
+                const sum = document.getElementById('collapsed-summary-' + pk);
+                const hijos = document.getElementById('respuestas-' + pk);
+                if (exp) exp.classList.add('d-none');
+                if (sum) sum.classList.remove('d-none');
+                if (hijos) hijos.classList.add('d-none');
+                return;
+            }
+
+            // Expandir hilo estilo Reddit [+]
+            const btnExpand = e.target.closest('.btn-expand-thread, .comment-collapsed-summary');
+            if (btnExpand) {
+                e.preventDefault();
+                const node = btnExpand.closest('.comment-node');
+                if (!node) return;
+                const pk = node.getAttribute('data-comment-id');
+                const exp = document.getElementById('expanded-content-' + pk);
+                const sum = document.getElementById('collapsed-summary-' + pk);
+                const hijos = document.getElementById('respuestas-' + pk);
+                if (sum) sum.classList.add('d-none');
+                if (exp) exp.classList.remove('d-none');
+                if (hijos) hijos.classList.remove('d-none');
+                return;
+            }
+
+            // Toggle formulario de respuesta inline
+            const btnReply = e.target.closest('.btn-toggle-reply');
+            if (btnReply) {
+                e.preventDefault();
+                const targetId = btnReply.getAttribute('data-reply-target');
+                const box = document.getElementById(targetId);
+                if (!box) return;
+                const oculto = box.classList.toggle('d-none');
+                btnReply.setAttribute('aria-expanded', oculto ? 'false' : 'true');
+                if (!oculto) {
+                    const ta = box.querySelector('textarea');
+                    if (ta) ta.focus();
+                }
+                return;
+            }
+
+            // Cancelar respuesta inline
+            const btnCancel = e.target.closest('.btn-cancel-reply');
+            if (btnCancel) {
+                e.preventDefault();
+                const targetId = btnCancel.getAttribute('data-reply-target');
+                const box = document.getElementById(targetId);
+                if (box) {
+                    box.classList.add('d-none');
+                    const ta = box.querySelector('textarea');
+                    if (ta) ta.value = '';
+                }
+                return;
+            }
+        });
+
+        // Auto-crecimiento y contador de caracteres en textareas de comentarios
+        document.addEventListener('input', function (e) {
+            const ta = e.target.closest('.comment-composer-textarea');
+            if (!ta) return;
+            const container = ta.closest('.comment-form-composer') || ta.parentElement;
+            const counter = container ? container.querySelector('.reply-char-counter, #main-char-counter') : null;
+            if (counter) {
+                counter.textContent = `${ta.value.length}/1000`;
+            }
+            ta.style.height = 'auto';
+            ta.style.height = Math.min(320, Math.max(44, ta.scrollHeight)) + 'px';
+        });
+
+        // Atajo Ctrl+Enter / Cmd+Enter para enviar comentario
+        document.addEventListener('keydown', function (e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                const ta = e.target.closest('.comment-composer-textarea');
+                if (!ta) return;
+                e.preventDefault();
+                const form = ta.closest('form');
+                if (form && ta.value.trim().length > 0) {
+                    form.submit();
+                }
+            }
+        });
+
         function alternarFormularioRespuesta(pk, forzarAbrir) {
             const formContainer = document.getElementById('reply-form-' + pk);
             if (!formContainer) return false;
@@ -589,7 +679,7 @@
             return true;
         }
 
-        // Botón «Responder» (sin JS funciona con ?responder=<id>#comentario-<id>)
+        // Compatibilidad con enlaces antiguos data-toggle-reply
         document.querySelectorAll('[data-toggle-reply]').forEach((btn) => {
             btn.addEventListener('click', function (e) {
                 const pk = btn.getAttribute('data-toggle-reply');
@@ -597,65 +687,43 @@
             });
         });
 
-        // Botón «Cancelar» del formulario inline
         document.querySelectorAll('[data-cancel-reply]').forEach((btn) => {
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
                 const pk = btn.getAttribute('data-cancel-reply');
                 alternarFormularioRespuesta(pk, false);
-                const trigger = document.querySelector('[data-toggle-reply="' + pk + '"]');
-                if (trigger) trigger.focus();
             });
         });
+    }
 
-        // Compatibilidad con el atributo anterior data-reply-toggle="<id del contenedor>"
-        document.querySelectorAll('[data-reply-toggle]').forEach((btn) => {
-            btn.addEventListener('click', function (e) {
-                const targetId = btn.getAttribute('data-reply-toggle');
-                const formContainer = document.getElementById(targetId);
-                if (!formContainer) return;
-                e.preventDefault();
-                const oculto = formContainer.classList.toggle('d-none');
-                btn.setAttribute('aria-expanded', oculto ? 'false' : 'true');
-                if (!oculto) {
-                    const ta = formContainer.querySelector('textarea');
-                    if (ta) ta.focus();
+    // Sondeo de comentarios nuevos cada 45s en post_detail
+    function inicializarPollingNovedadesComentarios() {
+        const root = document.getElementById('post-detail-root');
+        if (!root) return;
+        const slug = root.getAttribute('data-post-slug');
+        const banner = document.getElementById('banner-nuevos-comentarios');
+        const contadorTexto = document.getElementById('contador-nuevos-comentarios-texto');
+        let ultimoId = parseInt(root.getAttribute('data-ultimo-comentario-id') || '0', 10);
+        if (!slug || !banner) return;
+
+        setInterval(async function () {
+            if (document.visibilityState !== 'visible') return;
+            try {
+                const resp = await fetch(`/post/${encodeURIComponent(slug)}/comentarios/novedades/?ultimo_id=${ultimoId}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.nuevos_count > 0) {
+                        const n = data.nuevos_count;
+                        if (contadorTexto) {
+                            contadorTexto.textContent = n === 1 ? '1 comentario nuevo' : `${n} comentarios nuevos`;
+                        }
+                        banner.classList.remove('d-none');
+                    }
                 }
-            });
-        });
-
-        // «N respuestas más ⌄» / «Ocultar respuestas ⌃»
-        document.querySelectorAll('[data-reply-collapse-btn], [data-collapse-replies]').forEach((btn) => {
-            const targetSelector = btn.getAttribute('data-bs-target');
-            if (!targetSelector) return;
-            const collapseEl = document.querySelector(targetSelector);
-            if (!collapseEl) return;
-            const n = parseInt(btn.getAttribute('data-reply-count') || '0', 10);
-            const textoMas = btn.getAttribute('data-label-collapsed')
-                || (n === 1 ? '1 respuesta más' : n + ' respuestas más');
-            const textoOcultar = btn.getAttribute('data-label-expanded') || 'Ocultar respuestas';
-
-            function pintar(expandido) {
-                btn.innerHTML = '';
-                const span = document.createElement('span');
-                span.textContent = expandido ? textoOcultar : textoMas;
-                const icono = document.createElement('i');
-                icono.className = 'bi ' + (expandido ? 'bi-chevron-up' : 'bi-chevron-down');
-                icono.setAttribute('aria-hidden', 'true');
-                btn.appendChild(span);
-                btn.appendChild(icono);
-                btn.setAttribute('aria-expanded', expandido ? 'true' : 'false');
-            }
-
-            collapseEl.addEventListener('show.bs.collapse', function (ev) {
-                if (ev.target !== collapseEl) return;
-                pintar(true);
-            });
-            collapseEl.addEventListener('hide.bs.collapse', function (ev) {
-                if (ev.target !== collapseEl) return;
-                pintar(false);
-            });
-        });
+            } catch (_) {}
+        }, 45000);
     }
 
     function inicializarDropdownsSobreTarjetas() {
@@ -1082,6 +1150,7 @@
         inicializarAutocompletadoMenciones();
         inicializarVistaCategoria();
         inicializarComentariosAnidados();
+        inicializarPollingNovedadesComentarios();
         inicializarDropdownsSobreTarjetas();
         inicializarModalAcceso();
         inicializarBuscadorSugerencias();

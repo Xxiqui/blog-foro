@@ -497,6 +497,163 @@
 }
 
 /* --------------------------------------------------------------------------
+   5b. ARTÍCULO Y LECTURA (post_detail.html)
+   -------------------------------------------------------------------------- */
+.article-reading-layout {
+    display: flex;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    gap: var(--space-6);
+}
+
+.article-action-rail-left {
+    display: none;
+}
+
+@media (min-width: 1280px) {
+    .article-action-rail-left {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-3);
+        position: sticky;
+        top: calc(var(--header-height) + 24px);
+        height: fit-content;
+        width: 48px;
+        flex-shrink: 0;
+        margin-left: -56px;
+    }
+}
+
+.action-rail-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base);
+}
+
+.action-rail-btn:hover {
+    background-color: var(--color-surface-hover);
+    color: var(--color-accent);
+}
+
+.action-rail-btn.active {
+    color: var(--color-accent);
+}
+
+.article-reading-column {
+    width: 100%;
+    max-width: var(--article-max-width);
+    min-width: 0;
+}
+
+.article-headline {
+    font-size: var(--font-size-2xl);
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+}
+
+@media (max-width: 639.98px) {
+    .article-headline {
+        font-size: var(--font-size-xl);
+    }
+}
+
+.article-cover-compact {
+    max-height: 240px;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.article-cover-compact img {
+    width: 100%;
+    max-height: 240px;
+    object-fit: cover;
+}
+
+.article-body-prose {
+    font-size: var(--font-size-reading);
+    line-height: var(--line-height-reading);
+    color: var(--color-text);
+    word-break: break-word;
+}
+
+.article-body-prose p {
+    margin-bottom: var(--space-4);
+}
+
+.article-body-prose h2 {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    margin-top: var(--space-6);
+    margin-bottom: var(--space-3);
+    scroll-margin-top: calc(var(--header-height) + 16px);
+}
+
+.article-body-prose h3 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-top: var(--space-5);
+    margin-bottom: var(--space-2);
+    scroll-margin-top: calc(var(--header-height) + 16px);
+}
+
+.article-body-prose img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    margin: var(--space-3) 0;
+}
+
+/* Barra inferior móvil fija específica del artículo (< 1024px) */
+.article-mobile-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--bottom-bar-height) + var(--sab));
+    padding-bottom: var(--sab);
+    background-color: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    z-index: 1025;
+    align-items: center;
+    justify-content: space-around;
+    padding-left: var(--sal);
+    padding-right: var(--sar);
+}
+
+/* Resaltado temporal de comentario */
+@keyframes commentGlow {
+    0% { background-color: rgba(37, 99, 235, 0.25); }
+    100% { background-color: transparent; }
+}
+
+.comentario-highlight {
+    animation: commentGlow 2.5s ease-out;
+    border-radius: var(--radius-md);
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
    6. COMENTARIOS ESTILO REDDIT (_comentario.html)
    -------------------------------------------------------------------------- */
 .comments-container {
@@ -508,23 +665,18 @@
     position: relative;
 }
 
-.comment-tree-guide {
-    position: absolute;
-    left: 12px;
-    top: 28px;
-    bottom: 0;
-    width: 2px;
-    background-color: var(--color-border);
-    cursor: pointer;
-    transition: background-color var(--transition-base);
+.comment-node.comment-tree-guide {
+    border-left: 2px solid var(--color-border);
+    margin-left: 14px;
+    padding-left: 12px;
+    transition: border-color var(--transition-base);
 }
 
-.comment-tree-guide:hover {
-    background-color: var(--color-accent);
+.comment-node.comment-tree-guide:hover {
+    border-left-color: var(--color-accent);
 }
 
-.comment-box {
-    padding-left: 28px;
+.comment-card {
     display: flex;
     flex-direction: column;
 }
@@ -544,10 +696,15 @@
     cursor: pointer;
     padding: 0 4px;
     color: var(--color-text-muted);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-xs);
+    line-height: 1;
 }
 
 .comment-collapse-toggle:hover {
     color: var(--color-accent);
+    background-color: var(--color-surface-hover);
 }
 
 .comment-author-name {
@@ -555,11 +712,16 @@
     color: var(--color-text);
 }
 
+.comment-author-name:hover {
+    color: var(--color-accent);
+}
+
 .comment-body-text {
     font-size: var(--font-size-sm);
     line-height: 1.5;
     margin-bottom: var(--space-2);
     color: var(--color-text);
+    word-break: break-word;
 }
 
 .comment-actions-row {
@@ -569,15 +731,26 @@
     font-size: var(--font-size-xs);
 }
 
-/* Sangría visual de ramas anidadas */
+.comment-collapsed-summary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    background-color: var(--color-surface-hover);
+    border: 1px dashed var(--color-border);
+    transition: background-color var(--transition-base);
+}
+
+.comment-collapsed-summary:hover {
+    background-color: var(--color-surface-active);
+}
+
 .comment-children {
-    margin-left: 16px;
-    border-left: 2px solid var(--color-border);
-    padding-left: 12px;
+    display: flex;
+    flex-direction: column;
 }
 
 @media (max-width: 639.98px) {
-    .comment-children {
+    .comment-node.comment-tree-guide {
         margin-left: 8px;
         padding-left: 8px;
     }
@@ -595,16 +768,19 @@
 .comment-composer-textarea {
     width: 100%;
     min-height: 44px;
-    border: none;
-    background: transparent;
-    resize: vertical;
-    font-size: var(--font-size-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
     color: var(--color-text);
+    resize: vertical;
     outline: none;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+    transition: border-color var(--transition-base);
 }
 
 .comment-composer-textarea:focus {
-    min-height: 88px;
+    border-color: var(--color-border-focus);
 }
 
 /* --------------------------------------------------------------------------

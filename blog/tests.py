@@ -2504,3 +2504,169 @@ class ForoAdaptableFase3Tests(TestCase):
         self.assertEqual(data.get('nuevos_count'), nuevos_esperados)
 
 
+class ForoAdaptableFase4Tests(TestCase):
+    """Pruebas de la Fase 4: Lectura adaptable de artículos y comentarios estilo Reddit."""
+
+    def setUp(self):
+        cache.clear()
+        from cuentas.models import Perfil
+        self.autor_user = User.objects.create_user(
+            username='carlos_dev',
+            first_name='Carlos',
+            last_name='Dev',
+            email='carlos@example.com',
+            password='Password123!',
+        )
+        self.autor_perfil, _ = Perfil.objects.get_or_create(usuario=self.autor_user)
+        self.lector_user = User.objects.create_user(
+            username='lector_fase4',
+            first_name='Lector',
+            last_name='Test',
+            email='lector@example.com',
+            password='Password123!',
+        )
+        self.categoria = Categoria.objects.create(
+            nombre='Backend Python',
+            slug='backend-python',
+            descripcion='Comunidad dedicada a Django y Python.'
+        )
+        self.post = Post.objects.create(
+            titulo='Guía completa de arquitectura hexagonal en Django',
+            slug='guia-arquitectura-hexagonal-django',
+            contenido='<h2>Introducción</h2><p>Texto intro</p><h2>Capas</h2><p>Texto capas</p><h2>Conclusiones</h2><p>Texto fin</p>',
+            categoria=self.categoria,
+            autor=self.autor_perfil,
+            estado=Post.Estado.PUBLICADO,
+        )
+        # Post adicional para "Seguir leyendo"
+        self.post_extra = Post.objects.create(
+            titulo='Patrones de diseño en Django ORM',
+            slug='patrones-diseno-django-orm',
+            contenido='<p>Contenido extra</p>',
+            categoria=self.categoria,
+            autor=self.autor_perfil,
+            estado=Post.Estado.PUBLICADO,
+        )
+
+    def test_post_detail_lectura_adaptable_elementos_clave(self):
+        """Comprueba elementos de lectura adaptable, riel de acciones, sidebar y ausencia de ¿Te fue útil?"""
+        url = reverse('blog:post_detail', kwargs={'slug': self.post.slug})
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+
+        # Riel de acciones y estructura de lectura
+        self.assertContains(resp, 'article-action-rail-left')
+        self.assertContains(resp, 'article-reading-column')
+        self.assertContains(resp, 'Carlos Dev')
+        self.assertContains(resp, 'c/Backend Python')
+
+        # Tabla de contenidos y Seguir leyendo
+        self.assertContains(resp, 'Introducción')
+        self.assertContains(resp, 'Capas')
+        self.assertContains(resp, 'Seguir leyendo')
+        self.assertContains(resp, 'Patrones de diseño en Django ORM')
+
+        # Sidebar derecha (TOC, Autor, Comunidad)
+        self.assertContains(resp, 'En este artículo')
+        self.assertContains(resp, 'c/Backend Python')
+
+        # El widget público "¿Te fue útil?" NO debe aparecer en el HTML
+        self.assertNotContains(resp, 'data-utilidad-widget')
+        self.assertNotContains(resp, '¿Te fue útil?')
+
+    def test_comentarios_reddit_arbol_y_ordenamiento(self):
+        """Verifica comentarios estilo Reddit, selector de orden y carga parcial HTMX."""
+        c1 = Comentario.objects.create(
+            post=self.post,
+            autor=self.lector_user,
+            nombre='Lector Test',
+            email='lector@example.com',
+            texto='Primer comentario raíz con ideas.',
+            aprobado=True,
+        )
+        c2 = Comentario.objects.create(
+            post=self.post,
+            autor=self.autor_user,
+            nombre='Carlos Dev',
+            email='carlos@example.com',
+            texto='Segundo comentario raíz muy votado.',
+            aprobado=True,
+        )
+        # Añadir like a c2
+        LikeComentario.objects.create(comentario=c2, usuario=self.lector_user)
+
+        # Respuesta anidada a c1
+        hijo = Comentario.objects.create(
+            post=self.post,
+            padre=c1,
+            autor=self.autor_user,
+            nombre='Carlos Dev',
+            email='carlos@example.com',
+            texto='Respuesta al comentario raíz.',
+            aprobado=True,
+        )
+
+        url = reverse('blog:post_detail', kwargs={'slug': self.post.slug})
+
+        # 1. Orden Mejores (c2 con más votos va primero)
+        resp_mejores = self.client.get(url, {'orden_comentarios': 'mejores'})
+        self.assertEqual(resp_mejores.status_code, 200)
+        comentarios = resp_mejores.context['comentarios']
+        self.assertEqual(comentarios[0].pk, c2.pk)
+
+        # 2. Orden Recientes (c2 es más reciente que c1)
+        resp_recientes = self.client.get(url, {'orden_comentarios': 'recientes'})
+        self.assertEqual(resp_recientes.status_code, 200)
+
+        # 3. Petición HTMX para comentarios parciales
+        resp_htmx = self.client.get(
+            url,
+            {'orden_comentarios': 'mejores', 'comentarios_solo': '1'},
+            headers={'HX-Request': 'true'}
+        )
+        self.assertEqual(resp_htmx.status_code, 200)
+        self.assertNotContains(resp_htmx, '<!DOCTYPE html>')
+        self.assertContains(resp_htmx, 'comentario-' + str(c1.pk))
+        self.assertContains(resp_htmx, 'comentario-' + str(hijo.pk))
+        self.assertContains(resp_htmx, 'btn-collapse-thread')
+
+    def test_comentarios_novedades_endpoint(self):
+        """Verifica sondeo de nuevos comentarios cada 45s."""
+        c = Comentario.objects.create(
+            post=self.post,
+            autor=self.lector_user,
+            nombre='Lector Test',
+            email='lector@example.com',
+            texto='Comentario inicial.',
+            aprobado=True,
+        )
+        url_novedades = reverse('blog:comentarios_novedades', kwargs={'slug': self.post.slug})
+
+        # Sin novedades posteriores a c.id
+        resp = self.client.get(url_novedades, {'ultimo_id': c.id})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['total_nuevos'], 0)
+
+        # Crear nuevo comentario aprobado
+        Comentario.objects.create(
+            post=self.post,
+            autor=self.autor_user,
+            nombre='Carlos Dev',
+            email='carlos@example.com',
+            texto='Nuevo comentario aprobado.',
+            aprobado=True,
+        )
+        resp_nuevo = self.client.get(url_novedades, {'ultimo_id': c.id})
+        self.assertEqual(resp_nuevo.status_code, 200)
+        self.assertEqual(resp_nuevo.json()['total_nuevos'], 1)
+
+    def test_comentarios_requiere_login_cuando_anonimos_desactivados(self):
+        """Verifica que visitantes vean el botón para abrir el modal de acceso."""
+        url = reverse('blog:post_detail', kwargs={'slug': self.post.slug})
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'btn-requiere-auth')
+        self.assertContains(resp, 'Iniciar sesión para comentar')
+
+
+

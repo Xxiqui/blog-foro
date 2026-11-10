@@ -7,16 +7,16 @@ Parámetros:
 {% endcomment %}
 
 {% if tipo == 'comentario' %}
-    {% with url_voto=objeto.get_like_toggle_url|default:'' obj_liked=objeto.ya_dio_like obj_total=objeto.total_likes|default:0 obj_id=objeto.pk %}
-        <div class="vote-rail {% if horizontal %}vote-rail-horizontal{% endif %}" data-vote-tipo="comentario" data-vote-id="{{ obj_id }}">
+    {% with objeto_com=objeto|default:comentario %}
+        <div class="vote-rail {% if horizontal %}vote-rail-horizontal{% endif %}" data-vote-tipo="comentario" data-vote-id="{{ objeto_com.pk }}">
             {% if user.is_authenticated %}
                 <button type="button"
-                        class="vote-btn btn-voto {% if obj_liked %}active{% endif %}"
-                        data-url="{% url 'blog:like_comentario_toggle' obj_id %}"
+                        class="vote-btn btn-voto {% if objeto_com.ya_dio_like %}active{% endif %}"
+                        data-url="{% url 'blog:comentario_like_toggle' objeto_com.pk %}"
                         data-tipo="comentario"
-                        data-id="{{ obj_id }}"
-                        aria-pressed="{% if obj_liked %}true{% else %}false{% endif %}"
-                        aria-label="Votar a favor, {{ obj_total }} votos"
+                        data-id="{{ objeto_com.pk }}"
+                        aria-pressed="{% if objeto_com.ya_dio_like %}true{% else %}false{% endif %}"
+                        aria-label="Votar a favor, {{ objeto_com.total_likes|default:0 }} votos"
                         title="Votar a favor">
                     <i class="bi bi-arrow-up-short" aria-hidden="true"></i>
                 </button>
@@ -25,12 +25,12 @@ Parámetros:
                         class="vote-btn btn-voto btn-requiere-auth"
                         data-action="votar_comentario"
                         aria-pressed="false"
-                        aria-label="Votar a favor, {{ obj_total }} votos"
+                        aria-label="Votar a favor, {{ objeto_com.total_likes|default:0 }} votos"
                         title="Iniciar sesión para votar">
                     <i class="bi bi-arrow-up-short" aria-hidden="true"></i>
                 </button>
             {% endif %}
-            <span class="vote-score" aria-live="polite" data-vote-score>{{ obj_total }}</span>
+            <span class="vote-score" aria-live="polite" data-vote-score>{{ objeto_com.total_likes|default:0 }}</span>
         </div>
     {% endwith %}
 {% else %}
@@ -39,7 +39,7 @@ Parámetros:
             {% if user.is_authenticated %}
                 <button type="button"
                         class="vote-btn btn-voto {% if post_obj.ya_dio_like %}active{% endif %}"
-                        data-url="{% url 'blog:like_post_toggle' post_obj.slug %}"
+                        data-url="{% url 'blog:post_like_toggle' post_obj.slug %}"
                         data-tipo="post"
                         data-id="{{ post_obj.slug }}"
                         aria-pressed="{% if post_obj.ya_dio_like %}true{% else %}false{% endif %}"

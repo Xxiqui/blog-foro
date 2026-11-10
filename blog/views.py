@@ -305,6 +305,24 @@ class FeedNovedadesView(View):
         return JsonResponse({'nuevos_count': nuevos})
 
 
+class ComentariosNovedadesView(View):
+    """
+    Endpoint para sondeo de comentarios nuevos en un artículo cada 45s:
+    /post/<slug>/comentarios/novedades/?ultimo_id=<id>
+    Devuelve JSON { 'nuevos_count': n }.
+    """
+    def get(self, request, slug, *args, **kwargs):
+        ultimo_id = request.GET.get('ultimo_id')
+        try:
+            ultimo_id = int(ultimo_id)
+        except (TypeError, ValueError):
+            return JsonResponse({'nuevos_count': 0})
+
+        post = get_object_or_404(Post.objects.publicados(), slug=slug)
+        nuevos = post.comentarios.filter(aprobado=True, id__gt=ultimo_id).count()
+        return JsonResponse({'nuevos_count': nuevos, 'total_nuevos': nuevos})
+
+
 class PostListView(ListView):
     model = Post
     template_name = 'blog/post_list.html'
@@ -586,6 +604,8 @@ class PostDetailView(DetailView):
         self.object = self.get_object()
         registrar_vista_post(request, self.object)
         context = self.get_context_data(object=self.object)
+        if request.headers.get('HX-Request') and request.GET.get('comentarios_solo'):
+            return render(request, 'blog/includes/_lista_comentarios.html', context)
         return self.render_to_response(context)
 
     def obtener_arbol_comentarios(self):
@@ -657,14 +677,26 @@ class PostDetailView(DetailView):
             if mostrar:
                 raices_visibles.append(r)
 
-        return raices_visibles, total_visibles
+        orden = (self.request.GET.get('orden_comentarios') or 'mejores').lower()
+        if orden == 'recientes':
+            raices_visibles.sort(key=lambda c: (c.creado, c.id), reverse=True)
+        elif orden == 'antiguos':
+            raices_visibles.sort(key=lambda c: (c.creado, c.id))
+        else:
+            orden = 'mejores'
+            raices_visibles.sort(key=lambda c: (getattr(c, 'total_likes', 0), c.creado, c.id), reverse=True)
+
+        ultimo_id = max([c.id for c in todos], default=0)
+        return raices_visibles, total_visibles, ultimo_id, orden
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        raices_comentarios, total_visibles = self.obtener_arbol_comentarios()
+        raices_comentarios, total_visibles, ultimo_id, orden_com = self.obtener_arbol_comentarios()
         context['comentarios'] = raices_comentarios
         context['comentarios_raiz'] = raices_comentarios
         context['total_comentarios_visibles'] = total_visibles
+        context['ultimo_comentario_id'] = ultimo_id
+        context['orden_comentarios'] = orden_com
         context['profundidad_max_comentarios'] = getattr(settings, 'COMENTARIO_PROFUNDIDAD_MAX', 4)
 
         responder_id = self.request.GET.get('responder')
@@ -702,8 +734,35 @@ class PostDetailView(DetailView):
                 .exclude(pk=self.object.pk)
                 .distinct()[:4]
             )
+            context['seguir_leyendo_posts'] = list(
+                Post.objects.publicados()
+                .con_relaciones()
+                .con_interacciones(self.request.user)
+                .filter(condicion_rel)
+                .exclude(pk=self.object.pk)
+                .distinct()[:5]
+            )
         else:
             context['posts_relacionados'] = []
+            context['seguir_leyendo_posts'] = list(
+                Post.objects.publicados()
+                .con_relaciones()
+                .con_interacciones(self.request.user)
+                .exclude(pk=self.object.pk)[:5]
+            )
+
+        if self.object.categoria_id and self.request.user.is_authenticated:
+            context['es_miembro_comunidad'] = MiembroCategoria.objects.filter(
+                usuario=self.request.user,
+                categoria_id=self.object.categoria_id,
+            ).exists()
+        else:
+            context['es_miembro_comunidad'] = False
+
+        if self.object.categoria:
+            context['total_miembros_comunidad'] = self.object.categoria.miembros.count()
+        else:
+            context['total_miembros_comunidad'] = 0
 
         # Estadísticas de "¿Te fue útil?"
         votos_qs = self.object.votos_utilidad.all()
