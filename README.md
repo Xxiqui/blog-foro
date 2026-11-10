@@ -365,3 +365,53 @@ python manage.py publicar_programados
 - Admite `--dry-run` para previsualizar sin alterar la base de datos.
 - Utiliza `select_for_update(skip_locked=True)` para garantizar seguridad contra condiciones de carrera si concurren múltiples instancias de cron o workers.
 - Configurado en `render.yaml` como un trabajo programado (Cron Job) que se ejecuta cada 5 minutos (`*/5 * * * *`).
+
+---
+
+## Experiencia Pública: Foro Adaptable de Lectura y Discusión
+
+La experiencia pública del blog funciona como un **foro de lectura y debate técnico adaptable** (referencias: Reddit, Stack Overflow, Quora, X) sobre una **única base responsive** que escala con fluidez desde 360 px en celulares hasta pantallas 4K.
+
+### 1. Características Principales
+- **Feed adaptable de 1 clic:** Acceso a lectura, orden temporal con decaimiento logarítmico (Hot / Mejores), filtros por comunidad y etiquetas, y alternador entre vista de tarjetas y vista compacta (`vista_feed`).
+- **Riel de votos unificado:** Votación positiva (▲) y negativa (▼) con actualización optimista inmediata y reversión automática ante fallos de conexión.
+- **Hilos de discusión anidados estilo Reddit:**
+  - Guías visuales verticales indentadas (`.comment-tree-guide`).
+  - Colapso instantáneo de hilos `[–]` con resumen `[+] @autor · N respuestas ocultas`.
+  - Límite de indentación visual a nivel 4 con enlace a subhilos.
+  - Compositor de respuestas en línea con atajo `Ctrl + Enter` y límite de 1000 caracteres.
+- **Acceso para visitantes retenido:** Modal / hoja inferior sin interrupción que retiene la acción pretendida del lector (voto, guardado, respuesta) y la reintenta automáticamente tras iniciar sesión.
+- **Buscador global con sugerencias en vivo:** Desplegable instantáneo con artículos, comunidades, autores y etiquetas mediante endpoint cacheado `/buscar/sugerencias/`.
+- **Rendimiento y PWA:**
+  - Generación de variantes WebP (192px miniatura, 640px y 1200px portadas) con `srcset` y `sizes`.
+  - Cero CLS garantizado con dimensiones y `aspect-ratio` explícitos.
+  - Carga diferida nativa (`loading="lazy"`, `decoding="async"`).
+  - Optimización de scroll con `content-visibility: auto` en las filas fuera de pantalla.
+  - PWA mínima con `manifest.webmanifest`, íconos 192 y 512, y meta etiquetas `theme-color` para modos claro y oscuro.
+
+### 2. Atajos de Teclado Globales del Foro
+- `/` o `Ctrl + K`: Enfocar buscador con sugerencias.
+- `j` / `k`: Navegar al post siguiente o anterior en el feed.
+- `Enter` u `o`: Abrir el post enfocado.
+- `a`: Votar positivo (Upvote) en el post seleccionado.
+- `s`: Guardar o desguardar post en tu lista privada.
+- `c`: Saltar a los comentarios del post.
+- `g` + `h`: Volver al inicio.
+- `Esc`: Cerrar modales, buscador o paneles.
+
+### 3. Scripts de Tareas y Verificación (`scripts/tareas.ps1`)
+Se incluye un script unificado de automatización en PowerShell:
+```powershell
+# Ejecutar suite de pruebas unitarias e integración de Django (88 pruebas)
+.\scripts\tareas.ps1 test
+
+# Ejecutar pruebas E2E de presupuesto de clics (Playwright)
+.\scripts\tareas.ps1 e2e
+
+# Ejecutar matriz visual multidispositivo (iPhone 13, Pixel 7, iPad Mini, iPad Pro, Desktop)
+.\scripts\tareas.ps1 visual
+
+# Comprobar estado del sistema y configuración de producción
+.\scripts\tareas.ps1 check
+```
+Para detalles completos sobre tokens CSS, puntos de quiebre y especificaciones de componentes, consulta [`docs/DISENO.md`](docs/DISENO.md).

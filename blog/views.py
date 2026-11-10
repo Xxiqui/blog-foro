@@ -793,6 +793,17 @@ class PostDetailView(DetailView):
     @method_decorator(limitar_tasa('crear_comentario', 20, 60))
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
+
+        # Política de comentarios anónimos: si no están permitidos, exigir inicio de sesión
+        if not getattr(settings, 'COMENTARIOS_ANONIMOS', True) and not request.user.is_authenticated:
+            if es_peticion_ajax(request):
+                return JsonResponse(
+                    {'ok': False, 'requiere_auth': True, 'login_url': reverse('cuentas:login')},
+                    status=401,
+                )
+            messages.info(request, 'Debes iniciar sesión para comentar.')
+            return redirect(f"{reverse('cuentas:login')}?next={request.path}")
+
         form = ComentarioForm(request.POST, user=request.user, post=self.object)
         if form.is_valid():
             comentario = form.save(commit=False)

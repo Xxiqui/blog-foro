@@ -137,6 +137,7 @@ class BlogTests(TestCase):
         )
         self.assertIn(resp_ajeno_toggle.status_code, (403, 404))
 
+    @override_settings(COMENTARIOS_ANONIMOS=True)
     def test_flujo_moderacion_comentarios(self):
         """
         Los comentarios nuevos quedan pendientes (aprobado=False), no se ven públicamente
@@ -2966,6 +2967,103 @@ class ForoAdaptableFase7Tests(TestCase):
             content = f.read()
         self.assertIn('content-visibility: auto;', content)
         self.assertIn('contain-intrinsic-size', content)
+
+
+class ForoAdaptableFase8Tests(TestCase):
+    """Pruebas de la Fase 8: Rendimiento de queries, política anónima, HTMX y privacidad."""
+
+    def setUp(self):
+        cache.clear()
+        from cuentas.models import Perfil
+        self.autor_user = User.objects.create_user(
+            username='ana_fase8',
+            first_name='Ana',
+            last_name='Fase8',
+            email='anafase8@example.com',
+            password='Password123!',
+        )
+        self.autor_perfil, _ = Perfil.objects.get_or_create(usuario=self.autor_user)
+        self.categoria = Categoria.objects.create(
+            nombre='Python Architecture',
+            slug='python-arch',
+        )
+        self.posts = []
+        for i in range(5):
+            p = Post.objects.create(
+                titulo=f'Arquitectura Limpia en Django {i}',
+                slug=f'arquitectura-limpia-django-{i}',
+                autor=self.autor_perfil,
+                categoria=self.categoria,
+                contenido='Guía detallada de principios SOLID, inyección de dependencias y desacoplamiento.',
+                estado=Post.Estado.PUBLICADO,
+            )
+            self.posts.append(p)
+
+    def test_assert_num_queries_feed_y_articulo(self):
+        """Verifica que el feed y el artículo no tengan problemas de N+1 queries."""
+        from django.test.utils import CaptureQueriesContext
+        from django.db import connection
+
+        # Feed principal: queries acotadas
+        with CaptureQueriesContext(connection) as ctx_feed:
+            resp_feed = self.client.get(reverse('blog:post_list'))
+        self.assertEqual(resp_feed.status_code, 200)
+        self.assertLessEqual(len(ctx_feed.captured_queries), 22, "El feed excede el límite de consultas permitidas.")
+
+        # Detalle del post: queries acotadas
+        with CaptureQueriesContext(connection) as ctx_post:
+            resp_post = self.client.get(self.posts[0].get_absolute_url())
+        self.assertEqual(resp_post.status_code, 200)
+        self.assertLessEqual(len(ctx_post.captured_queries), 35, "El detalle de post excede el límite de consultas permitidas.")
+
+    def test_comentarios_anonimos_politica_acceso(self):
+        """Verifica que COMENTARIOS_ANONIMOS sea False y requiera autenticación."""
+        from django.conf import settings
+        self.assertFalse(getattr(settings, 'COMENTARIOS_ANONIMOS', True))
+
+        # Intento de enviar comentario anónimo
+        url_com = reverse('blog:post_detail', kwargs={'slug': self.posts[0].slug})
+        resp = self.client.post(url_com, {'texto': 'Comentario de visitante sin registrar'})
+        # Debe redirigir al login o modal de acceso (302)
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('/cuentas/login/', resp.url)
+
+    def test_django_htmx_no_rompe_login_ni_editor(self):
+        """Comprueba que el login, panel y editor desactiven o aíslen hx-boost para no interferir."""
+        resp_login = self.client.get(reverse('cuentas:login'))
+        self.assertEqual(resp_login.status_code, 200)
+
+        # Panel dashboard tiene hx-boost="false"
+        self.client.login(username='ana_fase8', password='Password123!')
+        resp_panel = self.client.get(reverse('blog:panel_dashboard'))
+        self.assertEqual(resp_panel.status_code, 200)
+        self.assertContains(resp_panel, 'hx-boost="false"')
+
+        # El estudio de escritura no incluye scripts de HTMX para no colisionar con CKEditor
+        resp_editor = self.client.get(reverse('blog:panel_post_create'))
+        self.assertEqual(resp_editor.status_code, 200)
+        self.assertNotContains(resp_editor, 'htmx.min.js')
+
+    def test_sondeo_novedades_privacidad(self):
+        """Verifica que el sondeo de novedades no exponga borradores ni datos privados."""
+        # Crear un borrador privado
+        Post.objects.create(
+            titulo='Borrador super secreto no publicado',
+            slug='borrador-secreto-privado',
+            autor=self.autor_perfil,
+            categoria=self.categoria,
+            contenido='Borrador no publicado todavía.',
+            estado=Post.Estado.BORRADOR,
+        )
+
+        resp = self.client.get(reverse('blog:feed_novedades'), {'ultimo_id': 0})
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertIn('nuevos_count', data)
+        # Solo debe contar publicados
+        total_publicados = Post.objects.publicados().count()
+        self.assertEqual(data['nuevos_count'], total_publicados)
+
 
 
 

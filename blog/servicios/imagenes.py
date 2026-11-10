@@ -21,7 +21,7 @@ def generar_variantes_webp(post):
         ruta_origen = post.imagen_portada.path
         if not os.path.exists(ruta_origen):
             return {}
-    except (ValueError, AttributeError, NotImplementedError):
+    except Exception:
         return {}
 
     directorio_destino = os.path.join(settings.MEDIA_ROOT, 'portadas', 'variantes')
