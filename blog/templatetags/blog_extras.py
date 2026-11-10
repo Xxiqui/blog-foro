@@ -372,9 +372,9 @@ def avatar(perfil, tamano=36, clase_extra=''):
             url_avatar = perfil.avatar.url
             return mark_safe(
                 f'<img src="{escape(url_avatar)}" alt="Avatar de {escape(nombre_mostrar)}" '
-                f'width="{px}" height="{px}" loading="lazy" '
+                f'width="{px}" height="{px}" loading="lazy" decoding="async" '
                 f'class="rounded-circle object-fit-cover flex-shrink-0 {escape(clase_extra)}" '
-                f'style="width:{px}px;height:{px}px;object-fit:cover;">'
+                f'style="width:{px}px;height:{px}px;aspect-ratio:1/1;object-fit:cover;">'
             )
         except ValueError:
             pass
@@ -470,10 +470,13 @@ def portada_post(post, altura_clase=''):
         url_imagen = getattr(post, 'portada_url', None)
 
     if url_imagen:
+        srcset = getattr(post, 'portada_srcset', '')
+        srcset_attr = f'srcset="{escape(srcset)}" sizes="(max-width: 768px) 100vw, 640px"' if srcset else ''
         return mark_safe(
             f'<div class="post-cover-wrapper {escape(altura_clase)}">'
-            f'<img src="{escape(url_imagen)}" alt="{titulo}" '
-            f'class="post-cover-img" loading="lazy" width="640" height="360">'
+            f'<img src="{escape(url_imagen)}" alt="{titulo}" {srcset_attr} '
+            f'class="post-cover-img" loading="lazy" decoding="async" width="640" height="360" '
+            f'style="aspect-ratio:16/9;object-fit:cover;">'
             f'</div>'
         )
 
@@ -553,9 +556,9 @@ def avatar_categoria(categoria, tamano=40, clase_extra=''):
             url_avatar = campo_avatar.url
             return mark_safe(
                 f'<img src="{escape(url_avatar)}" alt="Avatar de {escape(nombre)}" '
-                f'width="{px}" height="{px}" loading="lazy" '
+                f'width="{px}" height="{px}" loading="lazy" decoding="async" '
                 f'class="rounded-circle object-fit-cover flex-shrink-0 {escape(clase_extra)}" '
-                f'style="width:{px}px;height:{px}px;object-fit:cover;">'
+                f'style="width:{px}px;height:{px}px;aspect-ratio:1/1;object-fit:cover;">'
             )
         except ValueError:
             pass
@@ -600,12 +603,12 @@ def miniatura_post(post, tamano=72):
     except (TypeError, ValueError):
         px = 72
 
-    url_imagen = getattr(post, 'portada_url', None)
+    url_imagen = getattr(post, 'portada_thumb_webp', None) or getattr(post, 'portada_url', None)
     if url_imagen:
         return mark_safe(
             f'<img src="{escape(url_imagen)}" alt="" width="{px}" height="{px}" '
-            f'loading="lazy" class="post-thumb-72 flex-shrink-0" '
-            f'style="width:{px}px;height:{px}px;object-fit:cover;">'
+            f'loading="lazy" decoding="async" class="post-thumb-72 flex-shrink-0" '
+            f'style="width:{px}px;height:{px}px;aspect-ratio:1/1;object-fit:cover;">'
         )
 
     categoria = getattr(post, 'categoria', None)

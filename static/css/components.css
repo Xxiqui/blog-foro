@@ -318,6 +318,8 @@
     flex-direction: column;
     position: relative;
     transition: border-color var(--transition-base), background-color var(--transition-base);
+    content-visibility: auto;
+    contain-intrinsic-size: 0 140px;
 }
 
 .post-row:hover {

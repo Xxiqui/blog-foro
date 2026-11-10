@@ -891,6 +891,13 @@ class BuscarSugerenciasView(View):
         if len(q) < 2:
             return render(request, 'blog/includes/_sugerencias_busqueda.html', {'sin_termino': True, 'query': q})
 
+        ranking_version = cache.get('blog_ranking_version', 1)
+        cache_key = f'sugerencias_{q.lower()}_v{ranking_version}'
+        cached_html = cache.get(cache_key)
+        if cached_html is not None:
+            from django.http import HttpResponse
+            return HttpResponse(cached_html, content_type='text/html; charset=utf-8')
+
         articulos = (
             Post.objects.publicados()
             .filter(titulo__icontains=q)
@@ -909,7 +916,7 @@ class BuscarSugerenciasView(View):
         )
         etiquetas = Etiqueta.objects.filter(nombre__icontains=q)[:3]
 
-        return render(
+        response = render(
             request,
             'blog/includes/_sugerencias_busqueda.html',
             {
@@ -921,6 +928,8 @@ class BuscarSugerenciasView(View):
                 'sin_termino': False,
             },
         )
+        cache.set(cache_key, response.content, 300)
+        return response
 
 
 class AutorDetailView(ListView):

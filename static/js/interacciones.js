@@ -812,14 +812,19 @@
     }
 
     // Modal de Acceso para Visitantes (Hoja inferior en móvil)
+    let elementoPrevioFocoModal = null;
+
     function abrirModalAcceso(accion = '', ancla = '') {
         const modal = document.getElementById('modalAccesoVisitante');
         if (!modal) return;
+        elementoPrevioFocoModal = document.activeElement;
         modal.classList.add('show');
         modal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
-        const inputLogin = document.getElementById('modal-auth-login');
-        if (inputLogin) setTimeout(() => inputLogin.focus(), 80);
+        const focusable = modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])');
+        if (focusable.length) {
+            setTimeout(() => focusable[0].focus(), 80);
+        }
 
         const nextInput = document.getElementById('auth-modal-next');
         if (nextInput) {
@@ -840,6 +845,10 @@
         modal.classList.remove('show');
         modal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+        if (elementoPrevioFocoModal && typeof elementoPrevioFocoModal.focus === 'function') {
+            try { elementoPrevioFocoModal.focus(); } catch (_) {}
+            elementoPrevioFocoModal = null;
+        }
     }
 
     function verificarReintentoAccion() {
@@ -883,6 +892,21 @@
             modal.addEventListener('click', function(e) {
                 if (e.target === modal) {
                     cerrarModalAcceso();
+                }
+            });
+            modal.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    const focusable = Array.from(modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null);
+                    if (!focusable.length) return;
+                    const first = focusable[0];
+                    const last = focusable[focusable.length - 1];
+                    if (e.shiftKey && document.activeElement === first) {
+                        last.focus();
+                        e.preventDefault();
+                    } else if (!e.shiftKey && document.activeElement === last) {
+                        first.focus();
+                        e.preventDefault();
+                    }
                 }
             });
         }

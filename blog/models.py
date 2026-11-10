@@ -508,6 +508,24 @@ class Post(models.Model):
             return match.group(1)
         return None
 
+    @property
+    def portada_srcset(self):
+        """Devuelve el atributo srcset con variantes WebP de 640 y 1200 px si existen."""
+        from blog.servicios.imagenes import obtener_rutas_variantes_webp
+        variantes = obtener_rutas_variantes_webp(self)
+        if 640 in variantes and 1200 in variantes:
+            return f"{variantes[640]} 640w, {variantes[1200]} 1200w"
+        return ""
+
+    @property
+    def portada_thumb_webp(self):
+        """Devuelve la variante WebP de 192 px si existe, o portada_url como respaldo."""
+        from blog.servicios.imagenes import obtener_rutas_variantes_webp
+        variantes = obtener_rutas_variantes_webp(self)
+        if 192 in variantes:
+            return variantes[192]
+        return self.portada_url
+
     def __str__(self):
         return self.titulo
 

@@ -45,7 +45,14 @@ def _ejecutar_efectos_primera_publicacion(post_id):
     except Exception as e:
         logger.error("Error al enviar correos de boletín en post %s: %s", post_id, e)
 
-    # 3. Invalidación de caches
+    # 3. Variantes WebP de portada
+    try:
+        from blog.servicios.imagenes import generar_variantes_webp
+        generar_variantes_webp(post)
+    except Exception as e:
+        logger.warning("Error al generar variantes WebP del post %s: %s", post_id, e)
+
+    # 4. Invalidación de caches
     invalidar_caches_publicacion()
 
 
@@ -55,6 +62,12 @@ def invalidar_caches_publicacion():
     cache.delete('posts_populares_30')
     cache.delete('posts_populares_0')
     cache.delete('autores_destacados')
+    cache.delete('sidebar_comunidades_activas')
+    cache.delete('sidebar_descubrir_comunidades')
+    try:
+        cache.incr('blog_ranking_version')
+    except Exception:
+        cache.set('blog_ranking_version', 2)
 
 
 def validar_obligatorios_publicacion(post):

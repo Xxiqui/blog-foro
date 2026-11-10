@@ -2890,6 +2890,85 @@ class ForoAdaptableFase6Tests(TestCase):
         self.assertNotContains(resp_acerca, 'app-nav-left')
 
 
+class ForoAdaptableFase7Tests(TestCase):
+    """Pruebas de la Fase 7: Rendimiento, WebP, accesibilidad y PWA."""
+
+    def setUp(self):
+        cache.clear()
+        from cuentas.models import Perfil
+        self.autor_user = User.objects.create_user(
+            username='carlos_perf',
+            first_name='Carlos',
+            last_name='Perf',
+            email='carlosperf@example.com',
+            password='Password123!',
+        )
+        self.autor_perfil, _ = Perfil.objects.get_or_create(usuario=self.autor_user)
+        self.categoria = Categoria.objects.create(
+            nombre='Performance y Web',
+            slug='perf-web',
+        )
+
+    def test_pwa_manifest_y_meta_tags(self):
+        """Verifica existencia de manifest.webmanifest y metadatos theme-color."""
+        import os
+        import json
+        from django.conf import settings
+        manifest_path = os.path.join(settings.BASE_DIR, 'static', 'manifest.webmanifest')
+        self.assertTrue(os.path.exists(manifest_path))
+
+        with open(manifest_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        self.assertIn('name', data)
+        self.assertEqual(data.get('display'), 'standalone')
+        self.assertTrue(len(data.get('icons', [])) >= 2)
+
+        resp = self.client.get(reverse('blog:post_list'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'name="theme-color"')
+        self.assertContains(resp, 'manifest.webmanifest')
+
+    def test_caching_sidebar_y_sugerencias(self):
+        """Verifica que las sugerencias de búsqueda se almacenen en caché y se invaliden al publicar."""
+        from blog.servicios.publicacion import invalidar_caches_publicacion
+
+        Post.objects.create(
+            titulo='Acelerando Django con Cache',
+            slug='acelerando-django-cache',
+            autor=self.autor_perfil,
+            categoria=self.categoria,
+            contenido='Contenido largo sobre Redis y Memcached en producción.',
+            estado=Post.Estado.PUBLICADO,
+        )
+
+        # Primer llamado: consulta y almacena en caché
+        resp1 = self.client.get(reverse('blog:buscar_sugerencias'), {'q': 'Django'})
+        self.assertEqual(resp1.status_code, 200)
+        self.assertContains(resp1, 'Acelerando Django con Cache')
+
+        # Segundo llamado: debe provenir de caché
+        resp2 = self.client.get(reverse('blog:buscar_sugerencias'), {'q': 'Django'})
+        self.assertEqual(resp2.status_code, 200)
+        self.assertContains(resp2, 'Acelerando Django con Cache')
+
+        # Invalidación de publicación
+        v_antes = cache.get('blog_ranking_version', 1)
+        invalidar_caches_publicacion()
+        v_despues = cache.get('blog_ranking_version')
+        self.assertNotEqual(v_antes, v_despues)
+
+    def test_content_visibility_feed(self):
+        """Verifica que components.css aplique content-visibility: auto a las filas del feed."""
+        import os
+        from django.conf import settings
+        css_path = os.path.join(settings.BASE_DIR, 'static', 'css', 'components.css')
+        with open(css_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        self.assertIn('content-visibility: auto;', content)
+        self.assertIn('contain-intrinsic-size', content)
+
+
+
 
 
 
