@@ -926,23 +926,61 @@ class BuscarSugerenciasView(View):
 class AutorDetailView(ListView):
     model = Post
     template_name = 'blog/autor_detail.html'
-    context_object_name = 'posts'
-    paginate_by = 6
+    context_object_name = 'items'
+    paginate_by = 10
 
     def get_queryset(self):
         usuario = get_object_or_404(User, username=self.kwargs['username'])
         self.perfil_autor, _ = Perfil.objects.get_or_create(usuario=usuario)
+        self.tab = (self.request.GET.get('tab') or 'publicaciones').lower()
+
+        if self.tab == 'comentarios':
+            return (
+                Comentario.objects.filter(autor=self.perfil_autor.usuario, aprobado=True)
+                .select_related('post', 'post__autor', 'post__categoria')
+                .order_by('-creado')
+            )
+        elif self.tab == 'guardados':
+            if self.request.user.is_authenticated and self.request.user == self.perfil_autor.usuario:
+                lista_g = obtener_lista_guardados_usuario(self.request.user)
+                post_ids = list(lista_g.items.order_by('-agregado').values_list('post_id', flat=True))
+                return (
+                    Post.objects.publicados()
+                    .con_relaciones()
+                    .con_interacciones(self.request.user)
+                    .filter(id__in=post_ids)
+                )
+            self.tab = 'publicaciones'
+
         return (
             Post.objects.publicados()
             .con_relaciones()
             .con_interacciones(self.request.user)
             .filter(autor=self.perfil_autor)
+            .order_by('-publicado_en', '-id')
         )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['perfil_autor'] = self.perfil_autor
+        context['tab_actual'] = self.tab
         context['total_seguidores'] = self.perfil_autor.seguidores.count()
+        context['total_publicaciones'] = Post.objects.publicados().filter(autor=self.perfil_autor).count()
+        context['total_comentarios'] = Comentario.objects.filter(autor=self.perfil_autor.usuario, aprobado=True).count()
+        es_dueno = (self.request.user.is_authenticated and self.request.user == self.perfil_autor.usuario)
+        context['es_dueno'] = es_dueno
+        if es_dueno:
+            context['total_guardados'] = obtener_lista_guardados_usuario(self.request.user).items.count()
+        else:
+            context['total_guardados'] = 0
+
+        # Para compatibilidad con templates y tests que esperan 'posts'
+        if self.tab in ('publicaciones', 'guardados'):
+            context['posts'] = context['items']
+        else:
+            context['comentarios'] = context['items']
+            context['posts'] = list(Post.objects.publicados().filter(autor=self.perfil_autor)[:6])
+
         if self.request.user.is_authenticated:
             context['siguiendo_autor'] = Seguimiento.objects.filter(
                 seguidor=self.request.user,
@@ -1649,12 +1687,22 @@ class ExplorarView(TemplateView):
             total_posts=Count('posts', filter=Q(posts__estado=Post.Estado.PUBLICADO))
         ).filter(total_posts__gt=0).order_by('-total_posts')[:12]
 
-        posts_tendencia = (
+        una_semana_atras = timezone.now() - timedelta(days=7)
+        posts_tendencia_qs = (
             Post.objects.publicados()
             .con_relaciones()
             .con_interacciones(user)
+            .filter(publicado_en__gte=una_semana_atras)
             .order_by('-total_likes', '-total_comentarios_aprobados')[:6]
         )
+        posts_tendencia = list(posts_tendencia_qs)
+        if not posts_tendencia:
+            posts_tendencia = list(
+                Post.objects.publicados()
+                .con_relaciones()
+                .con_interacciones(user)
+                .order_by('-total_likes', '-total_comentarios_aprobados')[:6]
+            )
 
         autores = list(construir_queryset_autores_destacados(orden='puntuacion')[:8])
         if user.is_authenticated:

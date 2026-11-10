@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 
 {% block title %}Elegir plantilla para nuevo artículo | {{ MARCA }}{% endblock %}
+{% block body_hx_boost %}hx-boost="false"{% endblock %}
+{% block app_body_class %}app-body--plano{% endblock %}
+{% block nav_left %}{% endblock %}
+{% block sidebar_right %}{% endblock %}
+
 
 {% block content %}
 <div class="container py-4" style="max-width: 960px;">

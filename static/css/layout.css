@@ -46,6 +46,23 @@
     flex: 1;
 }
 
+/* Modo plano para panel, editor, cuentas y páginas estáticas: sin riel ni widgets */
+.app-body.app-body--plano {
+    max-width: 1200px;
+    justify-content: center;
+}
+
+.app-body.app-body--plano .app-nav-left,
+.app-body.app-body--plano .app-sidebar-right {
+    display: none !important;
+}
+
+.app-body.app-body--plano .app-main {
+    max-width: 100%;
+    width: 100%;
+    align-items: stretch;
+}
+
 /* Navegación izquierda pegajosa con scroll propio */
 .app-nav-left {
     display: none;

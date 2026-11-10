@@ -228,7 +228,8 @@
     </div>
 
     <!-- Estructura Adaptable del Foro -->
-    <div class="app-body">
+    <div class="app-body {% block app_body_class %}{% endblock %}">
+        {% block nav_left %}
         <!-- Navegación Izquierda Pegajosa (64px de 1024-1279, 220px desde 1280px) -->
         <nav class="app-nav-left" aria-label="Navegación principal del foro">
             <div class="w-100">
@@ -299,83 +300,84 @@
                 </div>
             </div>
         </nav>
+        {% endblock nav_left %}
 
         <!-- Feed Central / Contenido Principal -->
         <main id="main-content" class="app-main" tabindex="-1">
             {% block content %}{% endblock %}
         </main>
 
+        {% block sidebar_right %}
         <!-- Columna Lateral Derecha Pegajosa (>= 1280px) -->
         <aside class="app-sidebar-right" aria-label="Widgets e información complementaria">
-            {% block sidebar_right %}
-                {% if not user.is_authenticated %}
-                    {% include "blog/includes/widget_unete_comunidad.html" %}
-                {% endif %}
+            {% if not user.is_authenticated %}
+                {% include "blog/includes/widget_unete_comunidad.html" %}
+            {% endif %}
 
-                <!-- Widget Acerca del Foro -->
-                <div class="card border mb-3 shadow-none bg-surface">
-                    <div class="card-body p-3">
-                        <h2 class="h6 fw-bold mb-2 d-flex align-items-center gap-2">
-                            <i class="bi bi-info-circle text-primary" aria-hidden="true"></i>
-                            <span>Acerca de {{ marca_corta }}</span>
-                        </h2>
-                        <p class="small text-secondary mb-3">
-                            Comunidad de lectura técnica, debate constructivo y desarrollo en Django. Comparte tus conocimientos con autores y lectores.
-                        </p>
-                        <div class="d-grid">
-                            {% if not user.is_authenticated %}
-                                <button type="button" class="btn-forum btn-forum-primary justify-content-center btn-requiere-auth" data-action="crear_post">
-                                    Crear publicación
-                                </button>
-                            {% else %}
-                                <a href="{% url 'blog:panel_post_create' %}" hx-boost="false" class="btn-forum btn-forum-primary justify-content-center">
-                                    Crear publicación
+            <!-- Widget Acerca del Foro -->
+            <div class="card border mb-3 shadow-none bg-surface">
+                <div class="card-body p-3">
+                    <h2 class="h6 fw-bold mb-2 d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle text-primary" aria-hidden="true"></i>
+                        <span>Acerca de {{ marca_corta }}</span>
+                    </h2>
+                    <p class="small text-secondary mb-3">
+                        Comunidad de lectura técnica, debate constructivo y desarrollo en Django. Comparte tus conocimientos con autores y lectores.
+                    </p>
+                    <div class="d-grid">
+                        {% if not user.is_authenticated %}
+                            <button type="button" class="btn-forum btn-forum-primary justify-content-center btn-requiere-auth" data-action="crear_post">
+                                Crear publicación
+                            </button>
+                        {% else %}
+                            <a href="{% url 'blog:panel_post_create' %}" hx-boost="false" class="btn-forum btn-forum-primary justify-content-center">
+                                Crear publicación
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comunidades Activas -->
+            <div class="card border mb-3 shadow-none bg-surface">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h3 class="h6 fw-bold mb-0">Comunidades activas</h3>
+                        <a href="{% url 'blog:explorar' %}" class="small text-decoration-none">Ver más</a>
+                    </div>
+                    <div class="vstack gap-2">
+                        {% for c_dest in comunidades_nav|slice:":5" %}
+                            <div class="d-flex align-items-center justify-content-between py-1">
+                                <a href="{% url 'blog:posts_por_categoria' c_dest.slug %}" class="d-flex align-items-center gap-2 text-decoration-none text-body min-w-0">
+                                    <div class="rounded bg-body-secondary text-secondary d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width: 28px; height: 28px; font-size: 11px;">
+                                        c/
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="small fw-semibold text-truncate">{{ c_dest.nombre }}</div>
+                                        <div class="text-muted" style="font-size: 11px;">{{ c_dest.total_publicaciones|default:0 }} posts</div>
+                                    </div>
                                 </a>
-                            {% endif %}
-                        </div>
+                            </div>
+                        {% endfor %}
                     </div>
                 </div>
+            </div>
 
-                <!-- Comunidades Activas -->
-                <div class="card border mb-3 shadow-none bg-surface">
-                    <div class="card-body p-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h3 class="h6 fw-bold mb-0">Comunidades activas</h3>
-                            <a href="{% url 'blog:explorar' %}" class="small text-decoration-none">Ver más</a>
-                        </div>
-                        <div class="vstack gap-2">
-                            {% for c_dest in comunidades_nav|slice:":5" %}
-                                <div class="d-flex align-items-center justify-content-between py-1">
-                                    <a href="{% url 'blog:posts_por_categoria' c_dest.slug %}" class="d-flex align-items-center gap-2 text-decoration-none text-body min-w-0">
-                                        <div class="rounded bg-body-secondary text-secondary d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width: 28px; height: 28px; font-size: 11px;">
-                                            c/
-                                        </div>
-                                        <div class="min-w-0">
-                                            <div class="small fw-semibold text-truncate">{{ c_dest.nombre }}</div>
-                                            <div class="text-muted" style="font-size: 11px;">{{ c_dest.total_publicaciones|default:0 }} posts</div>
-                                        </div>
-                                    </a>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
+            <!-- Enlaces del Pie Compacto -->
+            <div class="px-2 small text-muted">
+                <div class="d-flex flex-wrap gap-x-2 gap-y-1 mb-2" style="font-size: 12px;">
+                    <a href="{% url 'blog:acerca' %}" class="text-decoration-none text-muted">Acerca de</a> &bull;
+                    <a href="{% url 'blog:privacidad' %}" class="text-decoration-none text-muted">Privacidad</a> &bull;
+                    <a href="{% url 'blog:terminos' %}" class="text-decoration-none text-muted">Términos</a> &bull;
+                    <a href="{% url 'blog:contacto' %}" class="text-decoration-none text-muted">Contacto</a> &bull;
+                    <a href="{% url 'blog:rss_feed' %}" class="text-decoration-none text-muted">RSS</a>
                 </div>
-
-                <!-- Enlaces del Pie Compacto -->
-                <div class="px-2 small text-muted">
-                    <div class="d-flex flex-wrap gap-x-2 gap-y-1 mb-2" style="font-size: 12px;">
-                        <a href="{% url 'blog:acerca' %}" class="text-decoration-none text-muted">Acerca de</a> &bull;
-                        <a href="{% url 'blog:privacidad' %}" class="text-decoration-none text-muted">Privacidad</a> &bull;
-                        <a href="{% url 'blog:terminos' %}" class="text-decoration-none text-muted">Términos</a> &bull;
-                        <a href="{% url 'blog:contacto' %}" class="text-decoration-none text-muted">Contacto</a> &bull;
-                        <a href="{% url 'blog:rss_feed' %}" class="text-decoration-none text-muted">RSS</a>
-                    </div>
-                    <div style="font-size: 11px;">
-                        {{ marca|default:"Blog con Panel de Autor" }} &copy; {% now "Y" %}. Todos los derechos reservados.
-                    </div>
+                <div style="font-size: 11px;">
+                    {{ marca|default:"Blog con Panel de Autor" }} &copy; {% now "Y" %}. Todos los derechos reservados.
                 </div>
-            {% endblock %}
+            </div>
         </aside>
+        {% endblock sidebar_right %}
     </div>
 
     <!-- Barra de Navegación Inferior (< 1024px) -->

@@ -75,7 +75,7 @@
                 {% if user.is_authenticated %}
                     <button type="button"
                             class="post-action-btn btn-guardar-post {% if post.ya_guardado %}active{% endif %}"
-                            data-url="{% url 'blog:guardar_post_toggle' post.slug %}"
+                            data-url="{% url 'blog:post_guardar_toggle' post.slug %}"
                             data-guardado="{% if post.ya_guardado %}true{% else %}false{% endif %}"
                             aria-pressed="{% if post.ya_guardado %}true{% else %}false{% endif %}"
                             title="{% if post.ya_guardado %}Guardado en tu lista{% else %}Guardar post{% endif %}">

@@ -1,410 +1,247 @@
 {% extends "base.html" %}
 {% load blog_extras %}
+{% load static %}
 
-{% block title %}{{ categoria_actual.nombre }} | Comunidad en {{ site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+{% block title %}c/{{ categoria_actual.nombre }} | {{ marca|default:site_name }}{% endblock %}
 
 {% block content %}
-<!-- Cabecera estilo Hub de Comunidad -->
-<section class="card border-0 shadow-sm overflow-hidden mb-4" aria-label="Cabecera de la comunidad {{ categoria_actual.nombre }}">
-    <div class="community-hub-banner" style="{% banner_categoria_style categoria_actual %}" role="img" aria-label="Banner de {{ categoria_actual.nombre }}"></div>
-
-    <div class="card-body px-4 pb-4 pt-0">
-        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3">
-            <div class="d-flex align-items-end gap-3">
-                <div class="community-hub-avatar-wrap">
-                    {% avatar_categoria categoria_actual 76 %}
-                </div>
-                <div class="pt-2">
-                    <h1 class="h2 fw-bold mb-1">{{ categoria_actual.nombre }}</h1>
-                    <div class="text-muted small d-flex flex-wrap align-items-center gap-2">
-                        <span>
-                            <strong data-miembros-count="{{ categoria_actual.slug }}">{{ categoria_actual.total_miembros|default:0 }}</strong>
-                            miembro{{ categoria_actual.total_miembros|default:0|pluralize }}
-                        </span>
-                        <span>&bull;</span>
-                        <span>{{ categoria_actual.vistas_semana|default:0 }} vista{{ categoria_actual.vistas_semana|default:0|pluralize }} esta semana</span>
-                        <span>&bull;</span>
-                        <span>{{ categoria_actual.publicaciones_semana|default:0 }} publicaci{{ categoria_actual.publicaciones_semana|default:0|pluralize:"ón,ones" }} esta semana</span>
+<div class="app-feed-container">
+    <!-- 1. Cabecera compacta (<= 120px) -->
+    <header class="card border mb-3 bg-surface shadow-none community-header-compact">
+        <div class="card-body p-3 p-md-4">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3 min-w-0">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+                         style="width: 52px; height: 52px; font-size: 1.25rem;">
+                        c/
+                    </div>
+                    <div class="min-w-0">
+                        <div class="d-flex align-items-center gap-2">
+                            <h1 class="h4 fw-bold mb-0 text-truncate">c/{{ categoria_actual.nombre }}</h1>
+                        </div>
+                        <div class="text-secondary small text-truncate mt-1">
+                            <span>
+                                <strong data-miembros-count="{{ categoria_actual.slug }}">{{ categoria_actual.total_miembros|default:0 }}</strong>
+                                miembro{{ categoria_actual.total_miembros|default:0|pluralize }}
+                            </span>
+                            <span class="mx-1">&bull;</span>
+                            <span>{{ categoria_actual.publicaciones_semana|default:0 }} publicaci{{ categoria_actual.publicaciones_semana|default:0|pluralize:"ón,ones" }} esta semana</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                {% if user.is_authenticated %}
-                    <a href="{% url 'blog:panel_post_create' %}?categoria={{ categoria_actual.slug }}"
-                       class="btn btn-outline-secondary rounded-pill px-3 fw-semibold"
-                       aria-label="Crear post en {{ categoria_actual.nombre }}">
-                        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Crear post
-                    </a>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    {% if user.is_authenticated %}
+                        <form method="post"
+                              action="{% url 'blog:categoria_unirse_toggle' categoria_actual.slug %}"
+                              data-ajax-unirse
+                              data-categoria-slug="{{ categoria_actual.slug }}"
+                              class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit"
+                                    class="btn-forum {% if es_miembro_categoria %}btn-forum-outline active{% else %}btn-forum-primary{% endif %}"
+                                    aria-label="{% if es_miembro_categoria %}Salir de {{ categoria_actual.nombre }}{% else %}Unirse a {{ categoria_actual.nombre }}{% endif %}"
+                                    aria-pressed="{% if es_miembro_categoria %}true{% else %}false{% endif %}">
+                                <i class="bi {% if es_miembro_categoria %}bi-check-lg{% else %}bi-plus-lg{% endif %} me-1" data-unirse-icon aria-hidden="true"></i>
+                                <span data-unirse-label>{% if es_miembro_categoria %}Unido{% else %}Únete{% endif %}</span>
+                            </button>
+                        </form>
 
-                    <form method="post"
-                          action="{% url 'blog:categoria_unirse_toggle' categoria_actual.slug %}"
-                          data-ajax-unirse
-                          data-categoria-slug="{{ categoria_actual.slug }}"
-                          class="d-inline">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                        <button type="submit"
-                                class="btn {% if es_miembro_categoria %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill px-4 fw-semibold"
-                                aria-label="{% if es_miembro_categoria %}Salir de {{ categoria_actual.nombre }}{% else %}Unirse a {{ categoria_actual.nombre }}{% endif %}"
-                                aria-pressed="{% if es_miembro_categoria %}true{% else %}false{% endif %}">
-                            <i class="bi {% if es_miembro_categoria %}bi-check-lg{% else %}bi-plus-lg{% endif %} me-1" data-unirse-icon aria-hidden="true"></i>
-                            <span data-unirse-label>{% if es_miembro_categoria %}Unido{% else %}Únete{% endif %}</span>
+                        <a href="{% url 'blog:panel_post_create' %}?categoria={{ categoria_actual.slug }}"
+                           hx-boost="false"
+                           class="btn-forum btn-forum-outline"
+                           aria-label="Escribir en {{ categoria_actual.nombre }}">
+                            <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>Escribir
+                        </a>
+                    {% else %}
+                        <button type="button" class="btn-forum btn-forum-primary btn-requiere-auth" data-action="unirse_categoria">
+                            <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Únete
                         </button>
-                    </form>
-                {% else %}
-                    <a href="{% url 'cuentas:login' %}?next={% url 'blog:panel_post_create' %}%3Fcategoria%3D{{ categoria_actual.slug|urlencode }}"
-                       class="btn btn-outline-secondary rounded-pill px-3 fw-semibold"
-                       aria-label="Iniciar sesión para crear un post en {{ categoria_actual.nombre }}">
-                        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Crear post
-                    </a>
-                    <a href="{% url 'cuentas:login' %}?next={{ request.get_full_path|urlencode }}"
-                       class="btn btn-primary rounded-pill px-4 fw-semibold"
-                       aria-label="Iniciar sesión para unirte a {{ categoria_actual.nombre }}">
-                        <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Únete
-                    </a>
-                {% endif %}
+                        <button type="button" class="btn-forum btn-forum-outline btn-requiere-auth" data-action="crear_post">
+                            <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>Escribir
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. Reglas en colapsable (si existen) -->
+    {% if reglas_categoria %}
+    <div class="mb-3">
+        <button class="btn btn-sm btn-forum-outline d-inline-flex align-items-center gap-2 mb-2"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapseReglasComunidad"
+                aria-expanded="false"
+                aria-controls="collapseReglasComunidad">
+            <i class="bi bi-shield-check text-primary" aria-hidden="true"></i>
+            <span>Reglas de la comunidad ({{ reglas_categoria|length }})</span>
+            <i class="bi bi-chevron-down small" aria-hidden="true"></i>
+        </button>
+
+        <div class="collapse" id="collapseReglasComunidad">
+            <div class="card border bg-surface p-3 shadow-none mb-3">
+                <ol class="mb-0 ps-3">
+                    {% for regla in reglas_categoria %}
+                        <li class="mb-2">
+                            <strong class="text-body">{{ regla.titulo }}</strong>
+                            {% if regla.descripcion %}
+                                <div class="small text-secondary mt-1">{{ regla.descripcion }}</div>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ol>
             </div>
         </div>
     </div>
-</section>
+    {% endif %}
 
-<!-- Posts fijados o respaldo de los 3 más populares de la categoría -->
-{% if posts_destacados_categoria %}
-<section class="mb-4" aria-label="{% if es_respaldo_populares %}Posts populares de la comunidad{% else %}Posts fijados de la comunidad{% endif %}">
-    <div class="d-flex align-items-center gap-2 mb-2">
-        {% if es_respaldo_populares %}
-            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1">
-                <i class="bi bi-fire me-1" aria-hidden="true"></i>Populares
-            </span>
-            <h2 class="h6 fw-bold mb-0 text-muted">Artículos más populares en {{ categoria_actual.nombre }}</h2>
-        {% else %}
-            <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle rounded-pill px-2 py-1">
+    <!-- 3. Publicaciones fijadas arriba -->
+    {% if posts_destacados_categoria %}
+    <section class="mb-3" aria-label="Publicaciones fijadas en {{ categoria_actual.nombre }}">
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-1">
                 <i class="bi bi-pin-angle-fill me-1" aria-hidden="true"></i>Fijados
             </span>
-            <h2 class="h6 fw-bold mb-0 text-muted">Posts destacados de la comunidad</h2>
-        {% endif %}
-    </div>
+            <h2 class="h6 fw-bold mb-0 text-muted">Destacados de la comunidad</h2>
+        </div>
+        <div class="feed-list mb-3">
+            {% for post in posts_destacados_categoria %}
+                {% include "blog/includes/_fila_post.html" with post=post %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
 
-    <div class="pinned-posts-scroll">
-        {% for p_dest in posts_destacados_categoria %}
-            <div class="pinned-post-col">
-                <article class="card h-100 pinned-post-card rounded-3 p-3">
-                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                        <span class="small text-muted d-flex align-items-center gap-1">
-                            {% if not es_respaldo_populares %}
-                                <i class="bi bi-pin-angle-fill text-primary" aria-hidden="true" title="Fijado en la categoría"></i>
-                            {% else %}
-                                <i class="bi bi-fire text-danger" aria-hidden="true" title="Popular en la categoría"></i>
-                            {% endif %}
-                            <span>{{ p_dest.autor.nombre_mostrar }}</span>
-                        </span>
-                        <span class="small text-muted">{{ p_dest.publicado_en|default:p_dest.creado|date:"d M" }}</span>
-                    </div>
-                    <h3 class="h6 fw-bold mb-2 line-clamp-2" title="{{ p_dest.titulo }}">
-                        <a href="{{ p_dest.get_absolute_url }}" class="text-body text-decoration-none stretched-link">
-                            {{ p_dest.titulo }}
-                        </a>
-                    </h3>
-                    <div class="mt-auto pt-2 d-flex align-items-center justify-content-between small text-muted">
-                        <span>
-                            <i class="bi bi-heart-fill text-danger me-1" aria-hidden="true"></i>{{ p_dest.total_likes|default:0 }}
-                            &bull;
-                            <i class="bi bi-chat-left-text ms-1 me-1" aria-hidden="true"></i>{{ p_dest.total_comentarios_aprobados|default:0 }}
-                        </span>
-                        <span>{{ p_dest.tiempo_lectura }} min</span>
-                    </div>
-                </article>
-            </div>
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
-
-<div class="row g-4">
-    <!-- Columna principal de artículos (con selector de Orden y Vista Tarjetas | Compacta) -->
-    <div class="col-lg-8">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-2 border-bottom">
-            <!-- Selector de orden: Mejores / Recientes / Más útiles -->
-            <div class="btn-group btn-group-sm" role="group" aria-label="Ordenar publicaciones de la comunidad">
-                <a href="{% query_transform orden='mejores' page=None %}"
-                   class="btn {% if orden_actual == 'mejores' or orden_actual == 'populares' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-                    <i class="bi bi-fire me-1" aria-hidden="true"></i>Mejores
-                </a>
-                <a href="{% query_transform orden='recientes' page=None %}"
-                   class="btn {% if orden_actual == 'recientes' or not orden_actual %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-                    <i class="bi bi-clock me-1" aria-hidden="true"></i>Recientes
-                </a>
-                <a href="{% query_transform orden='utiles' page=None %}"
-                   class="btn {% if orden_actual == 'utiles' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-                    <i class="bi bi-hand-thumbs-up me-1" aria-hidden="true"></i>Más útiles
-                </a>
-            </div>
-
-            <!-- Selector de vista: Tarjetas | Compacta -->
-            <div class="btn-group btn-group-sm" role="group" aria-label="Cambiar modo de visualización">
-                <button type="button"
-                        class="btn btn-primary"
-                        data-category-view-toggle="tarjetas"
-                        aria-pressed="true"
-                        aria-label="Vista de tarjetas">
-                    <i class="bi bi-grid-fill me-1" aria-hidden="true"></i>Tarjetas
-                </button>
-                <button type="button"
-                        class="btn btn-outline-secondary"
-                        data-category-view-toggle="compacta"
-                        aria-pressed="false"
-                        aria-label="Vista compacta">
-                    <i class="bi bi-view-list me-1" aria-hidden="true"></i>Compacta
-                </button>
-            </div>
+    <!-- 4. Barra de Filtros / Orden del Feed -->
+    <div class="feed-toolbar mb-3">
+        <div class="feed-tabs" role="tablist" aria-label="Ordenar publicaciones de la comunidad">
+            <a href="{% query_transform orden='mejores' page=None %}"
+               class="feed-tab {% if orden_actual == 'mejores' or orden_actual == 'populares' %}active{% endif %}"
+               role="tab"
+               aria-selected="{% if orden_actual == 'mejores' or orden_actual == 'populares' %}true{% else %}false{% endif %}">
+                <i class="bi bi-trophy" aria-hidden="true"></i>
+                <span>Mejores</span>
+            </a>
+            <a href="{% query_transform orden='recientes' page=None %}"
+               class="feed-tab {% if orden_actual == 'recientes' or not orden_actual %}active{% endif %}"
+               role="tab"
+               aria-selected="{% if orden_actual == 'recientes' or not orden_actual %}true{% else %}false{% endif %}">
+                <i class="bi bi-clock" aria-hidden="true"></i>
+                <span>Recientes</span>
+            </a>
+            <a href="{% query_transform orden='utiles' page=None %}"
+               class="feed-tab {% if orden_actual == 'utiles' %}active{% endif %}"
+               role="tab"
+               aria-selected="{% if orden_actual == 'utiles' %}true{% else %}false{% endif %}">
+                <i class="bi bi-hand-thumbs-up" aria-hidden="true"></i>
+                <span>Más útiles</span>
+            </a>
         </div>
 
-        {% if posts_cuadricula %}
-            <div id="category-posts-wrapper" class="category-posts-wrapper" data-view-mode="tarjetas">
-                <script>
-                    (function() {
-                        try {
-                            var m = localStorage.getItem('blog_categoria_vista');
-                            if (m === 'compacta' || m === 'tarjetas') {
-                                document.getElementById('category-posts-wrapper').setAttribute('data-view-mode', m);
-                            }
-                        } catch (e) {}
-                    })();
-                </script>
+        <div class="feed-actions">
+            <!-- Alternador de vista: Compacta / Tarjetas -->
+            <button type="button"
+                    class="btn-icon"
+                    id="btn-vista-toggle"
+                    aria-label="Alternar vista compacta o tarjetas"
+                    title="Alternar entre vista compacta y tarjetas">
+                <i class="bi bi-view-list" id="icono-vista-toggle" aria-hidden="true"></i>
+            </button>
+        </div>
+    </div>
 
-                <!-- 1. Vista en Tarjetas -->
-                <div class="row row-cols-1 row-cols-md-2 g-4 category-view-cards">
-                    {% for post in posts_cuadricula %}
-                        <div class="col">
-                            <article class="card h-100 post-card border-0">
-                                <a href="{% url 'blog:post_detail' post.slug %}" class="text-decoration-none d-block" tabindex="-1" aria-hidden="true">
-                                    {% portada_post post %}
-                                </a>
+    <!-- 5. Listado del Feed de la Comunidad -->
+    {% if posts %}
+        <div class="feed-list" id="feed-comunidad">
+            {% for post in posts %}
+                {% include "blog/includes/_fila_post.html" with post=post %}
+            {% endfor %}
+        </div>
 
-                                <div class="card-body d-flex flex-column p-4">
-                                    <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
-                                        <span class="badge-categoria">{{ categoria_actual.nombre }}</span>
-                                        <span class="text-muted small">
-                                            {{ post.publicado_en|default:post.creado|date:"d M Y" }}
-                                        </span>
-                                    </div>
-
-                                    <h2 class="h5 card-title fw-bold mb-2">
-                                        <a href="{% url 'blog:post_detail' post.slug %}"
-                                           class="text-body text-decoration-none line-clamp-2"
-                                           title="{{ post.titulo }}">
-                                            {{ post.titulo }}
-                                        </a>
-                                    </h2>
-
-                                    <p class="card-text text-secondary small flex-grow-1 mb-3">
-                                        {{ post.contenido|extracto_plano:160 }}
-                                    </p>
-
-                                    <div class="d-flex flex-wrap align-items-center gap-3 small text-muted mb-3">
-                                        <span title="Tiempo estimado de lectura">
-                                            <i class="bi bi-clock me-1" aria-hidden="true"></i>{{ post.tiempo_lectura }} min
-                                        </span>
-                                        <span title="Comentarios aprobados">
-                                            <i class="bi bi-chat-left-text me-1" aria-hidden="true"></i>{{ post.total_comentarios_aprobados|default:0 }}
-                                        </span>
-                                        {% if post.total_vistas %}
-                                            <span title="Vistas registradas">
-                                                <i class="bi bi-eye me-1" aria-hidden="true"></i>{{ post.total_vistas }}
-                                            </span>
-                                        {% endif %}
-                                    </div>
-
-                                    <div class="pt-3 border-top mt-auto d-flex justify-content-between align-items-center gap-2 post-card-footer">
-                                        <div class="author-meta-block">
-                                            <a href="{% url 'blog:autor_detail' post.autor.usuario.username %}"
-                                               class="author-name-link small">
-                                                {% avatar post.autor 32 %}
-                                                <span class="author-name-text">{{ post.autor.nombre_mostrar }}</span>
-                                            </a>
-                                            <div class="author-badge-container">{% insignia post.autor %}</div>
-                                        </div>
-
-                                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
-                                            <form method="post" action="{% url 'blog:post_like_toggle' post.slug %}" data-ajax-like class="d-inline">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                                <button type="submit"
-                                                        class="btn btn-sm {% if post.ya_dio_like %}btn-danger{% else %}btn-outline-danger{% endif %} rounded-pill px-2 py-1"
-                                                        aria-label="Me gusta en {{ post.titulo }}"
-                                                        aria-pressed="{% if post.ya_dio_like %}true{% else %}false{% endif %}">
-                                                    <i class="bi {% if post.ya_dio_like %}bi-heart-fill{% else %}bi-heart{% endif %}" data-like-icon aria-hidden="true"></i>
-                                                    <span data-like-count class="small ms-1">{{ post.total_likes|default:0 }}</span>
-                                                </button>
-                                            </form>
-                                            {% include "blog/includes/share_dropdown.html" with post=post btn_class="btn-sm btn-outline-secondary rounded-pill px-2 py-1" hide_label=True %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </article>
-                        </div>
-                    {% endfor %}
-                </div>
-
-                <!-- 2. Vista Compacta (una fila por post con miniatura pequeña, título y línea de metadatos) -->
-                <div class="vstack gap-2 category-view-compact">
-                    {% for post in posts_cuadricula %}
-                        <article class="compact-post-row p-3 d-flex align-items-center justify-content-between gap-3">
-                            <div class="d-flex align-items-center gap-3 min-w-0 flex-grow-1">
-                                <a href="{{ post.get_absolute_url }}" class="text-decoration-none flex-shrink-0" tabindex="-1" aria-hidden="true">
-                                    {% miniatura_post post 64 %}
-                                </a>
-                                <div class="min-w-0 flex-grow-1">
-                                    <h2 class="h6 fw-bold mb-1 line-clamp-2" title="{{ post.titulo }}">
-                                        <a href="{{ post.get_absolute_url }}" class="text-body text-decoration-none">
-                                            {{ post.titulo }}
-                                        </a>
-                                    </h2>
-                                    <div class="small text-muted d-flex flex-wrap align-items-center gap-2">
-                                        <a href="{{ post.autor.get_absolute_url }}" class="author-name-link text-decoration-none">
-                                            {{ post.autor.nombre_mostrar }}
-                                        </a>
-                                        <span>&bull;</span>
-                                        <span>{{ post.publicado_en|default:post.creado|date:"d M Y" }}</span>
-                                        <span>&bull;</span>
-                                        <span>{{ post.tiempo_lectura }} min</span>
-                                        <span>&bull;</span>
-                                        <span><i class="bi bi-heart-fill text-danger me-1" aria-hidden="true"></i>{{ post.total_likes|default:0 }}</span>
-                                        <span>&bull;</span>
-                                        <span><i class="bi bi-chat-left-text me-1" aria-hidden="true"></i>{{ post.total_comentarios_aprobados|default:0 }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </article>
-                    {% endfor %}
-                </div>
-            </div>
-
+        <div class="mt-4">
             {% include "blog/includes/pagination.html" %}
-        {% else %}
-            <div class="empty-state my-3">
-                <svg width="104" height="104" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                </svg>
-                <h2 class="h5 fw-bold">No hay artículos disponibles en esta comunidad</h2>
-                <p class="text-muted mb-3">
-                    Sé el primero en compartir un artículo en {{ categoria_actual.nombre }}.
-                </p>
-                <a href="{% url 'blog:panel_post_create' %}?categoria={{ categoria_actual.slug }}" class="btn btn-primary btn-sm">
-                    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Crear post
+        </div>
+    {% else %}
+        <div class="card p-5 text-center bg-surface border shadow-none my-3">
+            <div class="rounded-circle bg-body-secondary text-secondary d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 56px; height: 56px;">
+                <i class="bi bi-chat-square-text fs-4" aria-hidden="true"></i>
+            </div>
+            <h2 class="h5 fw-bold mb-2">No hay publicaciones en esta comunidad</h2>
+            <p class="text-secondary small mb-3">Sé la primera persona en abrir un debate o compartir un artículo técnico.</p>
+            <div>
+                <a href="{% url 'blog:panel_post_create' %}?categoria={{ categoria_actual.slug }}" hx-boost="false" class="btn-forum btn-forum-primary d-inline-flex">
+                    <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>Escribir primera publicación
                 </a>
             </div>
-        {% endif %}
-    </div>
-
-    <!-- Barra lateral de la Comunidad -->
-    <aside class="col-lg-4" aria-label="Información de la comunidad {{ categoria_actual.nombre }}">
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-body p-4">
-                <h2 class="h6 fw-bold text-uppercase mb-2">Acerca de {{ categoria_actual.nombre }}</h2>
-                <p class="text-secondary small mb-3">
-                    {{ categoria_actual.descripcion|default:"Comunidad técnica dedicada a compartir artículos, guías prácticas y experiencias sobre este tema." }}
-                </p>
-
-                <div class="small text-muted mb-3 d-flex align-items-center gap-2">
-                    <i class="bi bi-calendar-event" aria-hidden="true"></i>
-                    <span>Creada el {{ categoria_actual.creada|date:"d M Y" }}</span>
-                </div>
-
-                <!-- Métricas de la comunidad -->
-                <div class="row g-2 text-center py-3 border-top border-bottom mb-3">
-                    <div class="col-4">
-                        <div class="fw-bold fs-6" data-miembros-count="{{ categoria_actual.slug }}">{{ categoria_actual.total_miembros|default:0 }}</div>
-                        <div class="text-muted" style="font-size: 0.74rem;">Miembros</div>
-                    </div>
-                    <div class="col-4 border-start border-end">
-                        <div class="fw-bold fs-6">{{ categoria_actual.vistas_semana|default:0 }}</div>
-                        <div class="text-muted" style="font-size: 0.74rem;">Vistas esta semana</div>
-                    </div>
-                    <div class="col-4">
-                        <div class="fw-bold fs-6">{{ categoria_actual.publicaciones_semana|default:0 }}</div>
-                        <div class="text-muted" style="font-size: 0.74rem;">Posts esta semana</div>
-                    </div>
-                </div>
-
-                <!-- Enlaces rápidos: RSS de la categoría, suscripción por correo y Mis listas -->
-                <h3 class="h6 fw-bold text-uppercase small text-muted mb-2">Enlaces rápidos</h3>
-                <div class="d-grid gap-2 mb-3">
-                    <a href="{% url 'blog:categoria_rss_feed' categoria_actual.slug %}"
-                       class="btn btn-sm btn-outline-secondary text-start">
-                        <i class="bi bi-rss-fill text-warning me-2" aria-hidden="true"></i>Canal RSS de {{ categoria_actual.nombre }}
-                    </a>
-                    <a href="{% url 'blog:mis_listas' %}"
-                       class="btn btn-sm btn-outline-secondary text-start">
-                        <i class="bi bi-bookmarks text-primary me-2" aria-hidden="true"></i>Mis listas de lectura
-                    </a>
-                </div>
-
-                {% if form_suscripcion %}
-                <div class="pt-3 border-top">
-                    <h3 class="h6 fw-bold small mb-1">
-                        <i class="bi bi-envelope-paper-heart text-primary me-1" aria-hidden="true"></i>Suscripción por correo
-                    </h3>
-                    <p class="text-muted mb-2" style="font-size: 0.78rem;">
-                        Recibe un aviso por correo cada vez que se publique en {{ categoria_actual.nombre }}.
-                    </p>
-                    <form method="post" action="{% url 'blog:suscripcion_crear' %}" class="vstack gap-2">
-                        {% csrf_token %}
-                        <input type="hidden" name="categoria_id" value="{{ categoria_actual.pk }}">
-                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                        {{ form_suscripcion.sitio_web }}
-                        <input type="email" name="email" class="form-control form-control-sm"
-                               placeholder="tu@correo.com"
-                               aria-label="Correo para suscribirte a {{ categoria_actual.nombre }}"
-                               value="{{ form_suscripcion.email.value|default:'' }}" required>
-                        <button type="submit" class="btn btn-sm btn-primary w-100">
-                            <i class="bi bi-send me-1" aria-hidden="true"></i>Suscribirme por correo
-                        </button>
-                    </form>
-                </div>
-                {% endif %}
-            </div>
         </div>
-
-        <!-- Reglas de la comunidad (acordeón accordion-flush; solo se muestra si hay reglas) -->
-        {% if reglas_categoria %}
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-body p-4">
-                <h2 class="h6 fw-bold text-uppercase mb-3">
-                    <i class="bi bi-shield-check text-primary me-1" aria-hidden="true"></i>Reglas de {{ categoria_actual.nombre }}
-                </h2>
-                <div class="accordion accordion-flush" id="accordionReglasCategoria">
-                    {% for regla in reglas_categoria %}
-                        <div class="accordion-item bg-transparent">
-                            <h3 class="accordion-header" id="headingRegla{{ regla.pk }}">
-                                <button class="accordion-button collapsed px-0 py-2 bg-transparent fw-semibold small"
-                                        type="button"
-                                        data-bs-toggle="collapse"
-                                        data-bs-target="#collapseRegla{{ regla.pk }}"
-                                        aria-expanded="false"
-                                        aria-controls="collapseRegla{{ regla.pk }}">
-                                    <span class="me-2 text-primary">{{ regla.orden }}.</span>
-                                    <span>{{ regla.titulo }}</span>
-                                </button>
-                            </h3>
-                            <div id="collapseRegla{{ regla.pk }}"
-                                 class="accordion-collapse collapse"
-                                 aria-labelledby="headingRegla{{ regla.pk }}"
-                                 data-bs-parent="#accordionReglasCategoria">
-                                <div class="accordion-body px-0 py-2 small text-secondary">
-                                    {{ regla.descripcion|default:regla.titulo }}
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        {% include "blog/includes/widget_descubrir_comunidades.html" %}
-    </aside>
+    {% endif %}
 </div>
 {% endblock %}
 
+{% block sidebar_right %}
+<!-- Barra lateral específica de la Comunidad -->
+<div class="card border mb-3 shadow-none bg-surface">
+    <div class="card-body p-3">
+        <h2 class="h6 fw-bold mb-2 d-flex align-items-center gap-2">
+            <i class="bi bi-info-circle text-primary" aria-hidden="true"></i>
+            <span>Acerca de c/{{ categoria_actual.nombre }}</span>
+        </h2>
+        <p class="small text-secondary mb-3">
+            {{ categoria_actual.descripcion|default:"Comunidad técnica dedicada a compartir artículos, guías prácticas y experiencias sobre este tema." }}
+        </p>
+
+        <div class="small text-muted mb-3 d-flex align-items-center gap-2">
+            <i class="bi bi-calendar-event" aria-hidden="true"></i>
+            <span>Creada el {{ categoria_actual.creada|date:"d M Y" }}</span>
+        </div>
+
+        <!-- Métricas -->
+        <div class="row g-2 text-center py-2 border-top border-bottom mb-3">
+            <div class="col-6">
+                <div class="fw-bold fs-6" data-miembros-count="{{ categoria_actual.slug }}">{{ categoria_actual.total_miembros|default:0 }}</div>
+                <div class="text-muted small">Miembros</div>
+            </div>
+            <div class="col-6 border-start">
+                <div class="fw-bold fs-6">{{ categoria_actual.publicaciones_semana|default:0 }}</div>
+                <div class="text-muted small">Posts semana</div>
+            </div>
+        </div>
+
+        <div class="d-grid gap-2">
+            <a href="{% url 'blog:categoria_rss_feed' categoria_actual.slug %}"
+               class="btn-forum btn-forum-outline justify-content-center btn-sm text-decoration-none">
+                <i class="bi bi-rss-fill text-warning me-2" aria-hidden="true"></i>Canal RSS de la comunidad
+            </a>
+        </div>
+
+        {% if form_suscripcion %}
+        <div class="pt-3 border-top mt-3">
+            <h3 class="h6 fw-bold small mb-1">
+                <i class="bi bi-envelope-paper-heart text-primary me-1" aria-hidden="true"></i>Suscripción por correo
+            </h3>
+            <p class="text-muted mb-2" style="font-size: 0.78rem;">
+                Recibe un aviso por correo cada vez que se publique en esta comunidad.
+            </p>
+            <form method="post" action="{% url 'blog:suscripcion_crear' %}" class="vstack gap-2">
+                {% csrf_token %}
+                <input type="hidden" name="categoria_id" value="{{ categoria_actual.pk }}">
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                {{ form_suscripcion.sitio_web }}
+                <input type="email" name="email" class="form-control form-control-sm"
+                       placeholder="tu@correo.com"
+                       aria-label="Correo para suscribirte a {{ categoria_actual.nombre }}"
+                       value="{{ form_suscripcion.email.value|default:'' }}" required>
+                <button type="submit" class="btn-forum btn-forum-primary btn-sm justify-content-center">
+                    <i class="bi bi-send me-1" aria-hidden="true"></i>Suscribirme
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% include "blog/includes/widget_descubrir_comunidades.html" %}
+{% endblock sidebar_right %}

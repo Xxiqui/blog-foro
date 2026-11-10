@@ -2,6 +2,11 @@
 {% load blog_extras %}
 
 {% block title %}{% if object %}Editar Post{% else %}Nuevo Post{% endif %} | Panel de Autor{% endblock %}
+{% block body_hx_boost %}hx-boost="false"{% endblock %}
+{% block app_body_class %}app-body--plano{% endblock %}
+{% block nav_left %}{% endblock %}
+{% block sidebar_right %}{% endblock %}
+
 
 {% block extra_head %}
     {{ form.media }}

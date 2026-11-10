@@ -2773,5 +2773,123 @@ class ForoAdaptableFase5Tests(TestCase):
         self.assertEqual(data_u['total_miembros'], 1)
 
 
+class ForoAdaptableFase6Tests(TestCase):
+    """Pruebas de la Fase 6: Páginas de apoyo (explorar, comunidad, autor, páginas planas)."""
+
+    def setUp(self):
+        cache.clear()
+        from cuentas.models import Perfil
+        self.autor_user = User.objects.create_user(
+            username='ana_autora',
+            first_name='Ana',
+            last_name='García',
+            email='ana@example.com',
+            password='Password123!',
+        )
+        self.autor_perfil, _ = Perfil.objects.get_or_create(usuario=self.autor_user)
+        self.lector_user = User.objects.create_user(
+            username='lector_fase6',
+            first_name='Lector',
+            last_name='Fase6',
+            email='lector6@example.com',
+            password='Password123!',
+        )
+        self.categoria = Categoria.objects.create(
+            nombre='DevOps y Cloud',
+            slug='devops-cloud',
+            descripcion='Todo sobre infraestructura y Kubernetes.',
+        )
+        self.regla = ReglaCategoria.objects.create(
+            categoria=self.categoria,
+            titulo='Respeto mutuo',
+            descripcion='Mantén discusiones constructivas.',
+            orden=1,
+        )
+        self.post1 = Post.objects.create(
+            titulo='Guía de Terraform y Docker',
+            slug='guia-terraform-docker',
+            autor=self.autor_perfil,
+            categoria=self.categoria,
+            contenido='Contenido completo sobre infraestructura como código.',
+            estado=Post.Estado.PUBLICADO,
+            fijado_en_categoria=True,
+        )
+        self.comentario = Comentario.objects.create(
+            post=self.post1,
+            autor=self.autor_user,
+            nombre='Ana García',
+            email='ana@example.com',
+            texto='Mi comentario técnico sobre Terraform.',
+            aprobado=True,
+        )
+
+    def test_explorar_view(self):
+        """Verifica que /explorar/ reúna comunidades, tendencias y autores."""
+        resp = self.client.get(reverse('blog:explorar'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('comunidades', resp.context)
+        self.assertIn('posts_tendencia', resp.context)
+        self.assertIn('etiquetas_tendencia', resp.context)
+        self.assertIn('autores', resp.context)
+        self.assertContains(resp, 'Comunidades activas')
+        self.assertContains(resp, 'Tendencias de la semana')
+        self.assertContains(resp, 'Autores para seguir')
+
+    def test_categoria_hub_view(self):
+        """Verifica la cabecera compacta <= 120px, reglas colapsables y publicaciones fijadas."""
+        url = reverse('blog:posts_por_categoria', kwargs={'slug': self.categoria.slug})
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'c/DevOps y Cloud')
+        self.assertContains(resp, 'data-miembros-count')
+        self.assertContains(resp, 'Reglas de la comunidad')
+        self.assertContains(resp, 'Fijados')
+        self.assertContains(resp, 'Guía de Terraform y Docker')
+
+    def test_autor_detail_tabs(self):
+        """Verifica el perfil de autor con pestañas: publicaciones, comentarios y guardados."""
+        url = reverse('blog:autor_detail', kwargs={'username': self.autor_user.username})
+
+        # 1. Pestaña publicaciones (por defecto)
+        resp_pub = self.client.get(url)
+        self.assertEqual(resp_pub.status_code, 200)
+        self.assertEqual(resp_pub.context['tab_actual'], 'publicaciones')
+        self.assertContains(resp_pub, 'Guía de Terraform y Docker')
+
+        # 2. Pestaña comentarios
+        resp_com = self.client.get(url, {'tab': 'comentarios'})
+        self.assertEqual(resp_com.status_code, 200)
+        self.assertEqual(resp_com.context['tab_actual'], 'comentarios')
+        self.assertContains(resp_com, 'Mi comentario técnico sobre Terraform')
+
+        # 3. Pestaña guardados como dueño
+        self.client.login(username='ana_autora', password='Password123!')
+        resp_guard = self.client.get(url, {'tab': 'guardados'})
+        self.assertEqual(resp_guard.status_code, 200)
+        self.assertEqual(resp_guard.context['tab_actual'], 'guardados')
+
+        # 4. Pestaña guardados como otro usuario no dueño: redirige a publicaciones
+        self.client.login(username='lector_fase6', password='Password123!')
+        resp_otro = self.client.get(url, {'tab': 'guardados'})
+        self.assertEqual(resp_otro.status_code, 200)
+        self.assertEqual(resp_otro.context['tab_actual'], 'publicaciones')
+
+    def test_paginas_planas_sin_rails(self):
+        """Verifica que panel y páginas estáticas apliquen app-body--plano sin raíles laterales."""
+        # Panel
+        self.client.login(username='ana_autora', password='Password123!')
+        resp_panel = self.client.get(reverse('blog:panel_dashboard'))
+        self.assertEqual(resp_panel.status_code, 200)
+        self.assertContains(resp_panel, 'app-body--plano')
+        self.assertNotContains(resp_panel, 'app-nav-left')
+
+        # Página estática acerca
+        resp_acerca = self.client.get(reverse('blog:acerca'))
+        self.assertEqual(resp_acerca.status_code, 200)
+        self.assertContains(resp_acerca, 'app-body--plano')
+        self.assertNotContains(resp_acerca, 'app-nav-left')
+
+
+
 
 
