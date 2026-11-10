@@ -29,7 +29,7 @@
     }
 
     // 2. Mostrar avisos con Toasts de Bootstrap 5
-    function mostrarToast(mensaje, variante = 'primary') {
+    function mostrarToast(mensaje, variante = 'primary', accion = null) {
         const contenedor = document.getElementById('toast-container');
         if (!contenedor || !mensaje) return;
 
@@ -40,20 +40,44 @@
         toastEl.setAttribute('aria-atomic', 'true');
 
         toastEl.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body fw-semibold"></div>
+            <div class="d-flex align-items-center">
+                <div class="toast-body fw-semibold py-2"></div>
+                <div class="toast-actions ms-auto d-flex align-items-center gap-1 pe-2"></div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
             </div>
         `;
         toastEl.querySelector('.toast-body').textContent = mensaje;
+        const actionsBox = toastEl.querySelector('.toast-actions');
+
+        if (accion && accion.texto && typeof accion.callback === 'function') {
+            const btnAccion = document.createElement('button');
+            btnAccion.type = 'button';
+            btnAccion.className = 'btn btn-sm btn-light py-0 px-2 fw-bold text-dark';
+            btnAccion.textContent = accion.texto;
+            btnAccion.addEventListener('click', () => {
+                accion.callback();
+                const bsToast = window.bootstrap && window.bootstrap.Toast ? window.bootstrap.Toast.getInstance(toastEl) : null;
+                if (bsToast) bsToast.hide();
+            });
+            actionsBox.appendChild(btnAccion);
+        }
+
+        if (accion && accion.enlaceTexto && accion.enlaceUrl) {
+            const link = document.createElement('a');
+            link.href = accion.enlaceUrl;
+            link.className = 'btn btn-sm btn-outline-light py-0 px-2 small text-decoration-none';
+            link.textContent = accion.enlaceTexto;
+            actionsBox.appendChild(link);
+        }
+
         contenedor.appendChild(toastEl);
 
         if (window.bootstrap && window.bootstrap.Toast) {
-            const toast = new window.bootstrap.Toast(toastEl, { delay: 3500 });
+            const toast = new window.bootstrap.Toast(toastEl, { delay: 4500 });
             toast.show();
             toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
         } else {
-            setTimeout(() => toastEl.remove(), 3500);
+            setTimeout(() => toastEl.remove(), 4500);
         }
     }
 
@@ -280,7 +304,7 @@
         });
     }
 
-    // 5d. Manejador de botón Guardar en "Guardados" (marcador)
+    // 5d. Manejador de botón Guardar en "Guardados" (marcador con deshacer)
     function inicializarGuardarPost() {
         document.querySelectorAll('form[data-ajax-guardar]').forEach((form) => {
             form.addEventListener('submit', async function (e) {
@@ -307,7 +331,18 @@
                         label.textContent = activo ? 'Guardado' : 'Guardar';
                     }
 
-                    mostrarToast(data.mensaje || (activo ? 'Guardado en tu lista Guardados.' : 'Quitado de tu lista Guardados.'), 'primary');
+                    if (activo) {
+                        mostrarToast('Guardado en tus artículos', 'primary', {
+                            texto: 'Deshacer',
+                            callback: () => {
+                                form.dispatchEvent(new Event('submit', { cancelable: true }));
+                            },
+                            enlaceTexto: 'Ver guardados',
+                            enlaceUrl: '/guardados/',
+                        });
+                    } else {
+                        mostrarToast('Quitado de tus guardados', 'secondary');
+                    }
                 } finally {
                     btn.disabled = false;
                 }
@@ -317,6 +352,43 @@
 
     // 6. Botones de compartir (Copiar enlace y Web Share API móvil)
     function inicializarCompartir() {
+        // Manejador centralizado para botones .btn-compartir (feed, artículo y tarjetas)
+        document.addEventListener('click', async function (e) {
+            const btn = e.target.closest('.btn-compartir');
+            if (!btn) return;
+            e.preventDefault();
+            const url = btn.getAttribute('data-url') || window.location.href;
+            const titulo = btn.getAttribute('data-titulo') || document.title;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: titulo,
+                        url: url,
+                    });
+                    return;
+                } catch (err) {
+                    if (err.name === 'AbortError') return;
+                }
+            }
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(url);
+                } else {
+                    const temp = document.createElement('input');
+                    temp.value = url;
+                    document.body.appendChild(temp);
+                    temp.select();
+                    document.execCommand('copy');
+                    temp.remove();
+                }
+                mostrarToast('¡Enlace copiado al portapapeles!', 'success');
+            } catch (_) {
+                mostrarToast('Enlace: ' + url, 'info');
+            }
+        });
+
         document.querySelectorAll('[data-copy-url]').forEach((btn) => {
             btn.addEventListener('click', async function () {
                 const url = btn.getAttribute('data-copy-url');

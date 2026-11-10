@@ -2669,4 +2669,109 @@ class ForoAdaptableFase4Tests(TestCase):
         self.assertContains(resp, 'Iniciar sesión para comentar')
 
 
+class ForoAdaptableFase5Tests(TestCase):
+    """Pruebas de la Fase 5: Interacciones transversales y notificaciones."""
+
+    def setUp(self):
+        cache.clear()
+        from cuentas.models import Perfil
+        self.user = User.objects.create_user(
+            username='user_fase5',
+            email='user5@example.com',
+            password='Password123!',
+        )
+        self.perfil, _ = Perfil.objects.get_or_create(usuario=self.user)
+
+        self.autor_user = User.objects.create_user(
+            username='autor_fase5',
+            email='autor5@example.com',
+            password='Password123!',
+        )
+        self.autor_perfil, _ = Perfil.objects.get_or_create(usuario=self.autor_user)
+
+        self.categoria = Categoria.objects.create(
+            nombre='Comunidad Fase 5',
+            slug='comunidad-fase-5'
+        )
+        self.post = Post.objects.create(
+            titulo='Post para Pruebas de Interacciones',
+            slug='post-para-pruebas-interacciones',
+            contenido='<p>Contenido interactivo</p>',
+            categoria=self.categoria,
+            autor=self.autor_perfil,
+            estado=Post.Estado.PUBLICADO,
+        )
+
+    def test_notificaciones_marcar_todas_y_vista_movil(self):
+        """Comprueba el listado de notificaciones y la acción de marcar todas como leídas."""
+        self.client.login(username='user_fase5', password='Password123!')
+
+        # Crear 2 notificaciones no leídas
+        Notificacion.objects.create(
+            destinatario=self.user,
+            tipo=Notificacion.Tipo.POST_NUEVO,
+            actor=self.autor_user,
+            post=self.post,
+            leida=False,
+        )
+        Notificacion.objects.create(
+            destinatario=self.user,
+            tipo=Notificacion.Tipo.SEGUIDOR_NUEVO,
+            actor=self.autor_user,
+            leida=False,
+        )
+
+        resp_list = self.client.get(reverse('blog:notificaciones_list'))
+        self.assertEqual(resp_list.status_code, 200)
+        self.assertContains(resp_list, 'Mis Notificaciones')
+        self.assertContains(resp_list, 'Marcar todas como leídas')
+
+        # Acción marcar todas
+        resp_post = self.client.post(reverse('blog:notificaciones_marcar_todas'))
+        self.assertEqual(resp_post.status_code, 302)
+        self.assertEqual(Notificacion.objects.filter(destinatario=self.user, leida=False).count(), 0)
+
+    def test_guardar_post_toggle_y_respuesta_json(self):
+        """Verifica que el toggle de guardar responda JSON adecuado para actualizar UI y toast."""
+        self.client.login(username='user_fase5', password='Password123!')
+        url = reverse('blog:post_guardar_toggle', kwargs={'slug': self.post.slug})
+
+        # Primer toggle: guarda
+        resp = self.client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(data['ok'])
+        self.assertTrue(data['activo'])
+
+        # Segundo toggle: desguarda
+        resp2 = self.client.post(url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(resp2.status_code, 200)
+        data2 = resp2.json()
+        self.assertTrue(data2['ok'])
+        self.assertFalse(data2['activo'])
+
+    def test_seguir_autor_y_unirse_comunidad_ajax(self):
+        """Verifica que seguir autor y unirse a comunidad devuelvan contadores instantáneos."""
+        self.client.login(username='user_fase5', password='Password123!')
+
+        # 1. Seguir autor
+        url_seguir = reverse('blog:autor_seguir_toggle', kwargs={'username': self.autor_user.username})
+        resp_seguir = self.client.post(url_seguir, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(resp_seguir.status_code, 200)
+        data_s = resp_seguir.json()
+        self.assertTrue(data_s['ok'])
+        self.assertTrue(data_s['activo'])
+        self.assertEqual(data_s['total'], 1)
+
+        # 2. Unirse a comunidad
+        url_unirse = reverse('blog:categoria_unirse_toggle', kwargs={'slug': self.categoria.slug})
+        resp_unirse = self.client.post(url_unirse, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(resp_unirse.status_code, 200)
+        data_u = resp_unirse.json()
+        self.assertTrue(data_u['ok'])
+        self.assertTrue(data_u['unido'])
+        self.assertEqual(data_u['total_miembros'], 1)
+
+
+
 
