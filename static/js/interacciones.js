@@ -947,15 +947,138 @@
         });
     }
 
+    function inicializarVotosOptimistas() {
+        document.addEventListener('click', async function (e) {
+            const btn = e.target.closest('.btn-voto:not(.btn-requiere-auth)');
+            if (!btn || btn.disabled) return;
+
+            const url = btn.getAttribute('data-url');
+            if (!url) return;
+
+            e.preventDefault();
+            const rail = btn.closest('.vote-rail');
+            const scoreEl = rail ? rail.querySelector('[data-vote-score]') : null;
+            const wasActive = btn.classList.contains('active');
+            const prevScore = scoreEl ? parseInt(scoreEl.textContent.trim() || '0', 10) : 0;
+            const optimisticScore = wasActive ? Math.max(0, prevScore - 1) : prevScore + 1;
+
+            // Actualización optimista
+            btn.classList.toggle('active', !wasActive);
+            btn.setAttribute('aria-pressed', !wasActive ? 'true' : 'false');
+            if (scoreEl) scoreEl.textContent = optimisticScore;
+
+            try {
+                const data = await enviarPostInteraccion(url);
+                if (data && data.ok) {
+                    const finalTotal = typeof data.total === 'number' ? data.total : (typeof data.total_likes === 'number' ? data.total_likes : optimisticScore);
+                    const finalActive = typeof data.activo === 'boolean' ? data.activo : (typeof data.liked === 'boolean' ? data.liked : !wasActive);
+                    btn.classList.toggle('active', finalActive);
+                    btn.setAttribute('aria-pressed', finalActive ? 'true' : 'false');
+                    if (scoreEl) scoreEl.textContent = finalTotal;
+                } else {
+                    btn.classList.toggle('active', wasActive);
+                    btn.setAttribute('aria-pressed', wasActive ? 'true' : 'false');
+                    if (scoreEl) scoreEl.textContent = prevScore;
+                    mostrarToast('No se pudo registrar el voto.', 'danger');
+                }
+            } catch (err) {
+                btn.classList.toggle('active', wasActive);
+                btn.setAttribute('aria-pressed', wasActive ? 'true' : 'false');
+                if (scoreEl) scoreEl.textContent = prevScore;
+                mostrarToast('Error de red al votar.', 'danger');
+            }
+        });
+    }
+
+    function inicializarPollingNovedadesFeed() {
+        const feedRoot = document.getElementById('feed-root-container');
+        if (!feedRoot) return;
+        const banner = document.getElementById('banner-nuevas-publicaciones');
+        const btnCargar = document.getElementById('btn-cargar-novedades');
+        const contadorTexto = document.getElementById('contador-novedades-texto');
+        const ultimoId = parseInt(feedRoot.getAttribute('data-ultimo-id') || '0', 10);
+        if (!ultimoId || !banner) return;
+
+        if (btnCargar) {
+            btnCargar.addEventListener('click', function () {
+                window.location.reload();
+            });
+        }
+
+        setInterval(async function () {
+            if (document.visibilityState !== 'visible') return;
+            try {
+                const resp = await fetch(`/feed/novedades/?ultimo_id=${ultimoId}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.nuevos_count > 0) {
+                        const n = data.nuevos_count;
+                        if (contadorTexto) {
+                            contadorTexto.textContent = n === 1 ? '1 publicación nueva' : `${n} publicaciones nuevas`;
+                        }
+                        banner.classList.remove('d-none');
+                    }
+                }
+            } catch (_) {}
+        }, 60000);
+    }
+
+    function inicializarRestauracionScroll() {
+        const feedContainer = document.getElementById('feed-posts-container');
+        if (!feedContainer) return;
+
+        window.addEventListener('beforeunload', function () {
+            try {
+                sessionStorage.setItem('feed_scroll_pos', window.scrollY.toString());
+                sessionStorage.setItem('feed_path', window.location.pathname + window.location.search);
+            } catch (_) {}
+        });
+
+        window.addEventListener('pageshow', function () {
+            try {
+                const savedPath = sessionStorage.getItem('feed_path');
+                const savedPos = sessionStorage.getItem('feed_scroll_pos');
+                if (savedPath === (window.location.pathname + window.location.search) && savedPos) {
+                    setTimeout(() => window.scrollTo({ top: parseInt(savedPos, 10), behavior: 'instant' }), 50);
+                }
+            } catch (_) {}
+        });
+    }
+
+    function inicializarCopiarEnlaceMenu() {
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn-copiar-enlace');
+            if (btn) {
+                e.preventDefault();
+                const url = btn.getAttribute('data-url') || window.location.href;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(url).then(() => {
+                        mostrarToast('¡Enlace copiado al portapapeles!', 'success');
+                    }).catch(() => {
+                        mostrarToast('Enlace: ' + url, 'info');
+                    });
+                } else {
+                    mostrarToast('Enlace: ' + url, 'info');
+                }
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         inicializarTema();
         inicializarLikes();
         inicializarVotosUtilidad();
+        inicializarVotosOptimistas();
         inicializarSeguimiento();
         inicializarUnirseCategoria();
         inicializarGuardarPost();
         inicializarCompartir();
         inicializarPollingNotificaciones();
+        inicializarPollingNovedadesFeed();
+        inicializarRestauracionScroll();
+        inicializarCopiarEnlaceMenu();
         inicializarAutocompletadoMenciones();
         inicializarVistaCategoria();
         inicializarComentariosAnidados();

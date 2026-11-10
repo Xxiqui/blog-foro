@@ -4,7 +4,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.core.cache import cache
 from django.core.mail import send_mail
+from django.db import connection
 from django.db.models import (
     BooleanField,
     Count,
@@ -91,15 +93,42 @@ from .templatetags.blog_extras import sanear_y_generar_toc
 User = get_user_model()
 
 
-def aplicar_orden_posts(qs, orden='recientes', mantener_orden_busqueda=False):
+def anotar_puntuacion_mejores(qs):
     """
-    Aplica el ordenamiento solicitado (`?orden=recientes|populares|utiles`) a un QuerySet de Post:
+    Calcula la puntuación con decaimiento temporal en SQL:
+    (votos + 0.5 * comentarios + 1) / (horas + 2)^1.5
+    """
+    vendor = connection.vendor
+    sub_likes_sql = "(SELECT COUNT(id) FROM blog_likepost WHERE blog_likepost.post_id = blog_post.id)"
+    sub_comentarios_sql = "(SELECT COUNT(id) FROM blog_comentario WHERE blog_comentario.post_id = blog_post.id AND blog_comentario.aprobado = 1 AND blog_comentario.oculto_por_reportes = 0 AND blog_comentario.eliminado = 0)"
+    if vendor == 'sqlite':
+        horas_sql = "MAX(0.0, (julianday('now') - julianday(COALESCE(blog_post.publicado_en, blog_post.creado))) * 24.0)"
+    else:
+        horas_sql = "GREATEST(0.0, EXTRACT(EPOCH FROM (NOW() - COALESCE(blog_post.publicado_en, blog_post.creado))) / 3600.0)"
+    formula_sql = f"(COALESCE({sub_likes_sql}, 0) + 0.5 * COALESCE({sub_comentarios_sql}, 0) + 1.0) / (POWER(({horas_sql} + 2.0), 1.5))"
+    return qs.extra(select={'puntuacion_mejores': formula_sql}).order_by('-puntuacion_mejores', '-publicado_en', '-id')
+
+
+def aplicar_orden_posts(qs, orden='mejores', mantener_orden_busqueda=False, periodo=None, usuario=None):
+    """
+    Aplica el ordenamiento solicitado (`?orden=mejores|recientes|populares|siguiendo|utiles`):
+    - `mejores`: puntuación con decaimiento temporal en SQL: (votos + 0.5×comentarios + 1) / (horas + 2)^1.5.
     - `recientes`: por `-publicado_en`, `-creado`.
-    - `populares`: por puntuación de popularidad (vistas×1 + likes×3 + votos_útil×2 + comentarios×2).
-    - `utiles`: requiere un mínimo de 3 votos de utilidad (`total_votos_util >= 3`),
-      ordenado por votos positivos y porcentaje de utilidad.
+    - `populares`: por popularidad (vistas×1 + likes×3 + votos_útil×2 + comentarios×2) filtrable por periodo.
+    - `siguiendo`: publicaciones de autores seguidos por el usuario autenticado.
+    - `utiles`: compatible con votos de utilidad histórica.
     """
     orden_norm = (orden or '').strip().lower()
+
+    if orden_norm == 'mejores':
+        return anotar_puntuacion_mejores(qs)
+
+    if orden_norm == 'siguiendo':
+        if usuario and usuario.is_authenticated:
+            siguiendo_ids = list(usuario.siguiendo_autores.values_list('autor_id', flat=True))
+            return qs.filter(autor_id__in=siguiendo_ids).order_by('-publicado_en', '-creado', '-id')
+        return qs.order_by('-publicado_en', '-creado', '-id')
+
     if orden_norm in ('utiles', 'mas_utiles'):
         sub_total_votos = (
             VotoUtil.objects.filter(post=OuterRef('pk'))
@@ -122,7 +151,17 @@ def aplicar_orden_posts(qs, orden='recientes', mantener_orden_busqueda=False):
             .order_by('-votos_util_positivos', '-total_votos_util', '-publicado_en', '-id')
         )
 
-    if orden_norm in ('populares', 'mejores'):
+    if orden_norm == 'populares':
+        if periodo == 'hoy':
+            desde = timezone.now() - timedelta(days=1)
+            qs = qs.filter(Q(publicado_en__gte=desde) | Q(creado__gte=desde))
+        elif periodo == 'semana':
+            desde = timezone.now() - timedelta(days=7)
+            qs = qs.filter(Q(publicado_en__gte=desde) | Q(creado__gte=desde))
+        elif periodo == 'mes':
+            desde = timezone.now() - timedelta(days=30)
+            qs = qs.filter(Q(publicado_en__gte=desde) | Q(creado__gte=desde))
+
         sub_vistas = (
             VistaDiaria.objects.filter(post=OuterRef('pk'))
             .values('post')
@@ -249,34 +288,117 @@ def obtener_contexto_sidebar(request):
 # VISTAS PÚBLICAS
 # ==============================================================================
 
+class FeedNovedadesView(View):
+    """
+    Endpoint para sondeo de publicaciones nuevas cada 60s:
+    /feed/novedades/?ultimo_id=<id>
+    Devuelve JSON { 'nuevos_count': n } sin exponer datos privados.
+    """
+    def get(self, request, *args, **kwargs):
+        ultimo_id = request.GET.get('ultimo_id')
+        try:
+            ultimo_id = int(ultimo_id)
+        except (TypeError, ValueError):
+            return JsonResponse({'nuevos_count': 0})
+
+        nuevos = Post.objects.publicados().filter(id__gt=ultimo_id).count()
+        return JsonResponse({'nuevos_count': nuevos})
+
+
 class PostListView(ListView):
     model = Post
     template_name = 'blog/post_list.html'
     context_object_name = 'posts'
-    paginate_by = 6
+    paginate_by = 15
+
+    def get_paginate_by(self, queryset):
+        return getattr(settings, 'FEED_PAGINATE_BY', self.paginate_by)
 
     def get_queryset(self):
-        self.orden_actual = (self.request.GET.get('orden') or 'recientes').lower()
-        if self.orden_actual not in ('recientes', 'populares', 'utiles'):
-            self.orden_actual = 'recientes'
+        self.orden_actual = (self.request.GET.get('orden') or 'mejores').lower()
+        if self.orden_actual not in ('mejores', 'recientes', 'populares', 'siguiendo', 'utiles'):
+            self.orden_actual = 'mejores'
+
+        self.filtro_comunidad = (self.request.GET.get('comunidad') or '').strip()
+        self.filtro_etiqueta = (self.request.GET.get('etiqueta') or '').strip()
+        self.filtro_periodo = (self.request.GET.get('periodo') or '').strip().lower()
+
+        # Cache de 60s para anónimos en 'mejores' sin filtros con versión para invalidación instantánea
+        ranking_version = cache.get('blog_ranking_version', 1)
+        cache_key = f'feed_mejores_anon_ids_v{ranking_version}'
+        if (
+            not self.request.user.is_authenticated
+            and self.orden_actual == 'mejores'
+            and not self.filtro_comunidad
+            and not self.filtro_etiqueta
+            and not self.filtro_periodo
+        ):
+            cached_ids = cache.get(cache_key)
+            if cached_ids is not None:
+                from django.db.models import Case, When
+                orden_preservado = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(cached_ids)])
+                return (
+                    Post.objects.filter(id__in=cached_ids)
+                    .con_relaciones()
+                    .con_interacciones()
+                    .order_by(orden_preservado)
+                )
+
         qs = (
             Post.objects.publicados()
             .con_relaciones()
             .con_interacciones(self.request.user)
         )
-        return aplicar_orden_posts(qs, self.orden_actual)
+
+        if self.filtro_comunidad:
+            qs = qs.filter(categoria__slug=self.filtro_comunidad)
+        if self.filtro_etiqueta:
+            qs = qs.filter(etiquetas__slug=self.filtro_etiqueta)
+
+        qs = aplicar_orden_posts(
+            qs,
+            orden=self.orden_actual,
+            periodo=self.filtro_periodo,
+            usuario=self.request.user,
+        )
+
+        if (
+            not self.request.user.is_authenticated
+            and self.orden_actual == 'mejores'
+            and not self.filtro_comunidad
+            and not self.filtro_etiqueta
+            and not self.filtro_periodo
+        ):
+            ids_a_cachear = list(qs.values_list('id', flat=True)[:150])
+            cache.set(cache_key, ids_a_cachear, 60)
+
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(obtener_contexto_sidebar(self.request))
-        context['orden_actual'] = self.orden_actual
 
-        # Post destacado grande: solo en página 1 de inicio y sin filtros ni búsqueda activos
+        # Determinar vista: cookie 'vista_feed' o query param 'vista', por defecto 'compacta'
+        vista = self.request.GET.get('vista') or self.request.COOKIES.get('vista_feed', 'compacta')
+        if vista not in ('compacta', 'tarjetas'):
+            vista = 'compacta'
+
+        context['vista_feed'] = vista
+        context['orden_actual'] = self.orden_actual
+        context['filtro_comunidad'] = self.filtro_comunidad
+        context['filtro_etiqueta'] = self.filtro_etiqueta
+        context['filtro_periodo'] = self.filtro_periodo
+        context['comunidades_filtro'] = Categoria.objects.all()[:12]
+        context['etiquetas_filtro'] = Etiqueta.objects.all()[:15]
+
+        # Post destacado: en página 1 si no hay filtros y orden es recientes o mejores
         page_obj = context.get('page_obj')
         es_primera_pagina = (not page_obj) or (page_obj.number == 1)
         sin_filtros = (
-            self.orden_actual == 'recientes'
+            self.orden_actual in ('mejores', 'recientes')
             and not self.request.GET.get('q')
+            and not self.filtro_comunidad
+            and not self.filtro_etiqueta
         )
 
         post_destacado = None
@@ -301,6 +423,23 @@ class PostListView(ListView):
         else:
             context['posts_cuadricula'] = list(context['posts'])
         return context
+
+    def render_to_response(self, context, **response_kwargs):
+        if getattr(self.request, 'htmx', False) and self.request.GET.get('page'):
+            template = 'blog/includes/_feed_pagina.html'
+        else:
+            template = self.get_template_names()
+
+        response = self.response_class(
+            request=self.request,
+            template=template,
+            context=context,
+            using=self.template_engine,
+            **response_kwargs
+        )
+        if self.request.GET.get('vista') in ('compacta', 'tarjetas'):
+            response.set_cookie('vista_feed', self.request.GET['vista'], max_age=365*24*60*60, samesite='Lax')
+        return response
 
 
 class PostPorCategoriaView(ListView):

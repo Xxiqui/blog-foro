@@ -18,6 +18,7 @@ urlpatterns = [
     path('contacto/', views.ContactoView.as_view(), name='contacto'),
     path('feed/', UltimosPostsFeed(), name='rss_feed'),
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='sitemap'),
+    path('feed/novedades/', views.FeedNovedadesView.as_view(), name='feed_novedades'),
     path('explorar/', views.ExplorarView.as_view(), name='explorar'),
     path('buscar/sugerencias/', views.BuscarSugerenciasView.as_view(), name='buscar_sugerencias'),
     path('buscar/', views.BuscarPostsView.as_view(), name='buscar_posts'),

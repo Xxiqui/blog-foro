@@ -5,7 +5,7 @@ from django.core import mail
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -251,6 +251,7 @@ class BlogTests(TestCase):
             # En entornos Windows/desarrollo donde el driver psycopg/libpq no está disponible
             pass
 
+    @override_settings(FEED_PAGINATE_BY=6)
     def test_paginacion_inicio_6_por_pagina(self):
         """Verifica que el listado público pagina de 6 en 6 posts publicados."""
         for i in range(6):
@@ -1098,6 +1099,7 @@ class RedisenioUXTests(TestCase):
         self.assertEqual(len(generar_toc_html('<h2>Uno</h2><h2>Dos</h2>')), 0)
         self.assertEqual(len(generar_toc_html(html_repetido)), 3)
 
+    @override_settings(FEED_PAGINATE_BY=6)
     def test_ordenamiento_query_param_combinado_con_paginacion(self):
         # Crear 8 posts publicados con distintos likes y votos útiles
         lectores = [
@@ -1926,6 +1928,7 @@ class PulidoYMejorasTests(TestCase):
         self.assertEqual(data['nombre'], 'FastAPI')
         self.assertTrue(Etiqueta.objects.filter(nombre='FastAPI').exists())
 
+    @override_settings(FEED_PAGINATE_BY=6)
     def test_paginacion_botones_desactivados_anterior_y_siguiente(self):
         """
         Verifica que en la página 1 'Anterior' esté deshabilitado con aria-disabled='true',
@@ -2344,6 +2347,7 @@ class ForoAdaptableFase1y2Tests(TestCase):
     """Pruebas de la Fase 1 y 2: Sistema de diseño adaptable, navegación y buscador de sugerencias."""
 
     def setUp(self):
+        cache.clear()
         from cuentas.models import Perfil
         self.user = User.objects.create_user(
             username='carlos_dev',
@@ -2406,4 +2410,97 @@ class ForoAdaptableFase1y2Tests(TestCase):
         self.assertContains(resp, 'Python y Django')
         self.assertContains(resp, 'arquitectura')
         self.assertContains(resp, 'Carlos Dev')
+
+
+class ForoAdaptableFase3Tests(TestCase):
+    """Pruebas de la Fase 3: Feed, orden decay temporal, filtros, cookie de vista y scroll infinito."""
+
+    def setUp(self):
+        cache.clear()
+        from cuentas.models import Perfil
+        self.user = User.objects.create_user(
+            username='laura_dev',
+            first_name='Laura',
+            last_name='Dev',
+            email='laura@example.com',
+            password='Password123!',
+        )
+        self.perfil, _ = Perfil.objects.get_or_create(usuario=self.user)
+        self.categoria = Categoria.objects.create(
+            nombre='DevOps y Cloud',
+            slug='devops-cloud'
+        )
+        self.etiqueta = Etiqueta.objects.create(
+            nombre='kubernetes',
+            slug='kubernetes'
+        )
+        # Crear 16 posts para probar paginación de 15
+        self.posts = []
+        for i in range(16):
+            p = Post.objects.create(
+                titulo=f'Post de prueba {i}',
+                slug=f'post-prueba-{i}',
+                contenido=f'Contenido extenso del post {i} para verificar el feed.',
+                categoria=self.categoria,
+                autor=self.perfil,
+                estado=Post.Estado.PUBLICADO,
+            )
+            if i == 0:
+                p.etiquetas.add(self.etiqueta)
+            self.posts.append(p)
+
+    def test_feed_orden_mejores_default(self):
+        """Verifica que el feed inicie por defecto con orden 'mejores'."""
+        resp = self.client.get(reverse('blog:post_list'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['orden_actual'], 'mejores')
+        self.assertContains(resp, 'Mejores')
+        self.assertContains(resp, 'Recientes')
+        self.assertContains(resp, 'Populares')
+
+    def test_feed_paginacion_15_posts(self):
+        """Comprueba que la paginación sea de 15 publicaciones por página."""
+        resp = self.client.get(reverse('blog:post_list'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.context['posts']), 15)
+        self.assertTrue(resp.context['page_obj'].has_next())
+
+    def test_feed_htmx_paginacion_parcial(self):
+        """Verifica que petición HTMX devuelva únicamente el fragmento de la siguiente página."""
+        resp = self.client.get(
+            reverse('blog:post_list'),
+            {'page': '2'},
+            headers={'HX-Request': 'true'}
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, '<!DOCTYPE html>')
+        self.assertContains(resp, 'post-row')
+
+    def test_feed_filtro_comunidad_y_etiqueta(self):
+        """Verifica el filtrado por comunidad y etiqueta en el feed."""
+        resp_cat = self.client.get(reverse('blog:post_list'), {'comunidad': 'devops-cloud'})
+        self.assertEqual(resp_cat.status_code, 200)
+        self.assertEqual(resp_cat.context['filtro_comunidad'], 'devops-cloud')
+
+        resp_tag = self.client.get(reverse('blog:post_list'), {'etiqueta': 'kubernetes'})
+        self.assertEqual(resp_tag.status_code, 200)
+        self.assertEqual(len(resp_tag.context['posts']), 1)
+        self.assertContains(resp_tag, 'Post de prueba 0')
+
+    def test_feed_cookie_vista(self):
+        """Comprueba que el parámetro ?vista=tarjetas fije la cookie correspondiente."""
+        resp = self.client.get(reverse('blog:post_list'), {'vista': 'tarjetas'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('vista_feed', resp.cookies)
+        self.assertEqual(resp.cookies['vista_feed'].value, 'tarjetas')
+
+    def test_feed_novedades_endpoint(self):
+        """Verifica que el sondeo devuelva el contador de nuevos posts publicados."""
+        ultimo_id = self.posts[10].id
+        nuevos_esperados = Post.objects.publicados().filter(id__gt=ultimo_id).count()
+        resp = self.client.get(reverse('blog:feed_novedades'), {'ultimo_id': ultimo_id})
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertEqual(data.get('nuevos_count'), nuevos_esperados)
+
 

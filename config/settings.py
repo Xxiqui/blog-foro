@@ -204,6 +204,7 @@ EMAIL_BACKEND = os.environ.get(
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'no-reply@blogautores.local')
 
 # Parámetros de interacción y moderación de comentarios
+FEED_PAGINATE_BY = int(os.environ.get('FEED_PAGINATE_BY', 15))
 COMENTARIOS_ANONIMOS = os.environ.get('COMENTARIOS_ANONIMOS', 'False').lower() in ('true', '1', 'yes')
 COMENTARIO_VENTANA_EDICION_MIN = int(os.environ.get('COMENTARIO_VENTANA_EDICION_MIN', 10))
 REPORTES_PARA_OCULTAR = int(os.environ.get('REPORTES_PARA_OCULTAR', 3))

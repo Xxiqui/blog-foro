@@ -1,0 +1,217 @@
+{% load blog_extras %}
+
+<article class="post-row {% if vista_feed == 'tarjetas' %}post-row-card{% endif %}" id="post-{{ post.slug }}" data-post-slug="{{ post.slug }}">
+    <!-- Si la vista es Tarjetas y hay portada, mostrar como banda superior -->
+    {% if vista_feed == 'tarjetas' and post.imagen_portada %}
+        <div class="post-card-banner">
+            <a href="{{ post.get_absolute_url }}" class="d-block" tabindex="-1" aria-hidden="true">
+                <img src="{{ post.imagen_portada.url }}"
+                     alt=""
+                     loading="lazy"
+                     decoding="async"
+                     class="w-100 object-fit-cover"
+                     style="max-height: 220px;">
+            </a>
+        </div>
+    {% endif %}
+
+    <div class="post-row-inner">
+        <!-- Riel de Votos -->
+        <div class="me-1">
+            {% include "blog/includes/_votos.html" with post=post tipo='post' %}
+        </div>
+
+        <!-- Contenido Principal -->
+        <div class="post-main-content">
+            <!-- Línea de Metadatos -->
+            <div class="post-meta-line">
+                {% if post.categoria %}
+                    <a href="{% url 'blog:posts_por_categoria' post.categoria.slug %}" class="community-chip text-decoration-none">
+                        <i class="bi bi-hash" aria-hidden="true"></i>{{ post.categoria.nombre }}
+                    </a>
+                    <span>&bull;</span>
+                {% endif %}
+                <a href="{% url 'blog:autor_detail' post.autor.usuario.username %}" class="text-secondary text-decoration-none fw-medium text-truncate" style="max-width: 150px;" title="{{ post.autor.nombre_mostrar }} (@{{ post.autor.usuario.username }})">
+                    {{ post.autor.nombre_mostrar }}
+                </a>
+                <span>&bull;</span>
+                <span title="{{ post.publicado_en|default:post.creado|date:'d/m/Y H:i' }}">
+                    {{ post.publicado_en|default:post.creado|timesince }} atrás
+                </span>
+                {% if post.fijado_en_categoria %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis ms-1">
+                        <i class="bi bi-pin-angle-fill me-1"></i>Fijado
+                    </span>
+                {% endif %}
+            </div>
+
+            <!-- Título del Post -->
+            <h2 class="post-title-heading">
+                <a href="{{ post.get_absolute_url }}" class="text-body text-decoration-none post-title-link">
+                    {{ post.titulo }}
+                </a>
+            </h2>
+
+            <!-- Extracto de 2 líneas -->
+            <p class="post-excerpt-text mb-2">
+                {{ post.contenido|extracto_plano:160 }}
+            </p>
+
+            <!-- Barra de Acciones del Post -->
+            <div class="post-actions-bar">
+                <!-- Botón Comentarios (abre acordeón de comentarios rápidos) -->
+                <button type="button"
+                        class="post-action-btn post-action-comment"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#comments-feed-{{ post.slug }}"
+                        aria-expanded="false"
+                        aria-controls="comments-feed-{{ post.slug }}"
+                        title="Comentarios">
+                    <i class="bi bi-chat-left" aria-hidden="true"></i>
+                    <span class="comentarios-counter">{{ post.total_comentarios_aprobados|default:0 }}</span>
+                </button>
+
+                <!-- Botón Guardar -->
+                {% if user.is_authenticated %}
+                    <button type="button"
+                            class="post-action-btn btn-guardar-post {% if post.ya_guardado %}active{% endif %}"
+                            data-url="{% url 'blog:guardar_post_toggle' post.slug %}"
+                            data-guardado="{% if post.ya_guardado %}true{% else %}false{% endif %}"
+                            aria-pressed="{% if post.ya_guardado %}true{% else %}false{% endif %}"
+                            title="{% if post.ya_guardado %}Guardado en tu lista{% else %}Guardar post{% endif %}">
+                        <i class="bi {% if post.ya_guardado %}bi-bookmark-fill text-warning{% else %}bi-bookmark{% endif %}" aria-hidden="true"></i>
+                        <span class="d-none d-sm-inline">{% if post.ya_guardado %}Guardado{% else %}Guardar{% endif %}</span>
+                    </button>
+                {% else %}
+                    <button type="button"
+                            class="post-action-btn btn-guardar-post btn-requiere-auth"
+                            data-action="guardar_post"
+                            title="Guardar post">
+                        <i class="bi bi-bookmark" aria-hidden="true"></i>
+                        <span class="d-none d-sm-inline">Guardar</span>
+                    </button>
+                {% endif %}
+
+                <!-- Botón Compartir -->
+                <button type="button"
+                        class="post-action-btn btn-compartir"
+                        data-url="{{ request.scheme }}://{{ request.get_host }}{{ post.get_absolute_url }}"
+                        data-titulo="{{ post.titulo }}"
+                        title="Compartir enlace">
+                    <i class="bi bi-share" aria-hidden="true"></i>
+                    <span class="d-none d-sm-inline">Compartir</span>
+                </button>
+
+                <!-- Botón Vista Rápida (expande fragmento en el lugar) -->
+                <button type="button"
+                        class="post-action-btn post-expand-btn ms-1"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#quick-view-{{ post.slug }}"
+                        aria-expanded="false"
+                        aria-controls="quick-view-{{ post.slug }}"
+                        title="Vista previa del artículo">
+                    <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    <span class="small d-none d-md-inline">Vista previa</span>
+                </button>
+
+                <!-- Menú ⋯ (Copiar enlace, Reportar) -->
+                <div class="dropdown d-inline-block ms-auto">
+                    <button class="post-action-btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Más opciones" aria-label="Más opciones">
+                        <i class="bi bi-three-dots" aria-hidden="true"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 py-1" style="font-size: 13px;">
+                        <li>
+                            <button type="button" class="dropdown-item py-1 btn-copiar-enlace" data-url="{{ request.scheme }}://{{ request.get_host }}{{ post.get_absolute_url }}">
+                                <i class="bi bi-link-45deg me-2"></i>Copiar enlace
+                            </button>
+                        </li>
+                        <li>
+                            <a href="{% url 'blog:post_embed' post.slug %}" class="dropdown-item py-1" target="_blank" rel="noopener">
+                                <i class="bi bi-code-slash me-2"></i>Insertar artículo
+                            </a>
+                        </li>
+                        {% if user.is_authenticated and user.id == post.autor.usuario_id %}
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li>
+                                <a href="{% url 'blog:panel_post_update' post.slug %}" hx-boost="false" class="dropdown-item py-1 text-primary">
+                                    <i class="bi bi-pencil me-2"></i>Editar en Estudio
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Miniatura a la derecha (si hay portada y la vista es compacta) -->
+        {% if vista_feed != 'tarjetas' and post.imagen_portada %}
+            <div class="post-thumbnail-wrap ms-2 d-none d-sm-flex">
+                <a href="{{ post.get_absolute_url }}" tabindex="-1" aria-hidden="true" class="w-100 h-100 d-block">
+                    <img src="{{ post.imagen_portada.url }}"
+                         alt=""
+                         loading="lazy"
+                         decoding="async"
+                         class="post-thumbnail-img">
+                </a>
+            </div>
+        {% elif vista_feed != 'tarjetas' and post.categoria %}
+            <div class="post-thumbnail-wrap ms-2 d-none d-sm-flex bg-body-secondary text-secondary">
+                <span class="fw-bold fs-4">c/</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Panel de Vista Rápida Colapsable (~150 palabras saneadas) -->
+    <div class="collapse post-quick-view-box" id="quick-view-{{ post.slug }}">
+        <div class="py-2">
+            <p class="text-secondary small mb-2">
+                {{ post.contenido|extracto_plano:150 }}&hellip;
+            </p>
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                <span class="small text-muted">{{ post.tiempo_lectura }} min de lectura</span>
+                <a href="{{ post.get_absolute_url }}" class="fw-semibold text-primary small text-decoration-none">
+                    Leer completo &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acordeón para Comentar y Ver Comentarios Rápidos desde el feed -->
+    <div class="collapse border-top bg-surface-hover p-3" id="comments-feed-{{ post.slug }}">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="small fw-semibold text-body">
+                <i class="bi bi-chat-left-text me-1 text-primary"></i>Comentarios rápidos
+            </span>
+            <a href="{{ post.get_absolute_url }}#comentarios" class="small text-primary text-decoration-none">
+                Ver todos ({{ post.total_comentarios_aprobados|default:0 }}) &rarr;
+            </a>
+        </div>
+
+        <!-- Formulario inline rápido para comentar desde el feed -->
+        {% if user.is_authenticated %}
+            <form method="post" action="{% url 'blog:post_detail' post.slug %}" class="form-comentario-feed mb-3" data-post-slug="{{ post.slug }}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <div class="input-group input-group-sm">
+                    <input type="text"
+                           name="texto"
+                           class="form-control"
+                           placeholder="Escribe un comentario..."
+                           required
+                           maxlength="1000"
+                           autocomplete="off">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-send-fill me-1"></i>Enviar
+                    </button>
+                </div>
+            </form>
+        {% else %}
+            <div class="p-2 border rounded text-center small text-muted bg-surface mb-2">
+                <button type="button" class="btn btn-sm btn-outline-primary btn-requiere-auth me-2" data-action="comentar">
+                    Inicia sesión
+                </button>
+                para unirte a la conversación.
+            </div>
+        {% endif %}
+    </div>
+</article>
