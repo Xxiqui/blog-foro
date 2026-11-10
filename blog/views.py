@@ -97,14 +97,26 @@ def anotar_puntuacion_mejores(qs):
     """
     Calcula la puntuación con decaimiento temporal en SQL:
     (votos + 0.5 * comentarios + 1) / (horas + 2)^1.5
+    Compatible con SQLite y PostgreSQL.
     """
     vendor = connection.vendor
     sub_likes_sql = "(SELECT COUNT(id) FROM blog_likepost WHERE blog_likepost.post_id = blog_post.id)"
-    sub_comentarios_sql = "(SELECT COUNT(id) FROM blog_comentario WHERE blog_comentario.post_id = blog_post.id AND blog_comentario.aprobado = 1 AND blog_comentario.oculto_por_reportes = 0 AND blog_comentario.eliminado = 0)"
     if vendor == 'sqlite':
+        bool_true = '1'
+        bool_false = '0'
         horas_sql = "MAX(0.0, (julianday('now') - julianday(COALESCE(blog_post.publicado_en, blog_post.creado))) * 24.0)"
     else:
+        bool_true = 'TRUE'
+        bool_false = 'FALSE'
         horas_sql = "GREATEST(0.0, EXTRACT(EPOCH FROM (NOW() - COALESCE(blog_post.publicado_en, blog_post.creado))) / 3600.0)"
+
+    sub_comentarios_sql = (
+        f"(SELECT COUNT(id) FROM blog_comentario "
+        f"WHERE blog_comentario.post_id = blog_post.id "
+        f"AND blog_comentario.aprobado = {bool_true} "
+        f"AND blog_comentario.oculto_por_reportes = {bool_false} "
+        f"AND blog_comentario.eliminado = {bool_false})"
+    )
     formula_sql = f"(COALESCE({sub_likes_sql}, 0) + 0.5 * COALESCE({sub_comentarios_sql}, 0) + 1.0) / (POWER(({horas_sql} + 2.0), 1.5))"
     return qs.extra(select={'puntuacion_mejores': formula_sql}).order_by('-puntuacion_mejores', '-publicado_en', '-id')
 

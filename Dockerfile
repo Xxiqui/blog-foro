@@ -23,7 +23,7 @@ RUN adduser --disabled-password --gecos "" appuser
 COPY . /app/
 
 # Crear directorios para archivos estáticos y multimedia y asignar permisos al usuario no root
-RUN mkdir -p /app/staticfiles /app/media/uploads /app/media/avatares \
+RUN mkdir -p /app/staticfiles /app/media/uploads /app/media/avatares /app/media/portadas/variantes /app/media/portadas/thumbs /app/media/portadas/covers \
     && python manage.py collectstatic --no-input \
     && chown -R appuser:appuser /app
 
