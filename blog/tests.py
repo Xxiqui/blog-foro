@@ -2337,5 +2337,4 @@ class OptimizacionMovilTests(TestCase):
             request=request
         )
         self.assertIn('estilos.css', html)
-        self.assertIn('movil.css', html)
         self.assertIn('editor.css', html)

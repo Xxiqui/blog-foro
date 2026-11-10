@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'django.contrib.sitemaps',
     # Terceros
     'django_ckeditor_5',
+    'django_htmx',
     *(
         [
             'allauth',
@@ -98,6 +99,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django_htmx.middleware.HtmxMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     *(
         ['allauth.account.middleware.AccountMiddleware']
@@ -202,6 +204,7 @@ EMAIL_BACKEND = os.environ.get(
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'no-reply@blogautores.local')
 
 # Parámetros de interacción y moderación de comentarios
+COMENTARIOS_ANONIMOS = os.environ.get('COMENTARIOS_ANONIMOS', 'False').lower() in ('true', '1', 'yes')
 COMENTARIO_VENTANA_EDICION_MIN = int(os.environ.get('COMENTARIO_VENTANA_EDICION_MIN', 10))
 REPORTES_PARA_OCULTAR = int(os.environ.get('REPORTES_PARA_OCULTAR', 3))
 COMENTARIO_PROFUNDIDAD_MAX = int(os.environ.get('COMENTARIO_PROFUNDIDAD_MAX', 4))
@@ -262,6 +265,7 @@ AUTOR_DESTACADO_UMBRAL_PUNTOS = int(os.environ.get('AUTOR_DESTACADO_UMBRAL_PUNTO
 
 # Nombre unificado de la marca y URL base del sitio
 MARCA = os.environ.get('MARCA', os.environ.get('SITE_NAME', 'Blog con Panel de Autor')).strip()
+MARCA_CORTA = os.environ.get('MARCA_CORTA', 'Blog').strip()
 SITE_NAME = MARCA
 SITE_DOMAIN = os.environ.get('SITE_DOMAIN', 'localhost:8000').strip()
 SITE_URL = os.environ.get('SITE_URL', f'http://{SITE_DOMAIN}').rstrip('/')

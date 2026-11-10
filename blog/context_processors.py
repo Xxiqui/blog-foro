@@ -10,18 +10,22 @@ def notificaciones_context(request):
     y estado de proveedores sociales configurados.
     """
     categorias_footer = Categoria.objects.all()
+    comunidades_nav = Categoria.objects.all()[:8]
     marca = getattr(settings, 'MARCA', getattr(settings, 'SITE_NAME', 'Blog con Panel de Autor'))
+    marca_corta = getattr(settings, 'MARCA_CORTA', 'Blog')
     site_name = marca
     social_ctx = obtener_proveedores_sociales_activos()
 
     if not getattr(request, 'user', None) or not request.user.is_authenticated:
         return {
             'marca': marca,
+            'marca_corta': marca_corta,
             'site_name': site_name,
             'notificaciones_no_leidas_count': 0,
             'ultimas_notificaciones': (),
             'mis_listas_lectura': (),
             'categorias_footer': categorias_footer,
+            'comunidades_nav': comunidades_nav,
             **social_ctx,
         }
 
@@ -36,12 +40,19 @@ def notificaciones_context(request):
 
     mis_listas = ListaLectura.objects.filter(usuario=request.user).order_by('-es_predeterminada', 'nombre')
 
+    # Comunidades a las que pertenece el usuario (o generales si aún no se ha unido a ninguna)
+    comunidades_usuario = Categoria.objects.filter(miembros__usuario=request.user)[:8]
+    if not comunidades_usuario.exists():
+        comunidades_usuario = comunidades_nav
+
     return {
         'marca': marca,
+        'marca_corta': marca_corta,
         'site_name': site_name,
         'notificaciones_no_leidas_count': no_leidas_count,
         'ultimas_notificaciones': ultimas_5,
         'mis_listas_lectura': mis_listas,
         'categorias_footer': categorias_footer,
+        'comunidades_nav': comunidades_usuario,
         **social_ctx,
     }

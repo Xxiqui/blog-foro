@@ -1,0 +1,188 @@
+/* ==========================================================================
+   TOKENS.CSS - SISTEMA DE DISEÑO DEL FORO ADAPTABLE
+   Superficies neutras, un solo color de acento, bordes finos, múltiplos de 4px
+   ========================================================================== */
+
+:root {
+    /* Tipografía */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* Escala tipográfica */
+    --font-size-xs: 0.75rem;       /* 12px */
+    --font-size-sm: 0.8125rem;     /* 13px */
+    --font-size-base: 0.9375rem;   /* 15px - Listas y feed */
+    --font-size-md: 1rem;          /* 16px */
+    --font-size-reading: 1.125rem; /* 18px - Lectura de artículo */
+    --font-size-lg: 1.25rem;       /* 20px */
+    --font-size-xl: 1.5rem;        /* 24px */
+    --font-size-2xl: 1.875rem;     /* 30px */
+
+    /* Espaciado en múltiplos de 4 px */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+
+    /* Radios de borde sobrios */
+    --radius-xs: 3px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
+    --radius-full: 9999px;
+
+    /* Transiciones mínimas (<= 150 ms) */
+    --transition-duration: 120ms;
+    --transition-timing: cubic-bezier(0.2, 0, 0, 1);
+    --transition-base: var(--transition-duration) var(--transition-timing);
+
+    /* Áreas seguras del dispositivo */
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+
+    /* Dimensiones clave */
+    --header-height: 56px;
+    --nav-rail-width: 64px;
+    --nav-left-width: 220px;
+    --feed-max-width: 680px;
+    --article-max-width: 720px;
+    --sidebar-right-width: 320px;
+    --bottom-bar-height: 54px;
+    --touch-target-min: 44px;
+
+    /* COLOR: TEMA CLARO POR DEFECTO */
+    --color-bg: #f8fafc;
+    --color-surface: #ffffff;
+    --color-surface-hover: #f1f5f9;
+    --color-surface-active: #e2e8f0;
+    --color-surface-raised: #ffffff;
+    
+    --color-text: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-muted: #64748b;
+    --color-text-dim: #94a3b8;
+    --color-text-visited: #64748b;
+
+    --color-border: #e2e8f0;
+    --color-border-subtle: #f1f5f9;
+    --color-border-focus: #2563eb;
+
+    /* Un solo color de acento (Azul Reddit / Editorial) */
+    --color-accent: #2563eb;
+    --color-accent-hover: #1d4ed8;
+    --color-accent-active: #1e40af;
+    --color-accent-subtle: #eff6ff;
+    --color-accent-contrast: #ffffff;
+
+    /* Colores semánticos de estado */
+    --color-upvote: #d9480f;        /* Naranja-rojizo para voto positivo */
+    --color-upvote-subtle: #fff4e6;
+    --color-danger: #dc2626;
+    --color-danger-subtle: #fef2f2;
+    --color-success: #16a34a;
+    --color-success-subtle: #f0fdf4;
+    --color-warning: #d97706;
+    --color-warning-subtle: #fffbeb;
+
+    /* Sombras mínimas y discretas */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+}
+
+/* COLOR: TEMA OSCURO */
+[data-bs-theme="dark"],
+:root[data-theme="dark"] {
+    --color-bg: #0b0f19;
+    --color-surface: #111827;
+    --color-surface-hover: #1f2937;
+    --color-surface-active: #374151;
+    --color-surface-raised: #1e293b;
+
+    --color-text: #f9fafb;
+    --color-text-secondary: #cbd5e1;
+    --color-text-muted: #94a3b8;
+    --color-text-dim: #64748b;
+    --color-text-visited: #94a3b8;
+
+    --color-border: #1f2937;
+    --color-border-subtle: #192231;
+    --color-border-focus: #3b82f6;
+
+    --color-accent: #3b82f6;
+    --color-accent-hover: #60a5fa;
+    --color-accent-active: #2563eb;
+    --color-accent-subtle: rgba(59, 130, 246, 0.12);
+    --color-accent-contrast: #ffffff;
+
+    --color-upvote: #f97316;
+    --color-upvote-subtle: rgba(249, 115, 22, 0.15);
+    --color-danger: #ef4444;
+    --color-danger-subtle: rgba(239, 68, 68, 0.15);
+    --color-success: #22c55e;
+    --color-success-subtle: rgba(34, 197, 94, 0.15);
+    --color-warning: #f59e0b;
+    --color-warning-subtle: rgba(245, 158, 11, 0.15);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+/* TEMA AUTOMÁTICO DEL SISTEMA SI NO HAY PREFERENCIA EXPLÍCITA */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]):not([data-bs-theme="light"]) {
+        --color-bg: #0b0f19;
+        --color-surface: #111827;
+        --color-surface-hover: #1f2937;
+        --color-surface-active: #374151;
+        --color-surface-raised: #1e293b;
+
+        --color-text: #f9fafb;
+        --color-text-secondary: #cbd5e1;
+        --color-text-muted: #94a3b8;
+        --color-text-dim: #64748b;
+        --color-text-visited: #94a3b8;
+
+        --color-border: #1f2937;
+        --color-border-subtle: #192231;
+        --color-border-focus: #3b82f6;
+
+        --color-accent: #3b82f6;
+        --color-accent-hover: #60a5fa;
+        --color-accent-active: #2563eb;
+        --color-accent-subtle: rgba(59, 130, 246, 0.12);
+        --color-accent-contrast: #ffffff;
+
+        --color-upvote: #f97316;
+        --color-upvote-subtle: rgba(249, 115, 22, 0.15);
+        --color-danger: #ef4444;
+        --color-danger-subtle: rgba(239, 68, 68, 0.15);
+        --color-success: #22c55e;
+        --color-success-subtle: rgba(34, 197, 94, 0.15);
+        --color-warning: #f59e0b;
+        --color-warning-subtle: rgba(245, 158, 11, 0.15);
+    }
+}
+
+/* Respeto a reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --transition-duration: 0ms !important;
+        --transition-base: none !important;
+    }
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}

@@ -1,0 +1,212 @@
+/* ==========================================================================
+   LAYOUT.CSS - ESTRUCTURA RESPONSIVA Y REJILLAS DEL FORO ADAPTABLE
+   Puntos de quiebre únicos: <640px, 640-1023px, 1024-1279px, >=1280px
+   ========================================================================== */
+
+/* Contenedor principal de la aplicación */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-color: var(--color-bg);
+}
+
+/* Barra superior global (56 px fija) */
+.app-header {
+    height: var(--header-height);
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    display: flex;
+    align-items: center;
+    padding-left: max(var(--space-4), var(--sal));
+    padding-right: max(var(--space-4), var(--sar));
+    padding-top: var(--sat);
+}
+
+.app-header-inner {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+/* Cuerpo con rejilla según breakpoints */
+.app-body {
+    display: flex;
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    flex: 1;
+}
+
+/* Navegación izquierda pegajosa con scroll propio */
+.app-nav-left {
+    display: none;
+    position: sticky;
+    top: var(--header-height);
+    height: calc(100dvh - var(--header-height));
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    padding: var(--space-3) var(--space-2);
+    border-right: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    flex-shrink: 0;
+}
+
+/* Feed central adaptable */
+.app-main {
+    flex: 1;
+    min-width: 0;
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.app-feed-container {
+    width: 100%;
+    max-width: var(--feed-max-width);
+    container-type: inline-size;
+    container-name: feed;
+}
+
+.app-article-container {
+    width: 100%;
+    max-width: var(--article-max-width);
+    container-type: inline-size;
+    container-name: article;
+}
+
+/* Columna lateral derecha pegajosa con scroll propio */
+.app-sidebar-right {
+    display: none;
+    position: sticky;
+    top: var(--header-height);
+    height: calc(100dvh - var(--header-height));
+    width: var(--sidebar-right-width);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    padding: var(--space-4);
+    border-left: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+
+/* Barra de navegación inferior móvil (< 1024px) */
+.app-bottom-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--bottom-bar-height) + var(--sab));
+    padding-bottom: var(--sab);
+    background-color: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    z-index: 1020;
+    align-items: center;
+    justify-content: space-around;
+}
+
+/* Espacio compensatorio inferior cuando la barra móvil está activa */
+@media (max-width: 1023.98px) {
+    .app-main {
+        padding-bottom: calc(var(--bottom-bar-height) + var(--sab) + var(--space-4));
+    }
+}
+
+/* ==========================================================================
+   BREAKPOINTS REGLAMENTARIOS
+   ========================================================================== */
+
+/* 1. MÓVIL (< 640px) */
+@media (max-width: 639.98px) {
+    .app-main {
+        padding: var(--space-2);
+        padding-bottom: calc(var(--bottom-bar-height) + var(--sab) + var(--space-3));
+    }
+
+    .desktop-search-input {
+        display: none !important;
+    }
+
+    .desktop-write-btn {
+        display: none !important;
+    }
+}
+
+/* 2. TABLET (640px - 1023px) */
+@media (min-width: 640px) and (max-width: 1023.98px) {
+    .mobile-search-trigger {
+        display: none !important;
+    }
+
+    .desktop-search-input {
+        display: block !important;
+    }
+
+    .desktop-write-btn {
+        display: inline-flex !important;
+    }
+}
+
+/* 3. ESCRITORIO CON RIEL DE NAVEGACIÓN (1024px - 1279px) */
+@media (min-width: 1024px) and (max-width: 1279.98px) {
+    .app-bottom-bar {
+        display: none !important;
+    }
+
+    .app-nav-left {
+        display: flex;
+        flex-direction: column;
+        width: var(--nav-rail-width);
+        align-items: center;
+        padding-left: var(--space-1);
+        padding-right: var(--space-1);
+    }
+
+    .nav-label {
+        display: none !important;
+    }
+
+    .nav-subsections {
+        display: none !important;
+    }
+
+    .app-sidebar-right {
+        display: none !important;
+    }
+}
+
+/* 4. ESCRITORIO ANCHO (>= 1280px) */
+@media (min-width: 1280px) {
+    .app-bottom-bar {
+        display: none !important;
+    }
+
+    .app-nav-left {
+        display: flex;
+        flex-direction: column;
+        width: var(--nav-left-width);
+    }
+
+    .nav-label {
+        display: inline-block !important;
+    }
+
+    .nav-subsections {
+        display: block !important;
+    }
+
+    .app-sidebar-right {
+        display: block;
+    }
+}
