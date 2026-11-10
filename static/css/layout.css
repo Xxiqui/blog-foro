@@ -138,6 +138,22 @@
         display: none !important;
     }
 
+    .desktop-search-input.mobile-open {
+        display: flex !important;
+        position: absolute;
+        inset: 0;
+        background-color: var(--color-surface);
+        z-index: 1040;
+        margin: 0;
+        max-width: 100%;
+        padding: var(--space-2) var(--space-3);
+        align-items: center;
+    }
+
+    .desktop-search-input.mobile-open form {
+        width: 100%;
+    }
+
     .desktop-write-btn {
         display: none !important;
     }

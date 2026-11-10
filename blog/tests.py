@@ -2338,3 +2338,72 @@ class OptimizacionMovilTests(TestCase):
         )
         self.assertIn('estilos.css', html)
         self.assertIn('editor.css', html)
+
+
+class ForoAdaptableFase1y2Tests(TestCase):
+    """Pruebas de la Fase 1 y 2: Sistema de diseño adaptable, navegación y buscador de sugerencias."""
+
+    def setUp(self):
+        from cuentas.models import Perfil
+        self.user = User.objects.create_user(
+            username='carlos_dev',
+            first_name='Carlos',
+            last_name='Dev',
+            email='carlos@example.com',
+            password='Password123!',
+        )
+        self.perfil, _ = Perfil.objects.get_or_create(usuario=self.user)
+        self.categoria = Categoria.objects.create(
+            nombre='Python y Django',
+            slug='python-django',
+            descripcion='Comunidad de Python y Django'
+        )
+        self.post = Post.objects.create(
+            titulo='Arquitectura Limpia en Django',
+            slug='arquitectura-limpia-django',
+            contenido='Contenido explicativo de arquitectura limpia.',
+            categoria=self.categoria,
+            autor=self.perfil,
+            estado=Post.Estado.PUBLICADO,
+        )
+        self.etiqueta = Etiqueta.objects.create(
+            nombre='arquitectura',
+            slug='arquitectura'
+        )
+        self.post.etiquetas.add(self.etiqueta)
+
+    def test_base_html_estructura_foro_adaptable(self):
+        """Verifica que base.html incluya la barra superior, riel izquierdo, barra inferior, HTMX y modal visitante."""
+        resp = self.client.get(reverse('blog:post_list'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'app-header')
+        self.assertContains(resp, 'app-nav-left')
+        self.assertContains(resp, 'app-bottom-bar')
+        self.assertContains(resp, 'modalAccesoVisitante')
+        self.assertContains(resp, 'htmx.min.js')
+        self.assertContains(resp, 'hx-headers')
+        self.assertContains(resp, 'X-CSRFToken')
+
+    def test_buscar_sugerencias_endpoint_min_caracteres(self):
+        """Verifica que sugerencias requieran mínimo 2 caracteres sin romper."""
+        resp = self.client.get(reverse('blog:buscar_sugerencias'), {'q': 'a'})
+        self.assertEqual(resp.status_code, 200)
+        # Con menos de 2 caracteres no debe arrojar error y no lista artículos
+        self.assertNotContains(resp, 'Arquitectura Limpia en Django')
+
+    def test_buscar_sugerencias_endpoint_con_resultados(self):
+        """Verifica que sugerencias devuelvan artículos, comunidades y etiquetas."""
+        resp = self.client.get(reverse('blog:buscar_sugerencias'), {'q': 'Django'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Arquitectura Limpia en Django')
+        self.assertContains(resp, 'Python y Django')
+
+    def test_explorar_view(self):
+        """Verifica que la página /explorar/ cargue comunidades, etiquetas y autores."""
+        resp = self.client.get(reverse('blog:explorar'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Explorar')
+        self.assertContains(resp, 'Python y Django')
+        self.assertContains(resp, 'arquitectura')
+        self.assertContains(resp, 'Carlos Dev')
+

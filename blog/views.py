@@ -681,6 +681,50 @@ class BuscarPostsView(ListView):
         return context
 
 
+@method_decorator(limitar_tasa('buscar_sugerencias', 60, 60), name='dispatch')
+class BuscarSugerenciasView(View):
+    """
+    Endpoint rápido para buscador con sugerencias: /buscar/sugerencias/?q=
+    Devuelve un fragmento HTML con hasta 3 artículos, 2 comunidades, 2 autores y 3 etiquetas.
+    Requiere mínimo 2 caracteres.
+    """
+    def get(self, request, *args, **kwargs):
+        q = (request.GET.get('q') or '').strip()
+        if len(q) < 2:
+            return render(request, 'blog/includes/_sugerencias_busqueda.html', {'sin_termino': True, 'query': q})
+
+        articulos = (
+            Post.objects.publicados()
+            .filter(titulo__icontains=q)
+            .select_related('categoria', 'autor__usuario')[:3]
+        )
+        comunidades = Categoria.objects.filter(nombre__icontains=q)[:2]
+        autores = (
+            Perfil.objects.filter(
+                Q(usuario__first_name__icontains=q)
+                | Q(usuario__last_name__icontains=q)
+                | Q(usuario__username__icontains=q),
+                posts__estado=Post.Estado.PUBLICADO,
+            )
+            .select_related('usuario')
+            .distinct()[:2]
+        )
+        etiquetas = Etiqueta.objects.filter(nombre__icontains=q)[:3]
+
+        return render(
+            request,
+            'blog/includes/_sugerencias_busqueda.html',
+            {
+                'query': q,
+                'articulos': articulos,
+                'comunidades': comunidades,
+                'autores': autores,
+                'etiquetas': etiquetas,
+                'sin_termino': False,
+            },
+        )
+
+
 class AutorDetailView(ListView):
     model = Post
     template_name = 'blog/autor_detail.html'
@@ -1378,6 +1422,59 @@ class MisSuscripcionesView(LoginRequiredMixin, ListView):
 # ==============================================================================
 # RONDA 2 - BLOQUE 3 Y 4: MÁS POPULARES Y AUTORES DESTACADOS
 # ==============================================================================
+
+class ExplorarView(TemplateView):
+    """
+    Página `/explorar/`: Comunidades, tendencias de la semana (etiquetas y publicaciones)
+    y autores para seguir. Fusiona Autores y Comunidades.
+    """
+    template_name = 'blog/explorar.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+
+        comunidades = Categoria.objects.all().annotate(
+            total_posts=Count('posts', filter=Q(posts__estado=Post.Estado.PUBLICADO)),
+            total_miembros=Count('miembros')
+        ).order_by('-total_miembros', '-total_posts')
+
+        if user.is_authenticated:
+            miembro_ids = set(user.membresias_categoria.values_list('categoria_id', flat=True))
+            for c in comunidades:
+                c.es_miembro = c.pk in miembro_ids
+        else:
+            for c in comunidades:
+                c.es_miembro = False
+
+        etiquetas_tendencia = Etiqueta.objects.annotate(
+            total_posts=Count('posts', filter=Q(posts__estado=Post.Estado.PUBLICADO))
+        ).filter(total_posts__gt=0).order_by('-total_posts')[:12]
+
+        posts_tendencia = (
+            Post.objects.publicados()
+            .con_relaciones()
+            .con_interacciones(user)
+            .order_by('-total_likes', '-total_comentarios_aprobados')[:6]
+        )
+
+        autores = list(construir_queryset_autores_destacados(orden='puntuacion')[:8])
+        if user.is_authenticated:
+            siguiendo_ids = set(user.siguiendo_autores.values_list('autor_id', flat=True))
+            for a in autores:
+                a.siguiendo_usuario = a.pk in siguiendo_ids
+        else:
+            for a in autores:
+                a.siguiendo_usuario = False
+
+        context.update({
+            'comunidades': comunidades,
+            'etiquetas_tendencia': etiquetas_tendencia,
+            'posts_tendencia': posts_tendencia,
+            'autores': autores,
+        })
+        return context
+
 
 class PostsPopularesView(ListView):
     """Página `/populares/` con pestañas Semana (7d), Mes (30d) y Siempre."""

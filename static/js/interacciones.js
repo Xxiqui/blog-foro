@@ -74,6 +74,11 @@
         });
 
         if (response.status === 401) {
+            const modalAuth = document.getElementById('modalAccesoVisitante');
+            if (modalAuth && typeof abrirModalAcceso === 'function') {
+                abrirModalAcceso();
+                return null;
+            }
             let loginUrl = `/cuentas/login/?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
             try {
                 const data401 = await response.json();
@@ -502,17 +507,17 @@
 
     // 9. Modo Claro / Oscuro con soporte nativo Bootstrap 5.3 (data-bs-theme)
     function inicializarTema() {
-        const btnTema = document.getElementById('theme-toggle-btn');
-        const iconoTema = document.getElementById('theme-toggle-icon');
+        const btnsTema = document.querySelectorAll('#theme-toggle-btn, .theme-toggle-btn, [data-action="toggle-theme"]');
+        const iconosTema = document.querySelectorAll('#theme-toggle-icon, .theme-toggle-icon');
 
         function aplicarTema(tema) {
             document.documentElement.setAttribute('data-bs-theme', tema);
-            if (iconoTema) {
-                iconoTema.className = tema === 'dark' ? 'bi bi-sun-fill text-warning' : 'bi bi-moon-stars-fill';
-            }
-            if (btnTema) {
-                btnTema.setAttribute('aria-pressed', tema === 'dark' ? 'true' : 'false');
-            }
+            iconosTema.forEach(ic => {
+                ic.className = tema === 'dark' ? 'bi bi-sun text-warning' : 'bi bi-moon-stars';
+            });
+            btnsTema.forEach(btn => {
+                btn.setAttribute('aria-pressed', tema === 'dark' ? 'true' : 'false');
+            });
             const hljsLight = document.getElementById('hljs-theme-light');
             const hljsDark = document.getElementById('hljs-theme-dark');
             if (hljsLight && hljsDark) {
@@ -521,17 +526,20 @@
             }
         }
 
-        const guardado = localStorage.getItem('blog_theme') || 'light';
+        const guardado = localStorage.getItem('blog_theme') || localStorage.getItem('blog-tema') ||
+            (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         aplicarTema(guardado);
 
-        if (btnTema) {
-            btnTema.addEventListener('click', () => {
+        btnsTema.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
                 const actual = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light';
                 const nuevo = actual === 'dark' ? 'light' : 'dark';
                 localStorage.setItem('blog_theme', nuevo);
+                localStorage.setItem('blog-tema', nuevo);
                 aplicarTema(nuevo);
             });
-        }
+        });
     }
 
     // 10. Selector de vista Tarjetas | Compacta en hub de categoría y Comentarios anidados
@@ -663,6 +671,282 @@
         });
     }
 
+    // Modal de Acceso para Visitantes (Hoja inferior en móvil)
+    function abrirModalAcceso(accion = '', ancla = '') {
+        const modal = document.getElementById('modalAccesoVisitante');
+        if (!modal) return;
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        const inputLogin = document.getElementById('modal-auth-login');
+        if (inputLogin) setTimeout(() => inputLogin.focus(), 80);
+
+        const nextInput = document.getElementById('auth-modal-next');
+        if (nextInput) {
+            let nextVal = window.location.pathname + window.location.search;
+            if (ancla) nextVal += (ancla.startsWith('#') ? ancla : '#' + ancla);
+            nextInput.value = nextVal;
+        }
+        if (accion || ancla) {
+            try {
+                sessionStorage.setItem('reintentar_accion_post_login', JSON.stringify({ accion: accion, ancla: ancla }));
+            } catch (_) {}
+        }
+    }
+
+    function cerrarModalAcceso() {
+        const modal = document.getElementById('modalAccesoVisitante');
+        if (!modal) return;
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+    }
+
+    function verificarReintentoAccion() {
+        try {
+            const item = sessionStorage.getItem('reintentar_accion_post_login');
+            if (item) {
+                sessionStorage.removeItem('reintentar_accion_post_login');
+                const data = JSON.parse(item);
+                if (data && data.ancla) {
+                    const el = document.querySelector(data.ancla);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        const btn = el.querySelector('.btn-voto, .btn-guardar-post, .btn-seguir-autor, .btn-unirse-categoria') || el;
+                        if (btn && btn.click) {
+                            setTimeout(() => btn.click(), 400);
+                        }
+                    }
+                }
+            }
+        } catch (_) {}
+    }
+
+    function inicializarModalAcceso() {
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.btn-requiere-auth');
+            if (btn) {
+                e.preventDefault();
+                const accion = btn.getAttribute('data-action') || '';
+                const ancla = btn.closest('[id]') ? '#' + btn.closest('[id]').id : '';
+                abrirModalAcceso(accion, ancla);
+            }
+        });
+
+        const btnCerrar = document.getElementById('btn-cerrar-modal-auth');
+        if (btnCerrar) {
+            btnCerrar.addEventListener('click', cerrarModalAcceso);
+        }
+
+        const modal = document.getElementById('modalAccesoVisitante');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    cerrarModalAcceso();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                cerrarModalAcceso();
+            }
+        });
+
+        verificarReintentoAccion();
+    }
+
+    // Buscador global con sugerencias y atajos
+    function inicializarBuscadorSugerencias() {
+        const searchInput = document.getElementById('header-search-input');
+        const dropdown = document.getElementById('search-suggestions-dropdown');
+        const searchContainer = document.getElementById('global-search-container');
+        const mobileToggle = document.getElementById('mobile-search-toggle');
+
+        if (mobileToggle && searchContainer) {
+            mobileToggle.addEventListener('click', function() {
+                searchContainer.classList.toggle('mobile-open');
+                if (searchContainer.classList.contains('mobile-open') && searchInput) {
+                    setTimeout(() => searchInput.focus(), 60);
+                }
+            });
+        }
+
+        // Mostrar / ocultar dropdown al recibir resultados de HTMX
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            if (evt.detail.target && evt.detail.target.id === 'search-suggestions-dropdown') {
+                const dd = evt.detail.target;
+                const items = dd.querySelectorAll('.suggestion-item');
+                if (items.length > 0 || dd.innerText.trim().length > 0) {
+                    dd.classList.add('show');
+                } else {
+                    dd.classList.remove('show');
+                }
+            }
+        });
+
+        // Navegación por teclado en el input de búsqueda (flechas, Enter, Esc)
+        if (searchInput && dropdown) {
+            searchInput.addEventListener('keydown', function(e) {
+                const items = Array.from(dropdown.querySelectorAll('.suggestion-item'));
+                let activeIdx = items.findIndex(it => it.classList.contains('active'));
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (items.length === 0) return;
+                    if (activeIdx >= 0) items[activeIdx].classList.remove('active');
+                    activeIdx = (activeIdx + 1) % items.length;
+                    items[activeIdx].classList.add('active');
+                    items[activeIdx].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (items.length === 0) return;
+                    if (activeIdx >= 0) items[activeIdx].classList.remove('active');
+                    activeIdx = (activeIdx - 1 + items.length) % items.length;
+                    items[activeIdx].classList.add('active');
+                    items[activeIdx].scrollIntoView({ block: 'nearest' });
+                } else if (e.key === 'Enter') {
+                    if (activeIdx >= 0 && items[activeIdx]) {
+                        e.preventDefault();
+                        const href = items[activeIdx].getAttribute('href');
+                        if (href) window.location.href = href;
+                    }
+                } else if (e.key === 'Escape') {
+                    dropdown.classList.remove('show');
+                    if (searchContainer) searchContainer.classList.remove('mobile-open');
+                    searchInput.blur();
+                }
+            });
+
+            // Cerrar dropdown al hacer clic fuera
+            document.addEventListener('click', function(e) {
+                if (searchContainer && !searchContainer.contains(e.target)) {
+                    dropdown.classList.remove('show');
+                    if (searchContainer.classList.contains('mobile-open') && (!mobileToggle || !mobileToggle.contains(e.target))) {
+                        searchContainer.classList.remove('mobile-open');
+                    }
+                }
+            });
+        }
+    }
+
+    // Atajos de teclado del foro
+    function inicializarAtajosTeclado() {
+        let lastGTime = 0;
+        let postIndex = -1;
+
+        document.addEventListener('keydown', function(e) {
+            // Ignorar si el usuario está escribiendo o si hay un modal abierto
+            const tag = (e.target.tagName || '').toUpperCase();
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) {
+                return;
+            }
+            if (document.querySelector('.modal.show, .auth-modal-backdrop.show')) {
+                return;
+            }
+
+            // Atajo / o Ctrl/Cmd+K para abrir búsqueda
+            if (e.key === '/' || ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K'))) {
+                e.preventDefault();
+                const searchContainer = document.getElementById('global-search-container');
+                const searchInput = document.getElementById('header-search-input');
+                if (searchContainer) searchContainer.classList.add('mobile-open');
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+                return;
+            }
+
+            // G luego H -> Ir al inicio
+            if (e.key === 'g' || e.key === 'G') {
+                lastGTime = Date.now();
+                return;
+            }
+            if ((e.key === 'h' || e.key === 'H') && (Date.now() - lastGTime < 1000)) {
+                e.preventDefault();
+                window.location.href = '/';
+                return;
+            }
+
+            // Navegación de publicaciones en el feed con j / k
+            const posts = Array.from(document.querySelectorAll('.post-row, .card-post, .compact-post-row, article.card'));
+            if (posts.length > 0) {
+                if (e.key === 'j' || e.key === 'J') {
+                    e.preventDefault();
+                    if (postIndex >= 0 && postIndex < posts.length) {
+                        posts[postIndex].classList.remove('keyboard-active');
+                    }
+                    postIndex = Math.min(posts.length - 1, postIndex + 1);
+                    posts[postIndex].classList.add('keyboard-active');
+                    posts[postIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+                if (e.key === 'k' || e.key === 'K') {
+                    e.preventDefault();
+                    if (postIndex >= 0 && postIndex < posts.length) {
+                        posts[postIndex].classList.remove('keyboard-active');
+                    }
+                    postIndex = Math.max(0, postIndex - 1);
+                    posts[postIndex].classList.add('keyboard-active');
+                    posts[postIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+
+                // Acciones sobre el post activo
+                if (postIndex >= 0 && postIndex < posts.length) {
+                    const activePost = posts[postIndex];
+
+                    // Enter u 'o' -> Abrir publicación
+                    if (e.key === 'Enter' || e.key === 'o' || e.key === 'O') {
+                        const link = activePost.querySelector('a.post-title-heading, a.post-title-link, h2 a, h3 a');
+                        if (link) {
+                            e.preventDefault();
+                            link.click();
+                        }
+                        return;
+                    }
+
+                    // 'a' -> Votar
+                    if (e.key === 'a' || e.key === 'A') {
+                        const btnVoto = activePost.querySelector('.vote-btn, .btn-like-post, .btn-voto');
+                        if (btnVoto) {
+                            e.preventDefault();
+                            btnVoto.click();
+                        }
+                        return;
+                    }
+
+                    // 's' -> Guardar
+                    if (e.key === 's' || e.key === 'S') {
+                        const btnGuardar = activePost.querySelector('.btn-guardar-post, [data-action="guardar"]');
+                        if (btnGuardar) {
+                            e.preventDefault();
+                            btnGuardar.click();
+                        }
+                        return;
+                    }
+
+                    // 'c' -> Comentar / Saltar a comentarios
+                    if (e.key === 'c' || e.key === 'C') {
+                        const btnComentar = activePost.querySelector('.post-action-comment, [data-action="comentar"]');
+                        if (btnComentar) {
+                            e.preventDefault();
+                            btnComentar.click();
+                        }
+                        return;
+                    }
+                }
+            }
+
+            // '?' -> Mostrar ayuda de atajos
+            if (e.key === '?') {
+                e.preventDefault();
+                mostrarToast('Atajos: j/k = navegar posts, Enter/o = abrir, a = votar, s = guardar, c = comentar, / = buscar, g+h = inicio', 'dark');
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         inicializarTema();
         inicializarLikes();
@@ -676,11 +960,16 @@
         inicializarVistaCategoria();
         inicializarComentariosAnidados();
         inicializarDropdownsSobreTarjetas();
+        inicializarModalAcceso();
+        inicializarBuscadorSugerencias();
+        inicializarAtajosTeclado();
     });
 
     window.BlogInteracciones = {
         enviarPostInteraccion,
         mostrarToast,
+        abrirModalAcceso,
+        cerrarModalAcceso,
     };
 })();
 

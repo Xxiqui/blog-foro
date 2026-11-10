@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>{% block title %}{{ site_name|default:"Blog con Panel de Autor" }}{% endblock %}</title>
+    <title>{% block title %}{{ marca|default:"Blog con Panel de Autor" }}{% endblock %}</title>
     {% block meta_tags %}
-    <meta name="description" content="Plataforma de publicación de artículos técnicos y panel de autor en Django 5.">
-    <meta property="og:title" content="{{ site_name|default:'Blog con Panel de Autor' }}">
-    <meta property="og:description" content="Plataforma de publicación de artículos técnicos y panel de autor en Django 5.">
+    <meta name="description" content="Plataforma de lectura, discusión técnica y panel de autor en Django 5.">
+    <meta property="og:title" content="{{ marca|default:'Blog con Panel de Autor' }}">
+    <meta property="og:description" content="Plataforma de lectura, discusión técnica y panel de autor en Django 5.">
     {% endblock %}
 
     <!-- Google Fonts: Inter y JetBrains Mono con font-display: swap -->
@@ -20,256 +20,194 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
-    <!-- Sistema de Diseño propio y Adaptabilidad Móvil -->
+    <!-- Sistema de Diseño Adaptable (tokens, base, layout, components, utilities) -->
     <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
-    <link rel="stylesheet" href="{% static 'css/movil.css' %}">
 
+    <!-- HTMX cargado en local con defer -->
+    <script src="{% static 'vendor/htmx/htmx.min.js' %}" defer></script>
+
+    <!-- Script rápido de inicialización de tema antes del render para evitar parpadeos -->
     <script>
         (function() {
             const t = localStorage.getItem('blog_theme');
-            if (t === 'dark' || t === 'light') {
-                document.documentElement.setAttribute('data-bs-theme', t);
-            }
+            const systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = (t === 'dark' || t === 'light') ? t : (systemDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-bs-theme', theme);
         })();
     </script>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="d-flex flex-column min-vh-100">
+<body class="app-container" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' {% block body_hx_boost %}hx-boost="true"{% endblock %}>
     <!-- Enlace de accesibilidad: Saltar al contenido principal -->
     <a href="#main-content" class="skip-link">Saltar al contenido</a>
 
-    {% block top_progress %}{% endblock %}
+    <!-- Barra Superior Global (56px) -->
+    <header class="app-header">
+        <div class="app-header-inner">
+            <!-- Marca / Logo -->
+            <a class="header-brand" href="{% url 'blog:post_list' %}" title="{{ marca|default:'Blog con Panel de Autor' }}">
+                <i class="bi bi-chat-square-text-fill text-primary fs-5 flex-shrink-0" aria-hidden="true"></i>
+                <span class="text-truncate">{{ marca_corta|default:"Blog" }}</span>
+            </a>
 
-    <!-- Encabezado y Barra de Navegación -->
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-dark navbar-blog sticky-top shadow-sm" aria-label="Navegación principal">
-            <div class="container">
-                <a class="navbar-brand fw-bold d-flex align-items-center gap-2 navbar-brand-mobile" href="{% url 'blog:post_list' %}" title="{{ site_name|default:'Blog con Panel de Autor' }}">
-                    <i class="bi bi-journal-richtext text-primary fs-4 flex-shrink-0" aria-hidden="true"></i>
-                    <span>{{ site_name|default:"Blog con Panel de Autor" }}</span>
-                </a>
+            <!-- Trigger móvil de búsqueda (< 640px) -->
+            <button type="button" class="btn-forum btn-forum-subtle mobile-search-trigger touch-target-44 d-sm-none" id="mobile-search-toggle" aria-label="Abrir buscador" title="Buscar">
+                <i class="bi bi-search fs-5" aria-hidden="true"></i>
+            </button>
 
-                <!-- Controles siempre visibles en móvil y escritorio (Tema + Campana + Toggler) con touch target >= 44px -->
-                <div class="d-flex align-items-center gap-1 gap-sm-2 order-lg-3 ms-auto ms-lg-2">
-                    <button type="button" id="theme-toggle-btn"
-                            class="btn btn-sm btn-outline-light border-0 touch-target-44"
-                            aria-label="Cambiar entre modo claro y oscuro"
-                            aria-pressed="false"
-                            title="Cambiar modo claro / oscuro">
-                        <i id="theme-toggle-icon" class="bi bi-moon-stars-fill" aria-hidden="true"></i>
-                    </button>
-
-                    {% if user.is_authenticated %}
-                        <div class="dropdown">
-                            <a class="btn btn-sm btn-outline-light border-0 position-relative touch-target-44"
-                               href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"
-                               aria-label="Abrir menú de notificaciones"
-                               title="Notificaciones">
-                                <i class="bi bi-bell-fill" aria-hidden="true"></i>
-                                <span id="notificaciones-badge"
-                                      data-contador-url="{% url 'blog:notificaciones_contador' %}"
-                                      aria-live="polite"
-                                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {% if not notificaciones_no_leidas_count %}d-none{% endif %}">
-                                    {{ notificaciones_no_leidas_count|default:0 }}
-                                </span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end shadow border-0 p-0" style="width: 320px;">
-                                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
-                                    <span class="fw-bold small">Notificaciones recientes</span>
-                                    <a href="{% url 'blog:notificaciones_list' %}" class="small text-decoration-none">Ver todas</a>
-                                </div>
-                                <div class="list-group list-group-flush">
-                                    {% for notif in ultimas_notificaciones %}
-                                        <a href="{% url 'blog:notificacion_ir' notif.pk %}"
-                                           class="list-group-item list-group-item-action small py-2 {% if not notif.leida %}fw-semibold bg-body-tertiary{% endif %}">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <span class="me-2">{{ notif.mensaje }}</span>
-                                                {% if not notif.leida %}
-                                                    <span class="badge bg-primary rounded-circle p-1" aria-label="No leída"></span>
-                                                {% endif %}
-                                            </div>
-                                            <div class="text-muted" style="font-size: 0.75rem;">
-                                                {{ notif.creado|timesince }} atrás
-                                            </div>
-                                        </a>
-                                    {% empty %}
-                                        <div class="px-3 py-4 text-center text-muted small">
-                                            <i class="bi bi-bell-slash d-block fs-4 mb-1" aria-hidden="true"></i>
-                                            No tienes notificaciones.
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                                <div class="text-center border-top py-2">
-                                    <a href="{% url 'blog:notificaciones_list' %}" class="small fw-semibold text-decoration-none">
-                                        Ir al centro de notificaciones
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    {% endif %}
-
-                    <button class="navbar-toggler touch-target-44 border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
-                            aria-controls="navbarMain" aria-expanded="false" aria-label="Mostrar u ocultar navegación">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                </div>
-
-                <!-- Contenido colapsable (enlaces principales, buscador y menú de usuario) -->
-                <div class="collapse navbar-collapse order-lg-2" id="navbarMain">
-                    {% if user.is_authenticated %}
-                        <!-- Tarjeta de usuario en móvil arriba del menú colapsado -->
-                        <div class="d-lg-none navbar-user-card-mobile d-flex align-items-center gap-3">
-                            <div class="flex-shrink-0">
-                                {% if user.perfil.avatar %}
-                                    <img src="{{ user.perfil.avatar.url }}" alt="{{ user.perfil.nombre_mostrar }}" class="rounded-circle" style="width: 44px; height: 44px; object-fit: cover;">
-                                {% else %}
-                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 44px; height: 44px;">
-                                        {{ user.perfil.nombre_mostrar|slice:":1"|upper|default:user.username|slice:":1"|upper }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="min-w-0 flex-grow-1">
-                                <div class="fw-bold text-white text-truncate">{{ user.perfil.nombre_mostrar|default:user.get_full_name|default:user.username }}</div>
-                                <div class="small text-secondary text-truncate">@{{ user.username }}</div>
-                            </div>
-                        </div>
-                    {% endif %}
-
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'post_list' %}active{% endif %}"
-                               {% if request.resolver_match.url_name == 'post_list' %}aria-current="page"{% endif %}
-                               href="{% url 'blog:post_list' %}">
-                                Inicio
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'posts_populares' %}active{% endif %}"
-                               {% if request.resolver_match.url_name == 'posts_populares' %}aria-current="page"{% endif %}
-                               href="{% url 'blog:posts_populares' %}">
-                                Populares
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'autores_list' %}active{% endif %}"
-                               {% if request.resolver_match.url_name == 'autores_list' %}aria-current="page"{% endif %}
-                               href="{% url 'blog:autores_list' %}">
-                                Autores
-                            </a>
-                        </li>
-                        {% if user.is_authenticated %}
-                            <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.url_name == 'siguiendo_feed' %}active{% endif %}"
-                                   {% if request.resolver_match.url_name == 'siguiendo_feed' %}aria-current="page"{% endif %}
-                                   href="{% url 'blog:siguiendo_feed' %}">
-                                    Siguiendo
-                                </a>
-                            </li>
-                        {% endif %}
-                    </ul>
-
-                    <!-- Buscador integrado dentro del menú colapsable (ancho completo en móvil) -->
-                    <form class="d-flex me-lg-3 my-2 my-lg-0 w-100 w-lg-auto" action="{% url 'blog:buscar_posts' %}" method="get" role="search">
-                        <div class="input-group input-group-sm navbar-search-group w-100">
-                            <input class="form-control navbar-search-input" type="search" name="q"
-                                   placeholder="Buscar artículos…" value="{{ request.GET.q|default:'' }}"
-                                   aria-label="Buscar artículos">
-                            <button class="btn navbar-search-btn touch-target-44" type="submit" aria-label="Buscar artículos">
-                                <i class="bi bi-search" aria-hidden="true"></i>
-                            </button>
-                        </div>
-                    </form>
-
-                    <!-- Menú de usuario ("Panel" y "Mis Listas" agrupados en el desplegable) -->
-                    <ul class="navbar-nav align-items-lg-center gap-2">
-                        {% if user.is_authenticated %}
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 text-white" href="#"
-                                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-person-circle fs-5 text-info" aria-hidden="true"></i>
-                                    <span>{{ user.perfil.nombre_mostrar|default:user.get_full_name|default:user.username }}</span>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                    <li>
-                                        <a class="dropdown-item fw-semibold" href="{% url 'blog:panel_dashboard' %}">
-                                            <i class="bi bi-speedometer2 me-2 text-primary" aria-hidden="true"></i>Panel de Autor
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'blog:panel_post_create' %}">
-                                            <i class="bi bi-plus-circle me-2 text-success" aria-hidden="true"></i>Nuevo Post
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'blog:guardados' %}">
-                                            <i class="bi bi-bookmark-star me-2 text-warning" aria-hidden="true"></i>Artículos Guardados
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'blog:mis_listas' %}">
-                                            <i class="bi bi-bookmarks me-2 text-primary" aria-hidden="true"></i>Mis Listas de Lectura
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'blog:mis_suscripciones' %}">
-                                            <i class="bi bi-envelope-check me-2 text-info" aria-hidden="true"></i>Mis Suscripciones
-                                        </a>
-                                    </li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'blog:autor_detail' user.username %}">
-                                            <i class="bi bi-person-badge me-2" aria-hidden="true"></i>Ver Perfil Público
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'cuentas:editar_perfil' %}">
-                                            <i class="bi bi-gear me-2" aria-hidden="true"></i>Editar Perfil
-                                        </a>
-                                    </li>
-                                    {% if user.is_staff %}
-                                        <li>
-                                            <a class="dropdown-item" href="/admin/">
-                                                <i class="bi bi-shield-lock me-2 text-danger" aria-hidden="true"></i>Admin de Django
-                                            </a>
-                                        </li>
-                                    {% endif %}
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li>
-                                        <form method="post" action="{% url 'cuentas:logout' %}" class="px-2">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-sm btn-outline-danger w-100 text-start">
-                                                <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>Cerrar sesión
-                                            </button>
-                                        </form>
-                                    </li>
-                                </ul>
-                            </li>
-                        {% else %}
-                            <li class="nav-item d-none d-lg-block">
-                                <a class="btn btn-outline-light btn-sm" href="{% url 'cuentas:login' %}">Iniciar sesión</a>
-                            </li>
-                            <li class="nav-item d-none d-lg-block">
-                                <a class="btn btn-primary btn-sm" href="{% url 'cuentas:registro' %}">Registrarse</a>
-                            </li>
-                            <!-- En móvil: Iniciar sesión y Registrarse al 50% cada uno en una fila -->
-                            <li class="nav-item d-lg-none w-100">
-                                <div class="navbar-auth-row">
-                                    <a class="btn btn-outline-light" href="{% url 'cuentas:login' %}">Iniciar sesión</a>
-                                    <a class="btn btn-primary" href="{% url 'cuentas:registro' %}">Registrarse</a>
-                                </div>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </div>
+            <!-- Buscador central con sugerencias (>= 640px y expandible en móvil) -->
+            <div class="header-search-wrapper desktop-search-input" id="global-search-container">
+                <form action="{% url 'blog:buscar_posts' %}" method="get" role="search" class="m-0 p-0 position-relative" id="form-buscador-global">
+                    <i class="bi bi-search header-search-icon" aria-hidden="true"></i>
+                    <input type="search"
+                           name="q"
+                           id="header-search-input"
+                           class="header-search-input"
+                           placeholder="Buscar publicaciones, temas o autores... (Ctrl+K o /)"
+                           value="{{ query|default:'' }}"
+                           autocomplete="off"
+                           hx-get="{% url 'blog:buscar_sugerencias' %}"
+                           hx-trigger="input changed delay:200ms"
+                           hx-target="#search-suggestions-dropdown"
+                           aria-autocomplete="list"
+                           aria-expanded="false"
+                           aria-controls="search-suggestions-dropdown">
+                    <span class="header-search-badge d-none d-md-inline">/</span>
+                    <div class="search-suggestions-dropdown" id="search-suggestions-dropdown"></div>
+                </form>
             </div>
-        </nav>
+
+            <!-- Acciones a la derecha -->
+            <div class="d-flex align-items-center gap-1 gap-sm-2 flex-shrink-0">
+                <!-- Botón Escribir (>= 640px) -->
+                {% if user.is_authenticated %}
+                    <a href="{% url 'blog:panel_post_create' %}" hx-boost="false" class="btn-forum btn-forum-primary desktop-write-btn">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                        <span>Escribir</span>
+                    </a>
+                {% else %}
+                    <button type="button" class="btn-forum btn-forum-primary desktop-write-btn btn-requiere-auth" data-action="crear_post">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                        <span>Escribir</span>
+                    </button>
+                {% endif %}
+
+                <!-- Campana con Notificaciones (con sesión) -->
+                {% if user.is_authenticated %}
+                    <div class="dropdown">
+                        <a href="{% url 'blog:notificaciones_list' %}"
+                           class="btn-forum btn-forum-subtle position-relative touch-target-44 p-2"
+                           role="button"
+                           id="btn-notificaciones-dropdown"
+                           data-bs-toggle="dropdown"
+                           aria-expanded="false"
+                           aria-label="Notificaciones"
+                           title="Notificaciones">
+                            <i class="bi bi-bell fs-5" aria-hidden="true"></i>
+                            <span id="notificaciones-badge"
+                                  data-contador-url="{% url 'blog:notificaciones_contador' %}"
+                                  aria-live="polite"
+                                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {% if not notificaciones_no_leidas_count %}d-none{% endif %}"
+                                  style="font-size: 10px; transform: translate(-30%, 25%) !important;">
+                                {{ notificaciones_no_leidas_count|default:0 }}
+                            </span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow border-0 p-0" style="width: 320px; max-width: 90vw;">
+                            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                                <span class="fw-bold small">Notificaciones</span>
+                                <a href="{% url 'blog:notificaciones_list' %}" class="small text-decoration-none">Ver todas</a>
+                            </div>
+                            <div class="list-group list-group-flush" style="max-height: 360px; overflow-y: auto;">
+                                {% for notif in ultimas_notificaciones %}
+                                    <a href="{% url 'blog:notificacion_ir' notif.pk %}"
+                                       class="list-group-item list-group-item-action small py-2 {% if not notif.leida %}fw-semibold bg-body-tertiary{% endif %}">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <span class="me-2 text-truncate">{{ notif.mensaje }}</span>
+                                            {% if not notif.leida %}
+                                                <span class="badge bg-primary rounded-circle p-1" aria-label="No leída"></span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">
+                                            {{ notif.creado|timesince }} atrás
+                                        </div>
+                                    </a>
+                                {% empty %}
+                                    <div class="px-3 py-4 text-center text-muted small">
+                                        <i class="bi bi-bell-slash d-block fs-4 mb-1" aria-hidden="true"></i>
+                                        No tienes notificaciones
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Conmutador de tema para visitantes -->
+                {% if not user.is_authenticated %}
+                    <button type="button" id="theme-toggle-btn" class="btn-forum btn-forum-subtle touch-target-44 p-2" aria-label="Cambiar modo claro / oscuro" title="Cambiar tema">
+                        <i id="theme-toggle-icon" class="bi bi-moon-stars" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="btn-forum btn-forum-subtle btn-requiere-auth" data-action="login">
+                        Entrar
+                    </button>
+                    <a href="{% url 'cuentas:registro' %}" hx-boost="false" class="btn-forum btn-forum-primary d-none d-sm-inline-flex">
+                        Crear cuenta
+                    </a>
+                {% else %}
+                    <!-- Menú de usuario autenticado con avatar -->
+                    <div class="dropdown">
+                        <button class="btn btn-link p-0 border-0 d-flex align-items-center touch-target-44" type="button" id="userMenuDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menú de usuario">
+                            {% if user.perfil.avatar %}
+                                <img src="{{ user.perfil.avatar.url }}" alt="{{ user.perfil.nombre_mostrar }}" class="rounded-circle" style="width: 32px; height: 32px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px; font-size: 13px;">
+                                    {{ user.perfil.nombre_mostrar|slice:":1"|upper|default:user.username|slice:":1"|upper }}
+                                </div>
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 py-2" aria-labelledby="userMenuDropdown" style="min-width: 220px;">
+                            <li class="px-3 py-2 border-bottom mb-1">
+                                <div class="fw-bold text-truncate" style="max-width: 190px;">{{ user.perfil.nombre_mostrar|default:user.username }}</div>
+                                <div class="small text-muted text-truncate">@{{ user.username }}</div>
+                            </li>
+                            <li><a class="dropdown-item py-2" href="{% url 'blog:panel_dashboard' %}" hx-boost="false"><i class="bi bi-speedometer2 me-2 text-primary" aria-hidden="true"></i>Panel de Autor</a></li>
+                            <li><a class="dropdown-item py-2" href="{% url 'blog:autor_detail' user.username %}"><i class="bi bi-person-badge me-2 text-muted" aria-hidden="true"></i>Ver perfil público</a></li>
+                            <li><a class="dropdown-item py-2" href="{% url 'cuentas:editar_perfil' %}" hx-boost="false"><i class="bi bi-gear me-2 text-muted" aria-hidden="true"></i>Editar perfil</a></li>
+                            <li><a class="dropdown-item py-2" href="{% url 'blog:panel_post_list' %}" hx-boost="false"><i class="bi bi-journal-text me-2 text-muted" aria-hidden="true"></i>Mis posts</a></li>
+                            <li><a class="dropdown-item py-2" href="{% url 'blog:guardados' %}"><i class="bi bi-bookmark me-2 text-warning" aria-hidden="true"></i>Guardados y listas</a></li>
+                            <li><a class="dropdown-item py-2" href="{% url 'blog:mis_suscripciones' %}"><i class="bi bi-envelope-check me-2 text-info" aria-hidden="true"></i>Suscripciones</a></li>
+                            {% if user.is_staff %}
+                                <li><a class="dropdown-item py-2" href="/admin/" hx-boost="false"><i class="bi bi-shield-lock me-2 text-danger" aria-hidden="true"></i>Admin Django</a></li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <!-- Selector de tema integrado -->
+                            <li class="px-3 py-1 d-flex align-items-center justify-content-between">
+                                <span class="small text-muted"><i class="bi bi-circle-half me-2"></i>Tema</span>
+                                <button type="button" id="theme-toggle-btn" class="btn btn-sm btn-outline-secondary border-0 py-0 px-2" aria-label="Cambiar tema">
+                                    <i id="theme-toggle-icon" class="bi bi-moon-stars" aria-hidden="true"></i>
+                                </button>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'cuentas:logout' %}" class="px-2" hx-boost="false">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100 text-start">
+                                        <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>Cerrar sesión
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
     </header>
 
-    <!-- Mensajes Flash -->
-    <div class="container mt-3" aria-live="polite">
+    <!-- Avisos Flash -->
+    <div class="container-fluid px-3 pt-2" aria-live="polite">
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm" role="alert">
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm mb-2" role="alert">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar aviso"></button>
                 </div>
@@ -277,15 +215,264 @@
         {% endif %}
     </div>
 
-    <!-- Contenido Principal -->
-    <main id="main-content" class="container my-4" tabindex="-1">
-        {% block content %}{% endblock %}
-    </main>
+    <!-- Estructura Adaptable del Foro -->
+    <div class="app-body">
+        <!-- Navegación Izquierda Pegajosa (64px de 1024-1279, 220px desde 1280px) -->
+        <nav class="app-nav-left" aria-label="Navegación principal del foro">
+            <div class="w-100">
+                <a href="{% url 'blog:post_list' %}"
+                   class="nav-item-link {% if request.resolver_match.url_name == 'post_list' and not request.GET.orden and not request.GET.filtro %}active{% endif %}"
+                   {% if request.resolver_match.url_name == 'post_list' and not request.GET.orden and not request.GET.filtro %}aria-current="page"{% endif %}
+                   title="Inicio">
+                    <i class="bi bi-house-door" aria-hidden="true"></i>
+                    <span class="nav-label">Inicio</span>
+                </a>
+                <a href="{% url 'blog:posts_populares' %}"
+                   class="nav-item-link {% if request.resolver_match.url_name == 'posts_populares' %}active{% endif %}"
+                   {% if request.resolver_match.url_name == 'posts_populares' %}aria-current="page"{% endif %}
+                   title="Populares">
+                    <i class="bi bi-fire" aria-hidden="true"></i>
+                    <span class="nav-label">Populares</span>
+                </a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'blog:siguiendo_feed' %}"
+                       class="nav-item-link {% if request.resolver_match.url_name == 'siguiendo_feed' %}active{% endif %}"
+                       {% if request.resolver_match.url_name == 'siguiendo_feed' %}aria-current="page"{% endif %}
+                       title="Siguiendo">
+                        <i class="bi bi-people" aria-hidden="true"></i>
+                        <span class="nav-label">Siguiendo</span>
+                    </a>
+                {% endif %}
+                <a href="{% url 'blog:explorar' %}"
+                   class="nav-item-link {% if request.resolver_match.url_name == 'explorar' %}active{% endif %}"
+                   {% if request.resolver_match.url_name == 'explorar' %}aria-current="page"{% endif %}
+                   title="Explorar">
+                    <i class="bi bi-compass" aria-hidden="true"></i>
+                    <span class="nav-label">Explorar</span>
+                </a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'blog:guardados' %}"
+                       class="nav-item-link {% if request.resolver_match.url_name == 'guardados' or request.resolver_match.url_name == 'mis_listas' %}active{% endif %}"
+                       {% if request.resolver_match.url_name == 'guardados' or request.resolver_match.url_name == 'mis_listas' %}aria-current="page"{% endif %}
+                       title="Guardados">
+                        <i class="bi bi-bookmark" aria-hidden="true"></i>
+                        <span class="nav-label">Guardados</span>
+                    </a>
+                {% else %}
+                    <button type="button" class="nav-item-link btn-requiere-auth bg-transparent border-0 text-start" data-action="guardados" title="Guardados">
+                        <i class="bi bi-bookmark" aria-hidden="true"></i>
+                        <span class="nav-label">Guardados</span>
+                    </button>
+                {% endif %}
+            </div>
 
-    <!-- Contenedor de Toasts de Bootstrap para avisos de interacciones AJAX -->
+            <!-- Sección de Mis Comunidades (visible desde 1280px con .nav-subsections) -->
+            <div class="nav-subsections w-100 mt-3 pt-3 border-top">
+                <div class="nav-section-title d-flex justify-content-between align-items-center">
+                    <span>Comunidades</span>
+                    <a href="{% url 'blog:explorar' %}" class="small text-decoration-none text-muted" title="Ver todas">Ver todas</a>
+                </div>
+                <div class="mt-1">
+                    {% for cat in comunidades_nav %}
+                        <a href="{% url 'blog:posts_por_categoria' cat.slug %}"
+                           class="nav-item-link {% if categoria.slug == cat.slug %}active{% endif %}"
+                           {% if categoria.slug == cat.slug %}aria-current="page"{% endif %}
+                           title="c/{{ cat.nombre }}">
+                            <i class="bi bi-hash text-muted" aria-hidden="true"></i>
+                            <span class="nav-label text-truncate">{{ cat.nombre }}</span>
+                        </a>
+                    {% empty %}
+                        <div class="small text-muted px-3 py-2">Sin comunidades</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </nav>
+
+        <!-- Feed Central / Contenido Principal -->
+        <main id="main-content" class="app-main" tabindex="-1">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Columna Lateral Derecha Pegajosa (>= 1280px) -->
+        <aside class="app-sidebar-right" aria-label="Widgets e información complementaria">
+            {% block sidebar_right %}
+                <!-- Widget Acerca del Foro -->
+                <div class="card border mb-3 shadow-none bg-surface">
+                    <div class="card-body p-3">
+                        <h2 class="h6 fw-bold mb-2 d-flex align-items-center gap-2">
+                            <i class="bi bi-info-circle text-primary" aria-hidden="true"></i>
+                            <span>Acerca de {{ marca_corta }}</span>
+                        </h2>
+                        <p class="small text-secondary mb-3">
+                            Comunidad de lectura técnica, debate constructivo y desarrollo en Django. Comparte tus conocimientos con autores y lectores.
+                        </p>
+                        <div class="d-grid">
+                            {% if not user.is_authenticated %}
+                                <button type="button" class="btn-forum btn-forum-primary justify-content-center btn-requiere-auth" data-action="crear_post">
+                                    Crear publicación
+                                </button>
+                            {% else %}
+                                <a href="{% url 'blog:panel_post_create' %}" hx-boost="false" class="btn-forum btn-forum-primary justify-content-center">
+                                    Crear publicación
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comunidades Activas -->
+                <div class="card border mb-3 shadow-none bg-surface">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h3 class="h6 fw-bold mb-0">Comunidades activas</h3>
+                            <a href="{% url 'blog:explorar' %}" class="small text-decoration-none">Ver más</a>
+                        </div>
+                        <div class="vstack gap-2">
+                            {% for c_dest in comunidades_nav|slice:":5" %}
+                                <div class="d-flex align-items-center justify-content-between py-1">
+                                    <a href="{% url 'blog:posts_por_categoria' c_dest.slug %}" class="d-flex align-items-center gap-2 text-decoration-none text-body min-w-0">
+                                        <div class="rounded bg-body-secondary text-secondary d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width: 28px; height: 28px; font-size: 11px;">
+                                            c/
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="small fw-semibold text-truncate">{{ c_dest.nombre }}</div>
+                                            <div class="text-muted" style="font-size: 11px;">{{ c_dest.total_publicaciones|default:0 }} posts</div>
+                                        </div>
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enlaces del Pie Compacto -->
+                <div class="px-2 small text-muted">
+                    <div class="d-flex flex-wrap gap-x-2 gap-y-1 mb-2" style="font-size: 12px;">
+                        <a href="{% url 'blog:acerca' %}" class="text-decoration-none text-muted">Acerca de</a> &bull;
+                        <a href="{% url 'blog:privacidad' %}" class="text-decoration-none text-muted">Privacidad</a> &bull;
+                        <a href="{% url 'blog:terminos' %}" class="text-decoration-none text-muted">Términos</a> &bull;
+                        <a href="{% url 'blog:contacto' %}" class="text-decoration-none text-muted">Contacto</a> &bull;
+                        <a href="{% url 'blog:rss_feed' %}" class="text-decoration-none text-muted">RSS</a>
+                    </div>
+                    <div style="font-size: 11px;">
+                        {{ marca|default:"Blog con Panel de Autor" }} &copy; {% now "Y" %}. Todos los derechos reservados.
+                    </div>
+                </div>
+            {% endblock %}
+        </aside>
+    </div>
+
+    <!-- Barra de Navegación Inferior (< 1024px) -->
+    {% block bottom_bar %}
+    <nav class="app-bottom-bar" aria-label="Navegación inferior móvil">
+        <a href="{% url 'blog:post_list' %}"
+           class="bottom-nav-item {% if request.resolver_match.url_name == 'post_list' and not request.GET.orden and not request.GET.filtro %}active{% endif %}"
+           {% if request.resolver_match.url_name == 'post_list' and not request.GET.orden and not request.GET.filtro %}aria-current="page"{% endif %}
+           title="Inicio">
+            <i class="bi bi-house-door{% if request.resolver_match.url_name == 'post_list' and not request.GET.orden and not request.GET.filtro %}-fill{% endif %}" aria-hidden="true"></i>
+            <span>Inicio</span>
+        </a>
+        <a href="{% url 'blog:explorar' %}"
+           class="bottom-nav-item {% if request.resolver_match.url_name == 'explorar' %}active{% endif %}"
+           {% if request.resolver_match.url_name == 'explorar' %}aria-current="page"{% endif %}
+           title="Explorar">
+            <i class="bi bi-compass{% if request.resolver_match.url_name == 'explorar' %}-fill{% endif %}" aria-hidden="true"></i>
+            <span>Explorar</span>
+        </a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'blog:panel_post_create' %}" hx-boost="false" class="bottom-nav-create-btn" title="Escribir publicación" aria-label="Escribir publicación">
+                <i class="bi bi-plus-lg" aria-hidden="true"></i>
+            </a>
+        {% else %}
+            <button type="button" class="bottom-nav-create-btn btn-requiere-auth" data-action="crear_post" title="Escribir publicación" aria-label="Escribir publicación">
+                <i class="bi bi-plus-lg" aria-hidden="true"></i>
+            </button>
+        {% endif %}
+        {% if user.is_authenticated %}
+            <a href="{% url 'blog:notificaciones_list' %}"
+               class="bottom-nav-item position-relative {% if request.resolver_match.url_name == 'notificaciones_list' %}active{% endif %}"
+               {% if request.resolver_match.url_name == 'notificaciones_list' %}aria-current="page"{% endif %}
+               title="Avisos">
+                <i class="bi bi-bell{% if request.resolver_match.url_name == 'notificaciones_list' %}-fill{% endif %}" aria-hidden="true"></i>
+                <span>Avisos</span>
+                {% if notificaciones_no_leidas_count %}
+                    <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-danger" style="font-size: 9px; margin-left: 10px;">
+                        {{ notificaciones_no_leidas_count }}
+                    </span>
+                {% endif %}
+            </a>
+            <a href="{% url 'blog:autor_detail' user.username %}"
+               class="bottom-nav-item {% if request.resolver_match.url_name == 'autor_detail' and request.resolver_match.kwargs.username == user.username %}active{% endif %}"
+               {% if request.resolver_match.url_name == 'autor_detail' and request.resolver_match.kwargs.username == user.username %}aria-current="page"{% endif %}
+               title="Yo">
+                <i class="bi bi-person-circle" aria-hidden="true"></i>
+                <span>Yo</span>
+            </a>
+        {% else %}
+            <button type="button" class="bottom-nav-item btn-requiere-auth bg-transparent border-0" data-action="notificaciones" title="Avisos">
+                <i class="bi bi-bell" aria-hidden="true"></i>
+                <span>Avisos</span>
+            </button>
+            <button type="button" class="bottom-nav-item btn-requiere-auth bg-transparent border-0" data-action="login" title="Entrar">
+                <i class="bi bi-person-circle" aria-hidden="true"></i>
+                <span>Entrar</span>
+            </button>
+        {% endif %}
+    </nav>
+    {% endblock %}
+
+    <!-- Modal de Acceso para Visitantes (Hoja inferior en móvil) -->
+    <div class="auth-modal-backdrop" id="modalAccesoVisitante" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title" tabindex="-1">
+        <div class="auth-modal-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2 class="h5 fw-bold mb-0" id="auth-modal-title">Únete a la conversación</h2>
+                <button type="button" class="btn-close" id="btn-cerrar-modal-auth" aria-label="Cerrar ventana de acceso"></button>
+            </div>
+            <p class="small text-secondary mb-3" id="auth-modal-desc">
+                Inicia sesión o regístrate para interactuar, votar, comentar y unirte a comunidades.
+            </p>
+
+            {% if hay_proveedores_sociales %}
+                <div class="mb-3">
+                    {% include "cuentas/includes/botones_sociales.html" with next=request.get_full_path %}
+                </div>
+                <div class="text-center position-relative my-3">
+                    <hr class="m-0">
+                    <span class="position-absolute top-50 start-50 translate-middle px-2 small text-muted bg-surface">o con tu cuenta</span>
+                </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'cuentas:login' %}" id="form-auth-modal" hx-boost="false">
+                {% csrf_token %}
+                <input type="hidden" name="next" id="auth-modal-next" value="{{ request.get_full_path }}">
+                <div class="mb-2">
+                    <label for="modal-auth-login" class="form-label small fw-semibold">Usuario o correo</label>
+                    <input type="text" name="login" id="modal-auth-login" class="form-control form-control-sm" required autocomplete="username">
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <label for="modal-auth-password" class="form-label small fw-semibold">Contraseña</label>
+                        <a href="{% url 'cuentas:password_reset' %}" class="small text-decoration-none" hx-boost="false">¿Olvidaste?</a>
+                    </div>
+                    <input type="password" name="password" id="modal-auth-password" class="form-control form-control-sm" required autocomplete="current-password">
+                </div>
+                <div class="d-grid mb-2">
+                    <button type="submit" class="btn-forum btn-forum-primary justify-content-center">
+                        Iniciar sesión
+                    </button>
+                </div>
+            </form>
+
+            <div class="text-center small text-muted mt-3">
+                ¿No tienes cuenta? <a href="{% url 'cuentas:registro' %}" hx-boost="false" class="fw-semibold text-primary">Regístrate gratis</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container global para avisos flotantes -->
     <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3 z-3" aria-live="polite" aria-atomic="true"></div>
 
-    <!-- Modal reutilizable para Insertar artículo (<iframe> embed) -->
+    <!-- Modal reutilizable para Insertar artículo (iframe embed) -->
     <div class="modal fade" id="embedPostModal" tabindex="-1" aria-labelledby="embedPostModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content border-0 shadow">
@@ -297,7 +484,7 @@
                 </div>
                 <div class="modal-body">
                     <label for="embed-code-textarea" class="form-label small fw-semibold">
-                        Copia y pega este código HTML donde quieras insertar la tarjeta del artículo:
+                        Copia y pega este código HTML donde quieras insertar la tarjeta:
                     </label>
                     <textarea id="embed-code-textarea" class="form-control font-monospace small mb-3" rows="3" readonly></textarea>
                     <div class="d-flex justify-content-end mb-3">
@@ -312,118 +499,9 @@
         </div>
     </div>
 
-    <!-- Pie de página con suscripción, enlaces a RSS, categorías, Acerca de, Contacto y Sitemap -->
-    <footer class="bg-dark text-light pt-5 pb-4 mt-auto border-top">
-        <div class="container">
-            {% if categorias_footer and not es_panel and not es_editor and not es_auth and 'panel' not in request.path and 'cuentas' not in request.path and 'login' not in request.path and 'registro' not in request.path %}
-            <div class="pb-4 mb-4 border-bottom border-secondary" id="footerBoletinSeccion">
-                <div class="row g-3 align-items-center">
-                    <div class="col-lg-5">
-                        <h2 class="h6 fw-bold mb-1">
-                            <i class="bi bi-envelope-paper-heart text-primary me-2" aria-hidden="true"></i>Suscríbete por correo
-                        </h2>
-                        <p class="small text-light opacity-75 mb-0">
-                            Recibe un aviso cuando se publiquen nuevos artículos en tu categoría favorita (doble confirmación).
-                        </p>
-                    </div>
-                    <div class="col-lg-7">
-                        <form method="post" action="{% url 'blog:suscripcion_crear' %}" class="row g-2 align-items-center">
-                            {% csrf_token %}
-                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                            <input type="text" name="sitio_web" value="" tabindex="-1" autocomplete="off"
-                                   style="position:absolute;left:-9999px;height:0;width:0;opacity:0;" aria-hidden="true">
-                            <div class="col-12 col-sm-5">
-                                <select name="categoria_id" class="form-select form-select-sm" required aria-label="Seleccionar categoría para suscribirse">
-                                    {% for cat_f in categorias_footer %}
-                                        <option value="{{ cat_f.pk }}">Categoría: {{ cat_f.nombre }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-12 col-sm-4">
-                                <input type="email" name="email" class="form-control form-control-sm"
-                                       placeholder="tu@correo.com"
-                                       aria-label="Tu correo electrónico"
-                                       value="{% if user.is_authenticated %}{{ user.email }}{% endif %}" required>
-                            </div>
-                            <div class="col-12 col-sm-3 d-grid">
-                                <button type="submit" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-send me-1" aria-hidden="true"></i>Suscribirme
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-
-            <div class="pb-4 border-bottom border-secondary">
-                <div class="row g-4">
-                    <div class="col-md-5">
-                        <div class="fw-bold fs-5 mb-2 d-flex align-items-center gap-2">
-                            <i class="bi bi-journal-richtext text-primary" aria-hidden="true"></i>
-                            <span>{{ site_name|default:"Blog con Panel de Autor" }}</span>
-                        </div>
-                        <p class="small text-light opacity-75 mb-2">
-                            Plataforma editorial técnica construida con Python 3.12, Django 5 y Bootstrap 5.
-                        </p>
-                    </div>
-                    <div class="col-6 col-md-4">
-                        <h3 class="h6 fw-bold text-uppercase small mb-2">Categorías</h3>
-                        <ul class="list-unstyled small mb-0 vstack gap-1">
-                            {% for cat_f in categorias_footer %}
-                                <li>
-                                    <a href="{% url 'blog:posts_por_categoria' cat_f.slug %}" class="footer-link">
-                                        <i class="bi bi-folder2 me-1" aria-hidden="true"></i>{{ cat_f.nombre }}
-                                    </a>
-                                </li>
-                            {% empty %}
-                                <li class="text-light opacity-75">General</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <h3 class="h6 fw-bold text-uppercase small mb-2">Enlaces del sitio</h3>
-                        <ul class="list-unstyled small mb-0 vstack gap-1">
-                            <li><a href="{% url 'blog:acerca' %}" class="footer-link"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>Acerca de</a></li>
-                            <li><a href="{% url 'blog:privacidad' %}" class="footer-link"><i class="bi bi-shield-check me-1" aria-hidden="true"></i>Privacidad</a></li>
-                            <li><a href="{% url 'blog:terminos' %}" class="footer-link"><i class="bi bi-file-earmark-text me-1" aria-hidden="true"></i>Términos</a></li>
-                            <li><a href="{% url 'blog:contacto' %}" class="footer-link"><i class="bi bi-envelope me-1" aria-hidden="true"></i>Contacto</a></li>
-                            <li><a href="{% url 'blog:rss_feed' %}" class="footer-link"><i class="bi bi-rss-fill text-warning me-1" aria-hidden="true"></i>Canal RSS</a></li>
-                            <li><a href="{% url 'blog:sitemap' %}" class="footer-link"><i class="bi bi-diagram-3 me-1" aria-hidden="true"></i>Sitemap XML</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center pt-3 small text-light opacity-75">
-                <div class="mb-2 mb-md-0">
-                    <span class="fw-semibold">{{ site_name|default:"Blog con Panel de Autor" }}</span> &copy; {% now "Y" %}. Todos los derechos reservados.
-                </div>
-                <div>
-                    Zona horaria: América/Bogotá &bull; Idioma: Español
-                </div>
-            </div>
-        </div>
-    </footer>
-
+    <!-- Scripts de Bootstrap y Sistema Interactivo -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/interacciones.js' %}"></script>
-    <script>
-        // Auto-cerrar menú móvil al hacer clic en enlaces de navegación
-        document.addEventListener('DOMContentLoaded', function () {
-            const navCollapse = document.getElementById('navbarMain');
-            if (navCollapse) {
-                navCollapse.querySelectorAll('a:not([data-bs-toggle])').forEach(function (link) {
-                    link.addEventListener('click', function () {
-                        if (navCollapse.classList.contains('show')) {
-                            const bsCollapse = bootstrap.Collapse.getInstance(navCollapse) || new bootstrap.Collapse(navCollapse, { toggle: false });
-                            bsCollapse.hide();
-                        }
-                    });
-                });
-            }
-        });
-    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

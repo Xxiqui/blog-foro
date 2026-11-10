@@ -1,0 +1,66 @@
+{% if sin_termino %}
+    <!-- Vacío si no hay término suficiente -->
+{% elif not articulos and not comunidades and not autores and not etiquetas %}
+    <div class="p-3 text-center text-muted small">
+        <i class="bi bi-search me-1" aria-hidden="true"></i>
+        No se encontraron sugerencias para &ldquo;{{ query }}&rdquo;
+    </div>
+    <div class="border-top p-2 text-center">
+        <a href="{% url 'blog:buscar_posts' %}?q={{ query|urlencode }}" class="btn-forum btn-forum-subtle small w-100 justify-content-center">
+            Buscar &ldquo;{{ query }}&rdquo; en todos los contenidos &rarr;
+        </a>
+    </div>
+{% else %}
+    <div class="py-1" role="listbox" id="sugerencias-listbox">
+        {% if articulos %}
+            <div class="nav-section-title px-3 py-1">Publicaciones</div>
+            {% for post in articulos %}
+                <a href="{{ post.get_absolute_url }}" class="suggestion-item" role="option">
+                    <i class="bi bi-file-earmark-text text-muted" aria-hidden="true"></i>
+                    <span class="flex-grow-1 text-truncate">{{ post.titulo }}</span>
+                    <span class="badge bg-body-secondary text-secondary small">Post</span>
+                </a>
+            {% endfor %}
+        {% endif %}
+
+        {% if comunidades %}
+            <div class="nav-section-title px-3 py-1">Comunidades</div>
+            {% for cat in comunidades %}
+                <a href="{% url 'blog:posts_por_categoria' cat.slug %}" class="suggestion-item" role="option">
+                    <i class="bi bi-people text-muted" aria-hidden="true"></i>
+                    <span class="flex-grow-1 text-truncate">{{ cat.nombre }}</span>
+                    <span class="badge bg-body-secondary text-secondary small">Comunidad</span>
+                </a>
+            {% endfor %}
+        {% endif %}
+
+        {% if autores %}
+            <div class="nav-section-title px-3 py-1">Autores</div>
+            {% for autor in autores %}
+                <a href="{% url 'blog:autor_detail' autor.usuario.username %}" class="suggestion-item" role="option">
+                    <i class="bi bi-person text-muted" aria-hidden="true"></i>
+                    <span class="flex-grow-1 text-truncate">{{ autor.nombre_mostrar|default:autor.usuario.username }}</span>
+                    <span class="badge bg-body-secondary text-secondary small">@{{ autor.usuario.username }}</span>
+                </a>
+            {% endfor %}
+        {% endif %}
+
+        {% if etiquetas %}
+            <div class="nav-section-title px-3 py-1">Etiquetas</div>
+            {% for tag in etiquetas %}
+                <a href="{% url 'blog:posts_por_etiqueta' tag.slug %}" class="suggestion-item" role="option">
+                    <i class="bi bi-tag text-muted" aria-hidden="true"></i>
+                    <span class="flex-grow-1 text-truncate">#{{ tag.nombre }}</span>
+                    <span class="badge bg-body-secondary text-secondary small">Etiqueta</span>
+                </a>
+            {% endfor %}
+        {% endif %}
+
+        <div class="border-top p-2 text-center">
+            <a href="{% url 'blog:buscar_posts' %}?q={{ query|urlencode }}" class="suggestion-item text-primary fw-semibold justify-content-center" role="option">
+                <i class="bi bi-search me-1" aria-hidden="true"></i>
+                Ver todos los resultados para &ldquo;{{ query }}&rdquo;
+            </a>
+        </div>
+    </div>
+{% endif %}
