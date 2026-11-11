@@ -3148,6 +3148,134 @@ class ForoAdaptableFase4DatosYTextosTests(TestCase):
         self.assertContains(resp, 'resultados para')
 
 
+class ForoAdaptableFase5Tests(TestCase):
+    """
+    Pruebas de la Fase 5: Panel del autor y cuenta de usuario adaptables
+    (shell--gestion, bandeja unificada de moderación, KPIs, avatar 256x256).
+    """
+
+    def setUp(self):
+        self.autor = User.objects.create_user(username='autor_fase5', password='pwd')
+        self.lector = User.objects.create_user(username='lector_fase5', password='pwd')
+        from cuentas.models import Perfil
+        self.perfil = getattr(self.autor, 'perfil', None) or Perfil.objects.create(usuario=self.autor, nombre_mostrar='Autor Fase 5')
+        self.categoria = Categoria.objects.create(nombre='Arquitectura', slug='arquitectura')
+        self.post = Post.objects.create(
+            titulo='Post para moderar',
+            slug='post-para-moderar',
+            autor=self.perfil,
+            categoria=self.categoria,
+            contenido='Contenido de prueba',
+            estado=Post.Estado.PUBLICADO,
+        )
+
+    def test_panel_moderacion_view_y_filtros(self):
+        """Verifica la bandeja unificada de moderación con filtros y contadores."""
+        c1 = Comentario.objects.create(
+            post=self.post,
+            autor=self.lector,
+            texto='Comentario pendiente 1',
+            aprobado=False,
+        )
+        c2 = Comentario.objects.create(
+            post=self.post,
+            autor=self.lector,
+            texto='Comentario reportado 2',
+            aprobado=True,
+        )
+        r2 = ReporteComentario.objects.create(
+            comentario=c2,
+            reportante=self.lector,
+            motivo=ReporteComentario.Motivo.SPAM,
+            detalle='Es spam publicitario',
+        )
+
+        self.client.force_login(self.autor)
+        resp = self.client.get(reverse('blog:panel_moderacion'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Bandeja de moderación')
+        self.assertContains(resp, 'shell--gestion')
+        self.assertEqual(resp.context['total_pendientes'], 2)
+        self.assertEqual(resp.context['total_por_aprobar'], 1)
+        self.assertEqual(resp.context['total_reportados'], 1)
+
+    def test_moderacion_accion_ajax_aprobar_y_deshacer(self):
+        """Verifica la acción de aprobar y deshacer mediante AJAX."""
+        c = Comentario.objects.create(
+            post=self.post,
+            autor=self.lector,
+            texto='Comentario para aprobar',
+            aprobado=False,
+        )
+        self.client.force_login(self.autor)
+
+        # 1. Aprobar vía AJAX
+        url = reverse('blog:panel_moderacion_accion')
+        resp = self.client.post(
+            url,
+            {'accion': 'aprobar', 'tipo': 'comentario', 'id': c.pk},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertEqual(resp.status_code, 200)
+        c.refresh_from_db()
+        self.assertTrue(c.aprobado)
+
+        # 2. Deshacer
+        resp_undo = self.client.post(
+            url,
+            {'accion': 'deshacer', 'tipo': 'comentario', 'id': c.pk},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+        self.assertEqual(resp_undo.status_code, 200)
+        c.refresh_from_db()
+        self.assertFalse(c.aprobado)
+
+    def test_dashboard_requiere_atencion(self):
+        """Verifica que el bloque 'Requiere tu atención' solo aparezca si hay pendientes."""
+        self.client.force_login(self.autor)
+        # Sin pendientes
+        resp_limpio = self.client.get(reverse('blog:panel_dashboard'))
+        self.assertEqual(resp_limpio.status_code, 200)
+        self.assertNotContains(resp_limpio, 'Requiere tu atención')
+
+        # Con borrador
+        Post.objects.create(
+            titulo='Borrador en curso',
+            slug='borrador-en-curso-f5',
+            autor=self.perfil,
+            categoria=self.categoria,
+            contenido='Borrador...',
+            estado=Post.Estado.BORRADOR,
+        )
+        resp_con_borrador = self.client.get(reverse('blog:panel_dashboard'))
+        self.assertContains(resp_con_borrador, 'Requiere tu atención')
+        self.assertContains(resp_con_borrador, 'Borradores')
+
+    def test_avatar_crop_256x256(self):
+        """Verifica que la subida de avatar se redimensione a 256x256 px en el servidor."""
+        from PIL import Image
+        import io
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from cuentas.forms import PerfilForm
+
+        img = Image.new('RGB', (800, 600), color='blue')
+        buffer = io.BytesIO()
+        img.save(buffer, format='JPEG')
+        buffer.seek(0)
+        archivo_grande = SimpleUploadedFile('foto_grande.jpg', buffer.getvalue(), content_type='image/jpeg')
+
+        form = PerfilForm(
+            data={'first_name': 'Test', 'last_name': 'User', 'email': 'test@example.com', 'bio': 'Bio'},
+            files={'avatar': archivo_grande},
+            instance=self.perfil,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        perfil_actualizado = form.save()
+        with Image.open(perfil_actualizado.avatar.path) as img_guardada:
+            self.assertEqual(img_guardada.size, (256, 256))
+
+
+
 
 
 

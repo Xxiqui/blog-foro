@@ -1,14 +1,14 @@
-{% extends "base.html" %}
+{% extends "blog/panel/base_gestion.html" %}
 
 {% block title %}Mis listas de lectura | {{ marca_corta|default:"Blog" }}{% endblock %}
 
-{% block content %}
+{% block gestion_content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom">
     <div>
-        <h1 class="h2 fw-bold mb-1">
-            <i class="bi bi-bookmarks-fill text-primary me-2"></i>Mis listas de lectura
+        <h1 class="h4 fw-bold mb-1">
+            <i class="bi bi-bookmarks-fill text-primary me-2"></i>Listas y guardados
         </h1>
-        <p class="text-muted mb-0">
+        <p class="text-muted small mb-0">
             Organiza tus artículos guardados y crea colecciones temáticas privadas o públicas.
         </p>
     </div>
@@ -148,4 +148,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock gestion_content %}

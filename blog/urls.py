@@ -78,6 +78,8 @@ urlpatterns = [
     path('panel/', views.PanelDashboardView.as_view(), name='panel_dashboard'),
     path('panel/', include('blog.panel.urls')),
     path('panel/posts/<slug:slug>/cambiar-estado/', views.PanelPostCambiarEstadoView.as_view(), name='panel_post_toggle_status'),
+    path('panel/moderacion/', views.PanelModeracionView.as_view(), name='panel_moderacion'),
+    path('panel/moderacion/accion/', views.PanelModeracionAccionAjaxView.as_view(), name='panel_moderacion_accion'),
     path('panel/comentarios/', views.PanelComentarioListView.as_view(), name='panel_comentario_list'),
     path('panel/comentarios/<int:pk>/accion/', views.PanelComentarioAccionView.as_view(), name='panel_comentario_accion'),
     path('panel/reportes/', views.PanelReporteListView.as_view(), name='panel_reporte_list'),

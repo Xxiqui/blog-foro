@@ -1,98 +1,99 @@
-{% extends "base.html" %}
+{% extends "blog/panel/base_gestion.html" %}
+{% load blog_extras %}
 
-{% block title %}Editar Perfil | Panel de Autor{% endblock %}
-{% block body_hx_boost %}hx-boost="false"{% endblock %}
-{% block app_body_class %}app-body--plano{% endblock %}
-{% block nav_left %}{% endblock %}
-{% block sidebar_right %}{% endblock %}
+{% block title %}Editar perfil | {{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}
 
+{% block gestion_content %}
+<div class="mb-4 pb-2 border-bottom">
+    <h1 class="h4 fw-bold mb-1 d-flex align-items-center gap-2">
+        <i class="bi bi-person-gear text-primary" aria-hidden="true"></i>
+        <span>Editar perfil</span>
+    </h1>
+    <p class="small text-muted mb-0">Actualiza tu información pública de autor, biografía y foto de perfil.</p>
+</div>
 
-{% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="card shadow-none border bg-surface">
+    <div class="card-body p-4">
+        <!-- Vista previa del avatar -->
+        <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
+            <div id="avatar-preview-container">
+                {% avatar object 72 %}
+            </div>
             <div>
-                <h1 class="h3 fw-bold mb-1">Editar Perfil de Autor</h1>
-                <p class="text-muted mb-0">Actualiza tu información pública, biografía y foto de perfil.</p>
+                <h2 class="h5 mb-0 fw-bold">{{ user.get_full_name|default:user.username }}</h2>
+                <p class="text-muted small mb-1">@{{ user.username }}</p>
+                <a href="{% url 'blog:autor_detail' user.username %}" class="small text-decoration-none">
+                    Ver mi página pública <i class="bi bi-box-arrow-up-right ms-1"></i>
+                </a>
             </div>
-            <a href="{% url 'blog:panel_dashboard' %}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Volver al Dashboard
-            </a>
         </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
-                    {% if object.avatar %}
-                        <img src="{{ object.avatar.url }}" alt="{{ user.username }}" width="72" height="72" class="avatar-img border">
-                    {% else %}
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-3"
-                             style="width: 72px; height: 72px;">
-                            {{ user.username|slice:":1"|upper }}
-                        </div>
+        <form method="post" enctype="multipart/form-data" novalidate id="formEditarPerfil">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="{{ form.first_name.id_for_label }}" class="form-label small fw-semibold">Nombre</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.first_name.errors|striptags }}</div>
                     {% endif %}
-                    <div>
-                        <h2 class="h5 mb-0 fw-bold">{{ user.get_full_name|default:user.username }}</h2>
-                        <p class="text-muted small mb-1">@{{ user.username }}</p>
-                        <a href="{% url 'blog:autor_detail' user.username %}" class="small text-decoration-none">
-                            Ver mi página pública <i class="bi bi-box-arrow-up-right"></i>
-                        </a>
-                    </div>
                 </div>
-
-                <form method="post" enctype="multipart/form-data" novalidate>
-                    {% csrf_token %}
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="{{ form.first_name.id_for_label }}" class="form-label fw-semibold">Nombre</label>
-                            {{ form.first_name }}
-                            {% if form.first_name.errors %}
-                                <div class="text-danger small mt-1">{{ form.first_name.errors|striptags }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6">
-                            <label for="{{ form.last_name.id_for_label }}" class="form-label fw-semibold">Apellidos</label>
-                            {{ form.last_name }}
-                            {% if form.last_name.errors %}
-                                <div class="text-danger small mt-1">{{ form.last_name.errors|striptags }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-12">
-                            <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">Correo electrónico</label>
-                            {{ form.email }}
-                            {% if form.email.errors %}
-                                <div class="text-danger small mt-1">{{ form.email.errors|striptags }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-12">
-                            <label for="{{ form.bio.id_for_label }}" class="form-label fw-semibold">Biografía</label>
-                            {{ form.bio }}
-                            {% if form.bio.help_text %}
-                                <div class="form-text">{{ form.bio.help_text }}</div>
-                            {% endif %}
-                            {% if form.bio.errors %}
-                                <div class="text-danger small mt-1">{{ form.bio.errors|striptags }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-12">
-                            <label for="{{ form.avatar.id_for_label }}" class="form-label fw-semibold">Avatar (Imagen opcional)</label>
-                            {{ form.avatar }}
-                            {% if form.avatar.errors %}
-                                <div class="text-danger small mt-1">{{ form.avatar.errors|striptags }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="mt-4 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check2-circle me-1"></i>Guardar cambios
-                        </button>
-                        <a href="{% url 'blog:panel_dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
-                    </div>
-                </form>
+                <div class="col-md-6">
+                    <label for="{{ form.last_name.id_for_label }}" class="form-label small fw-semibold">Apellidos</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.last_name.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-12">
+                    <label for="{{ form.email.id_for_label }}" class="form-label small fw-semibold">Correo electrónico</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="text-danger small mt-1">{{ form.email.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-12">
+                    <label for="{{ form.bio.id_for_label }}" class="form-label small fw-semibold">Biografía</label>
+                    {{ form.bio }}
+                    {% if form.bio.help_text %}
+                        <div class="form-text small">{{ form.bio.help_text }}</div>
+                    {% endif %}
+                    {% if form.bio.errors %}
+                        <div class="text-danger small mt-1">{{ form.bio.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-12">
+                    <label for="{{ form.avatar.id_for_label }}" class="form-label small fw-semibold">Avatar (JPG o PNG, recortado a 256x256)</label>
+                    {{ form.avatar }}
+                    {% if form.avatar.errors %}
+                        <div class="text-danger small mt-1">{{ form.avatar.errors|striptags }}</div>
+                    {% endif %}
+                </div>
             </div>
-        </div>
+
+            <div class="mt-4 pt-3 border-top d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check2-circle me-1"></i>Guardar cambios
+                </button>
+                <a href="{% url 'blog:panel_dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
     </div>
 </div>
-{% endblock %}
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const avatarInput = document.querySelector('input[type="file"][name="avatar"]');
+    const container = document.getElementById('avatar-preview-container');
+    if (avatarInput && container) {
+        avatarInput.addEventListener('change', function () {
+            const file = this.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const url = URL.createObjectURL(file);
+                container.innerHTML = `<img src="${url}" alt="Vista previa avatar" class="avatar avatar--lg object-fit-cover" style="width: 72px; height: 72px; border-radius: 50%;">`;
+            }
+        });
+    }
+});
+</script>
+{% endblock gestion_content %}

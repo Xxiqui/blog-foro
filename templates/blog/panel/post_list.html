@@ -1,14 +1,9 @@
-{% extends "base.html" %}
+{% extends "blog/panel/base_gestion.html" %}
 {% load blog_extras %}
 
-{% block title %}Mis publicaciones | Panel de Autor{% endblock %}
-{% block body_hx_boost %}hx-boost="false"{% endblock %}
-{% block app_body_class %}app-body--plano{% endblock %}
-{% block nav_left %}{% endblock %}
-{% block sidebar_right %}{% endblock %}
+{% block title %}Mis publicaciones | Panel del autor | {{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}
 
-
-{% block content %}
+{% block gestion_content %}
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
     <div>
         <h1 class="h3 fw-bold mb-1">
@@ -17,10 +12,7 @@
         <p class="text-muted mb-0">Gestiona, edita y supervisa el rendimiento de tus publicaciones.</p>
     </div>
     <div class="d-flex gap-2">
-        <a href="{% url 'blog:panel_dashboard' %}" class="btn btn-outline-secondary">
-            <i class="bi bi-speedometer2 me-1" aria-hidden="true"></i>Dashboard
-        </a>
-        <a href="{% url 'blog:panel_nuevo_selector' %}" class="btn btn-primary fw-semibold">
+        <a href="{% url 'blog:panel_post_create' %}" hx-boost="false" class="btn btn-primary fw-semibold">
             <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Escribir
         </a>
     </div>
@@ -221,4 +213,4 @@
         {% endif %}
     </div>
 </div>
-{% endblock %}
+{% endblock gestion_content %}

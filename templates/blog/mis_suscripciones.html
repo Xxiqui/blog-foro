@@ -1,66 +1,150 @@
-{% extends "base.html" %}
+{% extends "blog/panel/base_gestion.html" %}
+{% load blog_extras %}
 
-{% block title %}Mis suscripciones por correo | {{ marca_corta|default:"Blog" }}{% endblock %}
+{% block title %}Mis suscripciones | {{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}
 
-{% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom">
-    <div>
-        <h1 class="h2 fw-bold mb-1">
-            <i class="bi bi-envelope-check-fill text-primary me-2"></i>Mis suscripciones por correo
-        </h1>
-        <p class="text-muted mb-0">
-            Administra los boletines de autores y categorías a los que te has suscrito.
-        </p>
-    </div>
+{% block gestion_content %}
+<div class="mb-4 pb-2 border-bottom">
+    <h1 class="h4 fw-bold mb-1 d-flex align-items-center gap-2">
+        <i class="bi bi-envelope-check text-primary" aria-hidden="true"></i>
+        <span>Suscripciones y seguimiento</span>
+    </h1>
+    <p class="small text-muted mb-0">
+        Administra tus autores seguidos, comunidades unidas y boletines por correo electrónico.
+    </p>
 </div>
 
-<div class="card border-0 shadow-sm">
-    <div class="list-group list-group-flush">
-        {% for sub in suscripciones %}
-            <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center py-3 gap-2">
-                <div>
-                    <div class="fw-bold d-flex align-items-center gap-2">
-                        {% if sub.autor %}
-                            <i class="bi bi-person-badge text-primary"></i>
-                            <a href="{{ sub.autor.get_absolute_url }}" class="text-decoration-none text-body">
-                                Autor: {{ sub.autor.nombre_visible }}
-                            </a>
-                        {% elif sub.categoria %}
-                            <i class="bi bi-folder2-open text-primary"></i>
-                            <a href="{{ sub.categoria.get_absolute_url }}" class="text-decoration-none text-body">
-                                Categoría: {{ sub.categoria.nombre }}
-                            </a>
-                        {% endif %}
-
-                        {% if sub.confirmada %}
-                            <span class="badge bg-success-subtle text-success border border-success-subtle">Confirmada</span>
-                        {% else %}
-                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Pendiente de confirmación</span>
-                        {% endif %}
-                    </div>
-                    <small class="text-muted">
-                        Correo: {{ sub.email }} · Suscrito el {{ sub.creado|date:"d M Y" }}
-                    </small>
+<div class="vstack gap-4">
+    <!-- 1. Comunidades unidas -->
+    <div class="card border shadow-none bg-surface">
+        <div class="card-header bg-transparent py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h2 class="h6 fw-bold mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-people-fill text-primary" aria-hidden="true"></i>
+                <span>Comunidades unidas ({{ comunidades_unidas|length }})</span>
+            </h2>
+            <a href="{% url 'blog:explorar' %}" class="small text-decoration-none">Explorar más</a>
+        </div>
+        <div class="card-body p-0">
+            {% if comunidades_unidas %}
+                <ul class="list-group list-group-flush" role="list">
+                    {% for m in comunidades_unidas %}
+                        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-3 px-3">
+                            <div class="d-flex align-items-center gap-3">
+                                {% avatar_categoria m.categoria 36 %}
+                                <div>
+                                    <a href="{{ m.categoria.get_absolute_url }}" class="fw-semibold text-body text-decoration-none d-block">
+                                        {{ m.categoria.nombre }}
+                                    </a>
+                                    <span class="small text-muted">Unido el {{ m.creado|date:"d M Y" }}</span>
+                                </div>
+                            </div>
+                            <form method="post" action="{% url 'blog:categoria_unirse_toggle' m.categoria.slug %}" data-ajax-unirse data-categoria-slug="{{ m.categoria.slug }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{% url 'blog:mis_suscripciones' %}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Salir de {{ m.categoria.nombre }}">
+                                    <i class="bi bi-dash-circle me-1"></i>Salir
+                                </button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="text-center py-4 text-muted small">
+                    No te has unido a ninguna comunidad todavía. <a href="{% url 'blog:explorar' %}">Explorar comunidades</a>
                 </div>
+            {% endif %}
+        </div>
+    </div>
 
-                <form method="post" action="{% url 'blog:suscripcion_baja' token=sub.token %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{% url 'blog:mis_suscripciones' %}">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                        <i class="bi bi-envelope-dash me-1"></i>Darme de baja
-                    </button>
-                </form>
-            </div>
-        {% empty %}
-            <div class="p-5 text-center">
-                <i class="bi bi-envelope-open fs-1 text-muted mb-2 d-block"></i>
-                <h2 class="h5 fw-bold">No tienes suscripciones activas</h2>
-                <p class="text-muted mb-3">
-                    Puedes suscribirte por correo desde la página de cualquier autor, categoría o desde el pie de página del blog.
-                </p>
-                <a href="{% url 'blog:post_list' %}" class="btn btn-primary btn-sm">Explorar artículos</a>
-            </div>
-        {% endfor %}
+    <!-- 2. Autores seguidos -->
+    <div class="card border shadow-none bg-surface">
+        <div class="card-header bg-transparent py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h2 class="h6 fw-bold mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-person-check-fill text-success" aria-hidden="true"></i>
+                <span>Autores que sigues ({{ autores_seguidos|length }})</span>
+            </h2>
+            <a href="{% url 'blog:autores_list' %}" class="small text-decoration-none">Ver autores</a>
+        </div>
+        <div class="card-body p-0">
+            {% if autores_seguidos %}
+                <ul class="list-group list-group-flush" role="list">
+                    {% for s in autores_seguidos %}
+                        <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-3 px-3">
+                            <div class="d-flex align-items-center gap-3">
+                                {% avatar s.autor 36 %}
+                                <div>
+                                    <a href="{{ s.autor.get_absolute_url }}" class="fw-semibold text-body text-decoration-none d-block">
+                                        {{ s.autor.nombre_visible }}
+                                    </a>
+                                    <span class="small text-muted">@{{ s.autor.usuario.username }} &bull; Siguiendo desde {{ s.creado|date:"d M Y" }}</span>
+                                </div>
+                            </div>
+                            <form method="post" action="{% url 'blog:autor_seguir_toggle' s.autor.usuario.username %}" data-ajax-seguir data-autor-username="{{ s.autor.usuario.username }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{% url 'blog:mis_suscripciones' %}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Dejar de seguir a {{ s.autor.nombre_visible }}">
+                                    <i class="bi bi-person-dash me-1"></i>Dejar de seguir
+                                </button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="text-center py-4 text-muted small">
+                    No sigues a ningún autor todavía. <a href="{% url 'blog:autores_list' %}">Descubrir autores</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 3. Boletines por correo -->
+    <div class="card border shadow-none bg-surface">
+        <div class="card-header bg-transparent py-3 border-bottom">
+            <h2 class="h6 fw-bold mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-envelope text-info" aria-hidden="true"></i>
+                <span>Boletines por correo electrónico ({{ suscripciones|length }})</span>
+            </h2>
+        </div>
+        <div class="card-body p-0">
+            {% if suscripciones %}
+                <ul class="list-group list-group-flush" role="list">
+                    {% for sub in suscripciones %}
+                        <li class="list-group-item bg-transparent d-flex flex-wrap justify-content-between align-items-center py-3 px-3 gap-2">
+                            <div>
+                                <div class="fw-semibold d-flex align-items-center gap-2 small">
+                                    {% if sub.autor %}
+                                        <i class="bi bi-person-badge text-primary"></i>
+                                        <span>Boletín de autor: <a href="{{ sub.autor.get_absolute_url }}" class="text-decoration-none text-body">{{ sub.autor.nombre_visible }}</a></span>
+                                    {% elif sub.categoria %}
+                                        <i class="bi bi-folder2-open text-primary"></i>
+                                        <span>Boletín de comunidad: <a href="{{ sub.categoria.get_absolute_url }}" class="text-decoration-none text-body">{{ sub.categoria.nombre }}</a></span>
+                                    {% endif %}
+                                    {% if sub.confirmada %}
+                                        <span class="badge bg-success-subtle text-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-warning-subtle text-warning-emphasis">Pendiente</span>
+                                    {% endif %}
+                                </div>
+                                <div class="small text-muted mt-1">
+                                    Enviado a {{ sub.email }} &bull; Desde {{ sub.creado|date:"d M Y" }}
+                                </div>
+                            </div>
+                            <form method="post" action="{% url 'blog:suscripcion_baja' token=sub.token %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{% url 'blog:mis_suscripciones' %}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-envelope-dash me-1"></i>Darme de baja
+                                </button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="text-center py-4 text-muted small">
+                    No tienes suscripciones por correo activas.
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>
-{% endblock %}
+{% endblock gestion_content %}

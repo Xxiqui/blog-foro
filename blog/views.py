@@ -88,7 +88,14 @@ from .populares import (
 )
 from .ratelimit import es_peticion_ajax, limitar_tasa, login_requerido_interaccion
 from .search import buscar_posts
-from .servicios import anotar_estadisticas_categorias, estadisticas_comunidad
+from .servicios import (
+    anotar_estadisticas_categorias,
+    aprobar_comentario,
+    descartar_reporte,
+    elementos_pendientes,
+    estadisticas_comunidad,
+    rechazar_comentario,
+)
 from .templatetags.blog_extras import sanear_y_generar_toc
 
 User = get_user_model()
@@ -1697,6 +1704,21 @@ class MisSuscripcionesView(LoginRequiredMixin, ListView):
             .order_by('-creado')
         )
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['autores_seguidos'] = (
+            Seguimiento.objects.filter(seguidor=self.request.user)
+            .select_related('autor__usuario')
+            .order_by('-creado')
+        )
+        context['comunidades_unidas'] = (
+            MiembroCategoria.objects.filter(usuario=self.request.user)
+            .select_related('categoria')
+            .order_by('-creado')
+        )
+        context['seccion_gestion'] = 'suscripciones'
+        return context
+
 
 # ==============================================================================
 # RONDA 2 - BLOQUE 3 Y 4: MÁS POPULARES Y AUTORES DESTACADOS
@@ -1934,6 +1956,7 @@ class MisListasView(LoginRequiredMixin, View):
         return {
             'listas': listas,
             'form_lista': form or ListaLecturaForm(),
+            'seccion_gestion': 'guardados',
         }
 
     def get(self, request, *args, **kwargs):
@@ -2137,6 +2160,11 @@ class PanelDashboardView(LoginRequiredMixin, TemplateView):
         context['grafica_vistas_labels_json'] = json.dumps(labels_14d)
         context['grafica_vistas_datos_json'] = json.dumps(datos_14d)
         context['total_vistas_14d'] = sum(datos_14d)
+        total_vistas_historico = (
+            VistaDiaria.objects.filter(post__autor=perfil).aggregate(total=Sum('cantidad'))['total'] or 0
+        )
+        context['total_vistas_historico'] = total_vistas_historico
+        context['seccion_gestion'] = 'resumen'
 
         # Checklist "Primeros pasos" para autores nuevos (desaparece con >= 1 post publicado)
         context['primeros_pasos_completar_perfil'] = bool(perfil.bio and perfil.avatar)
@@ -2473,6 +2501,106 @@ class PanelReporteAccionView(LoginRequiredMixin, View):
         return redirect(next_url)
 
 
+class PanelModeracionView(LoginRequiredMixin, TemplateView):
+    """
+    Bandeja unificada de moderación (/panel/moderacion/):
+    - Muestra comentarios pendientes de aprobación y reportes pendientes.
+    - Filtros: 'todos', 'por_aprobar', 'reportados'.
+    - Acciones HTMX/AJAX sin recarga y con deshacer por 5 segundos.
+    """
+    template_name = 'blog/panel/moderacion.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        perfil, _ = Perfil.objects.get_or_create(usuario=self.request.user)
+        filtro = self.request.GET.get('filtro', 'todos')
+        if filtro not in ('todos', 'por_aprobar', 'reportados'):
+            filtro = 'todos'
+
+        items = elementos_pendientes(perfil, filtro=filtro)
+        context['items'] = items
+        context['filtro_actual'] = filtro
+        context['seccion_gestion'] = 'moderacion'
+
+        todos_items = elementos_pendientes(perfil, filtro='todos')
+        context['total_pendientes'] = len(todos_items)
+        context['total_por_aprobar'] = sum(1 for it in todos_items if it['tipo'] == 'comentario')
+        context['total_reportados'] = sum(1 for it in todos_items if it['tipo'] == 'reporte')
+        context['moderacion_pendientes_count'] = context['total_pendientes']
+        return context
+
+
+class PanelModeracionAccionAjaxView(LoginRequiredMixin, View):
+    """
+    Acciones AJAX/HTMX para la bandeja de moderación:
+    - aprobar: aprueba un comentario
+    - rechazar: elimina el comentario
+    - descartar: descarta el reporte
+    - batch_aprobar: aprueba lista de comentarios
+    - batch_rechazar: rechaza lista de comentarios
+    - deshacer: restaura el estado previo si se solicita dentro de la ventana de 5s
+    """
+    def post(self, request, *args, **kwargs):
+        accion = request.POST.get('accion')
+        tipo = request.POST.get('tipo', 'comentario')
+        item_id = request.POST.get('id')
+
+        # Acciones en lote
+        if accion == 'batch_aprobar':
+            ids = request.POST.getlist('ids[]') or request.POST.getlist('ids')
+            for cid in ids:
+                try:
+                    aprobar_comentario(int(cid), request.user)
+                except Exception:
+                    pass
+            if es_peticion_ajax(request) or request.headers.get('HX-Request'):
+                return JsonResponse({'ok': True, 'mensaje': f'{len(ids)} elementos aprobados.'})
+            messages.success(request, f'{len(ids)} elementos aprobados.')
+            return redirect('blog:panel_moderacion')
+
+        if accion == 'batch_rechazar':
+            ids = request.POST.getlist('ids[]') or request.POST.getlist('ids')
+            for cid in ids:
+                try:
+                    rechazar_comentario(int(cid), request.user)
+                except Exception:
+                    pass
+            if es_peticion_ajax(request) or request.headers.get('HX-Request'):
+                return JsonResponse({'ok': True, 'mensaje': f'{len(ids)} elementos rechazados.'})
+            messages.success(request, f'{len(ids)} elementos rechazados.')
+            return redirect('blog:panel_moderacion')
+
+        # Acción individual
+        if not item_id:
+            return JsonResponse({'ok': False, 'error': 'ID no proporcionado.'}, status=400)
+
+        pk = int(item_id)
+        if accion == 'aprobar':
+            aprobar_comentario(pk, request.user)
+            mensaje = 'Comentario aprobado.'
+        elif accion == 'rechazar':
+            rechazar_comentario(pk, request.user)
+            mensaje = 'Comentario eliminado.'
+        elif accion == 'descartar':
+            descartar_reporte(pk, request.user)
+            mensaje = 'Reporte descartado.'
+        elif accion == 'deshacer':
+            if tipo == 'comentario':
+                com = Comentario.objects.filter(pk=pk).first()
+                if com:
+                    com.aprobado = False
+                    com.eliminado = False
+                    com.save(update_fields=['aprobado', 'eliminado'])
+            mensaje = 'Acción deshecha.'
+        else:
+            return JsonResponse({'ok': False, 'error': 'Acción no válida.'}, status=400)
+
+        if es_peticion_ajax(request) or request.headers.get('HX-Request'):
+            return JsonResponse({'ok': True, 'mensaje': mensaje, 'id': item_id, 'accion': accion})
+        messages.success(request, mensaje)
+        return redirect('blog:panel_moderacion')
+
+
 class PanelTaxonomiasView(LoginRequiredMixin, View):
     """Gestión de categorías y etiquetas (crear y listar) desde el panel de autor."""
 
@@ -2484,6 +2612,7 @@ class PanelTaxonomiasView(LoginRequiredMixin, View):
             'etiquetas': Etiqueta.objects.all(),
             'form_categoria': form_categoria or CategoriaForm(prefix='cat'),
             'form_etiqueta': form_etiqueta or EtiquetaForm(prefix='tag'),
+            'seccion_gestion': 'taxonomias',
         }
 
     def get(self, request, *args, **kwargs):

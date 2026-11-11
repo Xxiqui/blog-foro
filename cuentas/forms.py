@@ -150,6 +150,34 @@ class PerfilForm(BootstrapFormMixin, forms.ModelForm):
             self.fields['email'].initial = self.instance.usuario.email
         self._aplicar_estilos_bootstrap()
 
+    def clean_avatar(self):
+        avatar = self.cleaned_data.get('avatar')
+        if avatar and hasattr(avatar, 'file'):
+            try:
+                import io
+                import os
+                from django.core.files.uploadedfile import InMemoryUploadedFile
+                from PIL import Image, ImageOps
+
+                with Image.open(avatar) as img:
+                    img_rgb = img.convert('RGB')
+                    img_recortada = ImageOps.fit(img_rgb, (256, 256), method=Image.Resampling.LANCZOS)
+                    salida = io.BytesIO()
+                    img_recortada.save(salida, format='JPEG', quality=90, optimize=True)
+                    salida.seek(0)
+                    nombre = f"avatar_{self.instance.usuario_id or 'user'}.jpg"
+                    avatar = InMemoryUploadedFile(
+                        salida,
+                        'ImageField',
+                        nombre,
+                        'image/jpeg',
+                        salida.getbuffer().nbytes,
+                        None,
+                    )
+            except Exception:
+                pass
+        return avatar
+
     def save(self, commit=True):
         perfil = super().save(commit=False)
         usuario = perfil.usuario

@@ -248,6 +248,7 @@ class PanelPostListView(LoginRequiredMixin, ListView):
         context['q_actual'] = self.request.GET.get('q', '').strip()
         context['categoria_actual'] = self.request.GET.get('categoria', '').strip()
         context['orden_actual'] = self.request.GET.get('orden', 'recientes')
+        context['seccion_gestion'] = 'publicaciones'
 
         return context
 

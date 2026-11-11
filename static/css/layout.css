@@ -242,3 +242,160 @@
         display: block;
     }
 }
+
+/* ==========================================================================
+   5. SHELL DE GESTIÓN (Panel del autor y Mi cuenta)
+   ========================================================================== */
+.app-body--gestion {
+    display: block !important;
+    width: 100% !important;
+    max-width: 1160px !important;
+    margin-inline: auto !important;
+    padding: var(--space-4) var(--space-3) !important;
+}
+
+.gestion-container {
+    display: flex;
+    gap: var(--space-5);
+    align-items: flex-start;
+    width: 100%;
+}
+
+.gestion-subnav {
+    width: 240px;
+    flex-shrink: 0;
+    position: sticky;
+    top: calc(var(--header-height) + var(--space-4));
+}
+
+.gestion-subnav-inner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.gestion-nav-header {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    padding: 0 var(--space-3);
+    margin-bottom: var(--space-2);
+}
+
+.gestion-nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.gestion-nav-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color var(--transition-base), color var(--transition-base);
+}
+
+.gestion-nav-link i {
+    font-size: 16px;
+    color: var(--color-text-muted);
+}
+
+.gestion-nav-link:hover {
+    background-color: var(--color-surface-hover);
+    color: var(--color-text);
+}
+
+.gestion-nav-link.active {
+    background-color: var(--color-surface-hover);
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+.gestion-nav-link.active i {
+    color: var(--color-accent);
+}
+
+.gestion-canvas {
+    flex: 1;
+    min-width: 0;
+    max-width: 880px;
+    width: 100%;
+}
+
+@media (max-width: 767.98px) {
+    .app-body--gestion {
+        padding: var(--space-2) var(--space-2) !important;
+    }
+
+    .gestion-container {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+
+    .gestion-subnav {
+        width: 100%;
+        position: static;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: var(--space-2);
+    }
+
+    .gestion-subnav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .gestion-subnav-inner {
+        flex-direction: row;
+        gap: var(--space-3);
+        align-items: center;
+    }
+
+    .gestion-nav-group {
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+    }
+
+    .gestion-nav-header {
+        display: none;
+    }
+
+    .gestion-nav-links {
+        flex-direction: row;
+        gap: var(--space-1);
+    }
+
+    .gestion-nav-link {
+        white-space: nowrap;
+        padding: var(--space-1) var(--space-3);
+        border-radius: var(--radius-full);
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border);
+        font-size: var(--font-size-xs);
+    }
+
+    .gestion-nav-link.active {
+        background-color: var(--color-accent);
+        color: #ffffff;
+        border-color: var(--color-accent);
+    }
+
+    .gestion-nav-link.active i {
+        color: #ffffff;
+    }
+
+    .gestion-canvas {
+        max-width: 100%;
+    }
+}

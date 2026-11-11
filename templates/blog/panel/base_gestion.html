@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load blog_extras %}
+
+{% block title %}Panel de Gestión | {{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}
+
+{% block body_hx_boost %}hx-boost="false"{% endblock %}
+{% block app_body_class %}app-body--gestion shell--gestion{% endblock %}
+{% block nav_left %}{% endblock %}
+{% block sidebar_right %}{% endblock %}
+
+{% block content %}
+<div class="gestion-container">
+    <!-- Subnavegación lateral de 240px (escritorio) o barra horizontal con scroll (móvil) -->
+    <aside class="gestion-subnav" aria-label="Navegación de gestión y cuenta">
+        <div class="gestion-subnav-inner">
+            <!-- Sección 1: Panel del autor -->
+            <div class="gestion-nav-group">
+                <span class="gestion-nav-header">Panel del autor</span>
+                <nav class="gestion-nav-links">
+                    <a href="{% url 'blog:panel_dashboard' %}" class="gestion-nav-link {% if seccion_gestion == 'resumen' %}active{% endif %}">
+                        <i class="bi bi-speedometer2" aria-hidden="true"></i>
+                        <span>Resumen</span>
+                    </a>
+                    <a href="{% url 'blog:panel_post_list' %}" class="gestion-nav-link {% if seccion_gestion == 'publicaciones' %}active{% endif %}">
+                        <i class="bi bi-journal-text" aria-hidden="true"></i>
+                        <span>Mis publicaciones</span>
+                    </a>
+                    <a href="{% url 'blog:panel_moderacion' %}" class="gestion-nav-link {% if seccion_gestion == 'moderacion' %}active{% endif %}">
+                        <i class="bi bi-shield-check" aria-hidden="true"></i>
+                        <span>Moderación</span>
+                        {% if moderacion_pendientes_count %}
+                            <span class="badge bg-danger rounded-pill ms-auto">{{ moderacion_pendientes_count }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'blog:panel_taxonomias' %}" class="gestion-nav-link {% if seccion_gestion == 'taxonomias' %}active{% endif %}">
+                        <i class="bi bi-tags" aria-hidden="true"></i>
+                        <span>Comunidades y Etiquetas</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Sección 2: Mi cuenta -->
+            <div class="gestion-nav-group">
+                <span class="gestion-nav-header">Mi cuenta</span>
+                <nav class="gestion-nav-links">
+                    <a href="{% url 'cuentas:editar_perfil' %}" class="gestion-nav-link {% if seccion_gestion == 'perfil' %}active{% endif %}">
+                        <i class="bi bi-person-gear" aria-hidden="true"></i>
+                        <span>Editar perfil</span>
+                    </a>
+                    <a href="{% url 'blog:guardados' %}" class="gestion-nav-link {% if seccion_gestion == 'guardados' %}active{% endif %}">
+                        <i class="bi bi-bookmark" aria-hidden="true"></i>
+                        <span>Listas y guardados</span>
+                    </a>
+                    <a href="{% url 'blog:mis_suscripciones' %}" class="gestion-nav-link {% if seccion_gestion == 'suscripciones' %}active{% endif %}">
+                        <i class="bi bi-envelope-check" aria-hidden="true"></i>
+                        <span>Suscripciones</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Lienzo de contenido de hasta 880px -->
+    <section class="gestion-canvas" aria-label="Contenido principal del panel">
+        {% block gestion_content %}{% endblock %}
+    </section>
+</div>
+{% endblock content %}

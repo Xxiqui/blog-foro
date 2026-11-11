@@ -1,63 +1,57 @@
-{% extends "base.html" %}
+{% extends "blog/panel/base_gestion.html" %}
+{% load blog_extras %}
 
-{% block title %}Categorías y Etiquetas | Panel de Autor{% endblock %}
-{% block body_hx_boost %}hx-boost="false"{% endblock %}
-{% block app_body_class %}app-body--plano{% endblock %}
-{% block nav_left %}{% endblock %}
-{% block sidebar_right %}{% endblock %}
+{% block title %}Comunidades y Etiquetas | Panel del autor | {{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}
 
-
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 fw-bold mb-1">Gestión de Categorías y Etiquetas</h1>
-        <p class="text-muted mb-0">Crea y consulta las categorías y etiquetas disponibles en el blog.</p>
-    </div>
-    <a href="{% url 'blog:panel_dashboard' %}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i>Volver al Dashboard
-    </a>
+{% block gestion_content %}
+<div class="mb-4 pb-2 border-bottom">
+    <h1 class="h4 fw-bold mb-1 d-flex align-items-center gap-2">
+        <i class="bi bi-tags text-primary" aria-hidden="true"></i>
+        <span>Comunidades y Etiquetas</span>
+    </h1>
+    <p class="small text-muted mb-0">Crea y consulta las comunidades temáticas y etiquetas de discusión disponibles.</p>
 </div>
 
 <div class="row g-4">
-    <!-- Categorías -->
+    <!-- Comunidades (Categorías) -->
     <div class="col-md-6">
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-white py-3">
-                <h2 class="h6 fw-bold mb-0"><i class="bi bi-folder-plus me-2 text-primary"></i>Nueva Categoría</h2>
+        <div class="card shadow-none border bg-surface mb-4">
+            <div class="card-header bg-transparent py-3 border-bottom">
+                <h2 class="h6 fw-bold mb-0"><i class="bi bi-folder-plus me-2 text-primary"></i>Nueva Comunidad</h2>
             </div>
             <div class="card-body">
                 <form method="post" novalidate>
                     {% csrf_token %}
                     <input type="hidden" name="tipo" value="categoria">
                     <div class="mb-3">
-                        <label for="{{ form_categoria.nombre.id_for_label }}" class="form-label small fw-semibold">Nombre de la categoría</label>
+                        <label for="{{ form_categoria.nombre.id_for_label }}" class="form-label small fw-semibold">Nombre de la comunidad</label>
                         {{ form_categoria.nombre }}
                         {% if form_categoria.nombre.errors %}
                             <div class="text-danger small mt-1">{{ form_categoria.nombre.errors|striptags }}</div>
                         {% endif %}
                     </div>
                     <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="bi bi-plus-lg me-1"></i>Crear categoría
+                        <i class="bi bi-plus-lg me-1"></i>Crear comunidad
                     </button>
                 </form>
             </div>
         </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white py-3">
-                <h3 class="h6 fw-bold mb-0">Categorías existentes ({{ categorias|length }})</h3>
+        <div class="card shadow-none border bg-surface">
+            <div class="card-header bg-transparent py-3 border-bottom">
+                <h3 class="h6 fw-bold mb-0">Comunidades existentes ({{ categorias|length }})</h3>
             </div>
             <ul class="list-group list-group-flush">
                 {% for cat in categorias %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-2">
                         <div>
                             <span class="fw-semibold">{{ cat.nombre }}</span>
                             <code class="ms-2 small text-muted">{{ cat.slug }}</code>
                         </div>
-                        <a href="{% url 'blog:posts_por_categoria' cat.slug %}" class="btn btn-sm btn-light">Ver posts</a>
+                        <a href="{% url 'blog:posts_por_categoria' cat.slug %}" class="btn btn-sm btn-outline-secondary">Ver</a>
                     </li>
                 {% empty %}
-                    <li class="list-group-item text-muted small">No hay categorías creadas aún.</li>
+                    <li class="list-group-item bg-transparent text-muted small">No hay comunidades creadas aún.</li>
                 {% endfor %}
             </ul>
         </div>
@@ -65,8 +59,8 @@
 
     <!-- Etiquetas -->
     <div class="col-md-6">
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-white py-3">
+        <div class="card shadow-none border bg-surface mb-4">
+            <div class="card-header bg-transparent py-3 border-bottom">
                 <h2 class="h6 fw-bold mb-0"><i class="bi bi-tag me-2 text-info"></i>Nueva Etiqueta</h2>
             </div>
             <div class="card-body">
@@ -87,25 +81,24 @@
             </div>
         </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white py-3">
+        <div class="card shadow-none border bg-surface">
+            <div class="card-header bg-transparent py-3 border-bottom">
                 <h3 class="h6 fw-bold mb-0">Etiquetas existentes ({{ etiquetas|length }})</h3>
             </div>
             <ul class="list-group list-group-flush">
                 {% for tag in etiquetas %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <li class="list-group-item bg-transparent d-flex justify-content-between align-items-center py-2">
                         <div>
-                            <span class="badge rounded-pill text-bg-light border">#{{ tag.nombre }}</span>
+                            <span class="badge bg-secondary-subtle text-secondary border">#{{ tag.nombre }}</span>
                             <code class="ms-2 small text-muted">{{ tag.slug }}</code>
                         </div>
-                        <a href="{% url 'blog:posts_por_etiqueta' tag.slug %}" class="btn btn-sm btn-light">Ver posts</a>
+                        <a href="{% url 'blog:posts_por_etiqueta' tag.slug %}" class="btn btn-sm btn-outline-secondary">Ver</a>
                     </li>
                 {% empty %}
-                    <li class="list-group-item text-muted small">No hay etiquetas creadas aún.</li>
+                    <li class="list-group-item bg-transparent text-muted small">No hay etiquetas creadas aún.</li>
                 {% endfor %}
             </ul>
         </div>
     </div>
 </div>
-{% endblock %}
-
+{% endblock gestion_content %}

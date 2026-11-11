@@ -1,0 +1,387 @@
+{% extends "blog/panel/base_gestion.html" %}
+{% load blog_extras %}
+
+{% block title %}Bandeja de moderación | {{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}
+
+{% block gestion_content %}
+<div class="moderacion-tray-wrapper" id="moderacion-root">
+    <!-- Encabezado de la bandeja -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 pb-2 border-bottom gap-2">
+        <div>
+            <h1 class="h4 fw-bold mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-shield-check text-primary" aria-hidden="true"></i>
+                <span>Bandeja de moderación</span>
+            </h1>
+            <p class="small text-muted mb-0">
+                Gestiona comentarios pendientes de aprobación y reportes de la comunidad en tus artículos.
+            </p>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary d-none d-md-inline-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#modalAtajosModeracion" title="Atajos de teclado">
+            <i class="bi bi-keyboard" aria-hidden="true"></i>
+            <span>Atajos (?)</span>
+        </button>
+    </div>
+
+    <!-- Filtros en chips -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div class="feed-header-tabs border-0 p-0 m-0">
+            <a href="?filtro=todos" class="feed-tab-btn text-decoration-none {% if filtro_actual == 'todos' %}active{% endif %}">
+                Todos <span class="badge bg-secondary-subtle text-secondary rounded-pill ms-1">{{ total_pendientes|default:0 }}</span>
+            </a>
+            <a href="?filtro=por_aprobar" class="feed-tab-btn text-decoration-none {% if filtro_actual == 'por_aprobar' %}active{% endif %}">
+                Por aprobar <span class="badge bg-warning-subtle text-warning-emphasis rounded-pill ms-1">{{ total_por_aprobar|default:0 }}</span>
+            </a>
+            <a href="?filtro=reportados" class="feed-tab-btn text-decoration-none {% if filtro_actual == 'reportados' %}active{% endif %}">
+                Reportados <span class="badge bg-danger-subtle text-danger-emphasis rounded-pill ms-1">{{ total_reportados|default:0 }}</span>
+            </a>
+        </div>
+
+        <!-- Acciones en lote (visibles cuando hay selección) -->
+        <div class="d-flex align-items-center gap-2" id="batch-actions-bar">
+            <div class="form-check form-check-inline m-0">
+                <input class="form-check-input cursor-pointer" type="checkbox" id="selectAllCheckbox" title="Seleccionar todos">
+                <label class="form-check-label small text-muted cursor-pointer" for="selectAllCheckbox">Todos</label>
+            </div>
+            <button type="button" class="btn btn-sm btn-success d-none" id="btnBatchAprobar">
+                <i class="bi bi-check-lg me-1"></i>Aprobar seleccionados
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger d-none" id="btnBatchRechazar">
+                <i class="bi bi-trash me-1"></i>Rechazar seleccionados
+            </button>
+        </div>
+    </div>
+
+    <!-- Lista de tarjetas de moderación -->
+    <div class="vstack gap-3" id="moderacion-items-list" role="list">
+        {% for item in items %}
+            <article class="card border shadow-none bg-surface moderacion-card"
+                     id="item-card-{{ item.id }}"
+                     data-card-id="{{ item.id }}"
+                     data-tipo="{{ item.tipo }}"
+                     data-pk="{{ item.pk }}"
+                     {% if item.reporte_pk %}data-reporte-pk="{{ item.reporte_pk }}"{% endif %}
+                     tabindex="0"
+                     role="listitem">
+                <div class="card-body p-3">
+                    <!-- Contexto del artículo y badge -->
+                    <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
+                        <div class="d-flex align-items-center gap-2 min-w-0">
+                            <input type="checkbox" class="form-check-input item-checkbox cursor-pointer" value="{{ item.pk }}" aria-label="Seleccionar elemento">
+                            <span class="small text-muted text-truncate">
+                                En: <a href="{{ item.post.get_absolute_url }}" class="fw-semibold text-body text-decoration-none" target="_blank">{{ item.post.titulo }}</a>
+                            </span>
+                        </div>
+                        <div>
+                            {% if item.tipo == 'comentario' %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis">
+                                    <i class="bi bi-clock me-1"></i>Por aprobar
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger-emphasis">
+                                    <i class="bi bi-flag-fill me-1"></i>Reportado: {{ item.motivo_reporte }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Datos del autor del comentario -->
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        {% if item.autor_comentario %}
+                            {% avatar item.autor_comentario.perfil 28 %}
+                            <span class="small fw-semibold text-body">{{ item.autor_nombre }}</span>
+                            <span class="small text-muted">@{{ item.autor_comentario.username }}</span>
+                        {% else %}
+                            <span class="avatar avatar--xs bg-secondary text-white fw-bold">A</span>
+                            <span class="small fw-semibold text-body">Anónimo</span>
+                        {% endif %}
+                        <span class="small text-muted">&bull;</span>
+                        <time class="small text-muted" datetime="{{ item.fecha|date:'c' }}">
+                            {{ item.fecha|timesince }} atrás
+                        </time>
+                    </div>
+
+                    <!-- Contenido del comentario -->
+                    <div class="p-2 rounded bg-body-tertiary border mb-3 small text-body" style="white-space: pre-wrap;">
+                        {{ item.texto }}
+                    </div>
+
+                    <!-- Detalles del reporte si aplica -->
+                    {% if item.detalle_reporte %}
+                        <div class="small text-danger-emphasis bg-danger-subtle p-2 rounded mb-3">
+                            <i class="bi bi-info-circle me-1"></i><strong>Motivo del reporte:</strong> {{ item.detalle_reporte }}
+                        </div>
+                    {% endif %}
+
+                    <!-- Barra de acciones -->
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2 border-top">
+                        <div class="d-flex align-items-center gap-2">
+                            {% if item.tipo == 'comentario' %}
+                                <button type="button" class="btn btn-sm btn-primary btn-accion-aprobar" data-id="{{ item.pk }}" data-tipo="comentario">
+                                    <i class="bi bi-check-lg me-1"></i>Aprobar
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-accion-rechazar" data-id="{{ item.pk }}" data-tipo="comentario">
+                                    <i class="bi bi-x-lg me-1"></i>Rechazar
+                                </button>
+                            {% else %}
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-accion-descartar" data-id="{{ item.reporte_pk }}" data-tipo="reporte">
+                                    <i class="bi bi-shield-x me-1"></i>Descartar reporte
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-accion-rechazar" data-id="{{ item.pk }}" data-tipo="comentario">
+                                    <i class="bi bi-trash me-1"></i>Eliminar comentario
+                                </button>
+                            {% endif %}
+                        </div>
+
+                        <!-- Enlace directo al artículo -->
+                        <a href="{{ item.post.get_absolute_url }}" class="small text-muted text-decoration-none" target="_blank" rel="noopener">
+                            Ver artículo <i class="bi bi-box-arrow-up-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Banner de Deshacer (aparece durante 5 segundos tras actuar) -->
+                <div class="undo-banner d-none p-3 bg-secondary-subtle border-top align-items-center justify-content-between" id="undo-banner-{{ item.id }}">
+                    <div class="small">
+                        <i class="bi bi-info-circle-fill me-1 text-primary"></i>
+                        <span class="undo-text">Acción realizada.</span>
+                        <span class="text-muted ms-1">(deshacer en <strong class="undo-timer">5</strong>s)</span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-dark btn-deshacer" data-id="{{ item.pk }}" data-tipo="{{ item.tipo }}">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Deshacer
+                    </button>
+                </div>
+            </article>
+        {% empty %}
+            <div class="card border shadow-none bg-surface p-5 text-center my-3">
+                <i class="bi bi-check2-circle text-success fs-1 mb-2" aria-hidden="true"></i>
+                <h2 class="h5 fw-bold text-body mb-1">¡Todo al día!</h2>
+                <p class="small text-muted mb-0">No hay comentarios pendientes de aprobación ni reportes por revisar.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal de atajos de teclado -->
+<div class="modal fade" id="modalAtajosModeracion" tabindex="-1" aria-labelledby="modalAtajosTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header py-2">
+                <h2 class="h6 modal-title fw-bold" id="modalAtajosTitulo">Atajos de teclado</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-3">
+                <ul class="list-unstyled mb-0 small vstack gap-2">
+                    <li class="d-flex justify-content-between"><kbd>j</kbd> <span>Siguiente elemento</span></li>
+                    <li class="d-flex justify-content-between"><kbd>k</kbd> <span>Elemento anterior</span></li>
+                    <li class="d-flex justify-content-between"><kbd>a</kbd> <span>Aprobar seleccionado</span></li>
+                    <li class="d-flex justify-content-between"><kbd>x</kbd> <span>Rechazar / Eliminar</span></li>
+                    <li class="d-flex justify-content-between"><kbd>d</kbd> <span>Deshacer última acción</span></li>
+                    <li class="d-flex justify-content-between"><kbd>?</kbd> <span>Ver esta ayuda</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const urlAccion = "{% url 'blog:panel_moderacion_accion' %}";
+    let lastAction = null;
+    let selectedIndex = -1;
+    const cards = Array.from(document.querySelectorAll('.moderacion-card'));
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // Selección de tarjetas con j/k
+    function selectCard(index) {
+        if (cards.length === 0) return;
+        cards.forEach(c => c.classList.remove('border-primary', 'shadow-sm'));
+        if (index < 0) index = 0;
+        if (index >= cards.length) index = cards.length - 1;
+        selectedIndex = index;
+        const current = cards[selectedIndex];
+        current.classList.add('border-primary', 'shadow-sm');
+        current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        current.focus();
+    }
+
+    // Ejecutar acción AJAX con deshacer de 5 segundos
+    async function ejecutarAccion(card, accion, tipo, id) {
+        const undoBanner = card.querySelector('.undo-banner');
+        const cardBody = card.querySelector('.card-body');
+        const timerSpan = undoBanner.querySelector('.undo-timer');
+        const textSpan = undoBanner.querySelector('.undo-text');
+
+        textSpan.textContent = accion === 'aprobar' ? 'Comentario aprobado.' : (accion === 'descartar' ? 'Reporte descartado.' : 'Comentario eliminado.');
+        cardBody.classList.add('d-none');
+        undoBanner.classList.remove('d-none');
+        undoBanner.classList.add('d-flex');
+
+        let secondsLeft = 5;
+        timerSpan.textContent = secondsLeft;
+
+        const formData = new FormData();
+        formData.append('accion', accion);
+        formData.append('tipo', tipo);
+        formData.append('id', id);
+
+        lastAction = { card, accion, tipo, id, undone: false };
+
+        const interval = setInterval(() => {
+            secondsLeft -= 1;
+            if (timerSpan) timerSpan.textContent = secondsLeft;
+            if (secondsLeft <= 0) {
+                clearInterval(interval);
+                if (!lastAction.undone) {
+                    card.remove();
+                }
+            }
+        }, 1000);
+
+        try {
+            await fetch(urlAccion, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            });
+        } catch (e) {
+            console.error('Error al moderar:', e);
+        }
+
+        // Listener de deshacer
+        const btnDeshacer = undoBanner.querySelector('.btn-deshacer');
+        btnDeshacer.onclick = async function () {
+            clearInterval(interval);
+            lastAction.undone = true;
+            const undoData = new FormData();
+            undoData.append('accion', 'deshacer');
+            undoData.append('tipo', tipo);
+            undoData.append('id', id);
+            try {
+                await fetch(urlAccion, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' },
+                    body: undoData
+                });
+            } catch (err) {}
+            undoBanner.classList.add('d-none');
+            undoBanner.classList.remove('d-flex');
+            cardBody.classList.remove('d-none');
+        };
+    }
+
+    // Botones individuales
+    document.querySelectorAll('.btn-accion-aprobar').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const card = this.closest('.moderacion-card');
+            ejecutarAccion(card, 'aprobar', this.dataset.tipo, this.dataset.id);
+        });
+    });
+
+    document.querySelectorAll('.btn-accion-rechazar').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const card = this.closest('.moderacion-card');
+            ejecutarAccion(card, 'rechazar', this.dataset.tipo, this.dataset.id);
+        });
+    });
+
+    document.querySelectorAll('.btn-accion-descartar').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const card = this.closest('.moderacion-card');
+            ejecutarAccion(card, 'descartar', this.dataset.tipo, this.dataset.id);
+        });
+    });
+
+    // Selección múltiple
+    const selectAll = document.getElementById('selectAllCheckbox');
+    const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+    const btnBatchAprobar = document.getElementById('btnBatchAprobar');
+    const btnBatchRechazar = document.getElementById('btnBatchRechazar');
+
+    function updateBatchButtons() {
+        const checked = Array.from(itemCheckboxes).filter(cb => cb.checked);
+        if (checked.length > 0) {
+            btnBatchAprobar.classList.remove('d-none');
+            btnBatchRechazar.classList.remove('d-none');
+        } else {
+            btnBatchAprobar.classList.add('d-none');
+            btnBatchRechazar.classList.add('d-none');
+        }
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            itemCheckboxes.forEach(cb => cb.checked = selectAll.checked);
+            updateBatchButtons();
+        });
+    }
+
+    itemCheckboxes.forEach(cb => cb.addEventListener('change', updateBatchButtons));
+
+    async function ejecutarLote(accion) {
+        const ids = Array.from(itemCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+        if (ids.length === 0) return;
+        const formData = new FormData();
+        formData.append('accion', accion);
+        ids.forEach(id => formData.append('ids[]', id));
+        await fetch(urlAccion, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrftoken, 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        });
+        window.location.reload();
+    }
+
+    if (btnBatchAprobar) btnBatchAprobar.addEventListener('click', () => ejecutarLote('batch_aprobar'));
+    if (btnBatchRechazar) btnBatchRechazar.addEventListener('click', () => ejecutarLote('batch_rechazar'));
+
+    // Atajos de teclado: j, k, a, x, d, ?
+    document.addEventListener('keydown', function (e) {
+        if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+        if (e.key === 'j') {
+            e.preventDefault();
+            selectCard(selectedIndex + 1);
+        } else if (e.key === 'k') {
+            e.preventDefault();
+            selectCard(selectedIndex - 1);
+        } else if (e.key === 'a' && selectedIndex >= 0 && cards[selectedIndex]) {
+            e.preventDefault();
+            const card = cards[selectedIndex];
+            const btn = card.querySelector('.btn-accion-aprobar');
+            if (btn) btn.click();
+        } else if (e.key === 'x' && selectedIndex >= 0 && cards[selectedIndex]) {
+            e.preventDefault();
+            const card = cards[selectedIndex];
+            const btn = card.querySelector('.btn-accion-rechazar, .btn-accion-descartar');
+            if (btn) btn.click();
+        } else if (e.key === 'd' && lastAction && !lastAction.undone) {
+            e.preventDefault();
+            const btn = lastAction.card.querySelector('.btn-deshacer');
+            if (btn) btn.click();
+        } else if (e.key === '?') {
+            e.preventDefault();
+            const modalEl = document.getElementById('modalAtajosModeracion');
+            if (modalEl && window.bootstrap) {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.toggle();
+            }
+        }
+    });
+});
+</script>
+{% endblock gestion_content %}
