@@ -185,9 +185,10 @@ STORAGES = {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
     },
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
 }
+WHITENOISE_MANIFEST_STRICT = False
 
 # Archivos multimedia (subidos por usuarios y CKEditor)
 MEDIA_URL = '/media/'

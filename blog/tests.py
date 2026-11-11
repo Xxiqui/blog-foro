@@ -3343,6 +3343,30 @@ class ForoAdaptableFase7Tests(TestCase):
         self.assertIn('Previsualización de correos generada', out.getvalue())
 
 
+class ForoAdaptableFase8ProductionTests(TestCase):
+    """Pruebas para la Fase 8: Producción Railway, salud y almacenamiento estático."""
+
+    def test_health_check_endpoint(self):
+        """Verifica que el endpoint /health/ responda 200 OK."""
+        resp = self.client.get('/health/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.content.decode().strip(), 'OK')
+
+    def test_railway_production_settings(self):
+        """Verifica que los dominios de Railway y el storage de Whitenoise estén configurados."""
+        from django.conf import settings
+        from django.core.files.storage import storages
+        from whitenoise.storage import CompressedManifestStaticFilesStorage
+
+        # Storage de estáticos
+        static_storage = storages['staticfiles']
+        self.assertIsInstance(static_storage, CompressedManifestStaticFilesStorage)
+
+        # Hosts de Railway
+        self.assertTrue(any('.railway.app' in h for h in settings.ALLOWED_HOSTS))
+
+
+
 
 
 
