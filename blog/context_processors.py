@@ -1,6 +1,7 @@
 from django.conf import settings
+from django.db.models import Count, Q
 from cuentas.adapters import obtener_proveedores_sociales_activos
-from .models import Categoria, ListaLectura, Notificacion
+from .models import Categoria, ListaLectura, Notificacion, Post
 
 
 def notificaciones_context(request):
@@ -10,7 +11,9 @@ def notificaciones_context(request):
     y estado de proveedores sociales configurados.
     """
     categorias_footer = Categoria.objects.all()
-    comunidades_nav = Categoria.objects.all()[:8]
+    comunidades_nav = Categoria.objects.annotate(
+        total_publicaciones=Count('posts', filter=Q(posts__estado=Post.Estado.PUBLICADO))
+    ).order_by('-total_publicaciones', 'nombre')[:8]
     marca = getattr(settings, 'MARCA', 'Blog')
     marca_corta = getattr(settings, 'MARCA_CORTA', 'Blog')
     marca_descripcion = getattr(
@@ -47,7 +50,9 @@ def notificaciones_context(request):
     mis_listas = ListaLectura.objects.filter(usuario=request.user).order_by('-es_predeterminada', 'nombre')
 
     # Comunidades a las que pertenece el usuario (o generales si aún no se ha unido a ninguna)
-    comunidades_usuario = Categoria.objects.filter(miembros__usuario=request.user)[:8]
+    comunidades_usuario = Categoria.objects.filter(miembros__usuario=request.user).annotate(
+        total_publicaciones=Count('posts', filter=Q(posts__estado=Post.Estado.PUBLICADO))
+    )[:8]
     if not comunidades_usuario.exists():
         comunidades_usuario = comunidades_nav
 

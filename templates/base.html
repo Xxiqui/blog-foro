@@ -69,55 +69,20 @@
                 <span class="text-truncate">{{ marca_corta|default:"Blog" }}</span>
             </a>
 
-            <!-- Trigger móvil de búsqueda (< 640px) -->
-            <button type="button" class="btn-forum btn-forum-subtle mobile-search-trigger touch-target-44 d-sm-none" id="mobile-search-toggle" aria-label="Abrir buscador" title="Buscar">
-                <i class="bi bi-search fs-5" aria-hidden="true"></i>
-            </button>
-
-            <!-- Buscador central con sugerencias (>= 640px y expandible en móvil) -->
-            <div class="header-search-wrapper desktop-search-input" id="global-search-container">
-                <form action="{% url 'blog:buscar_posts' %}" method="get" role="search" class="m-0 p-0 position-relative" id="form-buscador-global">
-                    <i class="bi bi-search header-search-icon" aria-hidden="true"></i>
-                    <input type="search"
-                           name="q"
-                           id="header-search-input"
-                           class="header-search-input"
-                           placeholder="Buscar publicaciones, temas o autores... (Ctrl+K o /)"
-                           value="{{ query|default:'' }}"
-                           autocomplete="off"
-                           hx-get="{% url 'blog:buscar_sugerencias' %}"
-                           hx-trigger="input changed delay:200ms"
-                           hx-target="#search-suggestions-dropdown"
-                           aria-autocomplete="list"
-                           aria-expanded="false"
-                           aria-controls="search-suggestions-dropdown">
-                    <span class="header-search-badge d-none d-md-inline">/</span>
-                    <div class="search-suggestions-dropdown" id="search-suggestions-dropdown"></div>
-                </form>
-            </div>
-
-            <!-- Acciones a la derecha -->
+            <!-- Acciones de cabecera (Móvil y Perfil) -->
             <div class="d-flex align-items-center gap-1 gap-sm-2 flex-shrink-0">
-                <!-- Botón Escribir (>= 640px) -->
-                {% if user.is_authenticated %}
-                    <a href="{% url 'blog:panel_post_create' %}" hx-boost="false" class="btn-forum btn-forum-primary desktop-write-btn">
-                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                        <span>Escribir</span>
-                    </a>
-                {% else %}
-                    <button type="button" class="btn-forum btn-forum-primary desktop-write-btn btn-requiere-auth" data-action="crear_post">
-                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                        <span>Escribir</span>
-                    </button>
-                {% endif %}
+                <!-- Botón móvil de búsqueda (< 1280px) -->
+                <button type="button" class="btn-forum btn-forum-subtle d-xl-none touch-target-44 p-2" id="mobile-search-toggle" aria-label="Abrir buscador" title="Buscar">
+                    <i class="bi bi-search fs-5" aria-hidden="true"></i>
+                </button>
 
-                <!-- Campana con Notificaciones (con sesión) -->
+                <!-- Campana con Notificaciones (visible en móvil y tablet < 1024px donde la barra lateral izquierda está oculta) -->
                 {% if user.is_authenticated %}
-                    <div class="dropdown">
+                    <div class="dropdown d-lg-none">
                         <a href="{% url 'blog:notificaciones_list' %}"
                            class="btn-forum btn-forum-subtle position-relative touch-target-44 p-2"
                            role="button"
-                           id="btn-notificaciones-dropdown"
+                           id="btn-notificaciones-dropdown-mobile"
                            data-bs-toggle="dropdown"
                            aria-expanded="false"
                            aria-label="Notificaciones"
@@ -242,6 +207,29 @@
         </div>
     </header>
 
+    <!-- Barra de búsqueda móvil desplegable (< 1280px) -->
+    <div id="mobile-search-bar" class="mobile-search-overlay d-none">
+        <div class="container-fluid px-3 py-2 bg-surface border-bottom d-flex align-items-center gap-2 shadow-sm">
+            <form action="{% url 'blog:buscar_posts' %}" method="get" role="search" class="flex-grow-1 m-0 position-relative" id="form-buscador-mobile">
+                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" aria-hidden="true"></i>
+                <input type="search"
+                       name="q"
+                       id="mobile-search-input"
+                       class="form-control rounded-pill ps-5"
+                       placeholder="Buscar en Blog... (posts, temas, autores)"
+                       value="{{ query|default:'' }}"
+                       autocomplete="off"
+                       hx-get="{% url 'blog:buscar_sugerencias' %}"
+                       hx-trigger="input changed delay:200ms"
+                       hx-target="#mobile-search-suggestions">
+                <div class="search-suggestions-dropdown" id="mobile-search-suggestions"></div>
+            </form>
+            <button type="button" class="btn btn-sm btn-link text-body p-2" id="mobile-search-close" aria-label="Cerrar búsqueda">
+                <i class="bi bi-x-lg fs-5"></i>
+            </button>
+        </div>
+    </div>
+
     <!-- Avisos Flash -->
     <div class="container-fluid px-3 pt-2" aria-live="polite">
         {% if messages %}
@@ -257,7 +245,7 @@
     <!-- Estructura Adaptable del Foro -->
     <div class="app-body {% block app_body_class %}{% endblock %}">
         {% block nav_left %}
-        <!-- Navegación Izquierda Pegajosa (64px de 1024-1279, 220px desde 1280px) -->
+        <!-- Navegación Izquierda Pegajosa (64px de 1024-1279, 260px desde 1280px) -->
         <nav class="app-nav-left" aria-label="Navegación principal del foro">
             <div class="w-100">
                 <a href="{% url 'blog:post_list' %}"
@@ -267,14 +255,28 @@
                     <i class="bi bi-house-door" aria-hidden="true"></i>
                     <span class="nav-label">Inicio</span>
                 </a>
-                <a href="{% url 'blog:posts_populares' %}"
-                   class="nav-item-link {% if request.resolver_match.url_name == 'posts_populares' %}active{% endif %}"
-                   {% if request.resolver_match.url_name == 'posts_populares' %}aria-current="page"{% endif %}
-                   title="Populares">
-                    <i class="bi bi-fire" aria-hidden="true"></i>
-                    <span class="nav-label">Populares</span>
+                <a href="{% url 'blog:explorar' %}"
+                   class="nav-item-link {% if request.resolver_match.url_name == 'explorar' %}active{% endif %}"
+                   {% if request.resolver_match.url_name == 'explorar' %}aria-current="page"{% endif %}
+                   title="Explorar">
+                    <i class="bi bi-compass" aria-hidden="true"></i>
+                    <span class="nav-label">Explorar</span>
                 </a>
                 {% if user.is_authenticated %}
+                    <a href="{% url 'blog:notificaciones_list' %}"
+                       class="nav-item-link position-relative {% if request.resolver_match.url_name == 'notificaciones_list' %}active{% endif %}"
+                       {% if request.resolver_match.url_name == 'notificaciones_list' %}aria-current="page"{% endif %}
+                       title="Notificaciones">
+                        <div class="position-relative d-inline-flex align-items-center">
+                            <i class="bi bi-bell" aria-hidden="true"></i>
+                            {% if notificaciones_no_leidas_count %}
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px; padding: 2px 6px;">
+                                    {{ notificaciones_no_leidas_count }}
+                                </span>
+                            {% endif %}
+                        </div>
+                        <span class="nav-label ms-1">Notificaciones</span>
+                    </a>
                     <a href="{% url 'blog:siguiendo_feed' %}"
                        class="nav-item-link {% if request.resolver_match.url_name == 'siguiendo_feed' %}active{% endif %}"
                        {% if request.resolver_match.url_name == 'siguiendo_feed' %}aria-current="page"{% endif %}
@@ -283,12 +285,12 @@
                         <span class="nav-label">Siguiendo</span>
                     </a>
                 {% endif %}
-                <a href="{% url 'blog:explorar' %}"
-                   class="nav-item-link {% if request.resolver_match.url_name == 'explorar' %}active{% endif %}"
-                   {% if request.resolver_match.url_name == 'explorar' %}aria-current="page"{% endif %}
-                   title="Explorar">
-                    <i class="bi bi-compass" aria-hidden="true"></i>
-                    <span class="nav-label">Explorar</span>
+                <a href="{% url 'blog:posts_populares' %}"
+                   class="nav-item-link {% if request.resolver_match.url_name == 'posts_populares' %}active{% endif %}"
+                   {% if request.resolver_match.url_name == 'posts_populares' %}aria-current="page"{% endif %}
+                   title="Populares">
+                    <i class="bi bi-fire" aria-hidden="true"></i>
+                    <span class="nav-label">Populares</span>
                 </a>
                 {% if user.is_authenticated %}
                     <a href="{% url 'blog:guardados' %}"
@@ -313,7 +315,7 @@
                 {% endif %}
 
                 {% if user.is_authenticated %}
-                    <!-- Botón de acción principal grande integrado (Estilo X) -->
+                    <!-- Botón de acción principal único integrado (Estilo X) -->
                     <div class="my-3 w-100">
                         <a href="{% url 'blog:panel_post_create' %}" class="btn btn-primary rounded-pill w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-bold shadow-sm" hx-boost="false" title="Crear nueva publicación">
                             <i class="bi bi-pencil-square fs-5" aria-hidden="true"></i>
@@ -387,27 +389,44 @@
 
         {% block sidebar_right %}
         <!-- Columna Lateral Derecha Pegajosa (>= 1280px) -->
-        <aside class="app-sidebar-right" aria-label="Widgets e información complementaria">
+        <aside class="app-sidebar-right" aria-label="Búsqueda e información complementaria">
             {% block sidebar_right_content %}
+            <!-- Buscador Global al inicio de la columna derecha (Estilo X) -->
+            <div class="sidebar-search-box mb-3 position-relative" id="sidebar-search-container">
+                <form action="{% url 'blog:buscar_posts' %}" method="get" role="search" class="m-0 p-0 position-relative" id="form-buscador-sidebar">
+                    <i class="bi bi-search sidebar-search-icon" aria-hidden="true"></i>
+                    <input type="search"
+                           name="q"
+                           id="sidebar-search-input"
+                           class="sidebar-search-input form-control rounded-pill"
+                           placeholder="Buscar en Blog... (Ctrl+K o /)"
+                           value="{{ query|default:'' }}"
+                           autocomplete="off"
+                           hx-get="{% url 'blog:buscar_sugerencias' %}"
+                           hx-trigger="input changed delay:200ms"
+                           hx-target="#sidebar-search-suggestions"
+                           aria-autocomplete="list"
+                           aria-expanded="false"
+                           aria-controls="sidebar-search-suggestions">
+                    <span class="sidebar-search-badge d-none d-xl-inline">/</span>
+                    <div class="search-suggestions-dropdown" id="sidebar-search-suggestions"></div>
+                </form>
+            </div>
+
             {% if not user.is_authenticated %}
                 <!-- Visitantes: una sola tarjeta Únete -->
                 {% include "blog/includes/widget_unete_comunidad.html" %}
             {% else %}
-                <!-- Widget Acerca de la comunidad para autores autenticados -->
+                <!-- Widget Acerca de la comunidad (informativo sin botón repetido) -->
                 <div class="card border mb-3 shadow-none bg-surface">
                     <div class="card-body p-3">
                         <h2 class="h6 fw-bold mb-2 d-flex align-items-center gap-2">
-                            <i class="bi bi-pencil-square text-primary" aria-hidden="true"></i>
+                            <i class="bi bi-chat-square-quote text-primary" aria-hidden="true"></i>
                             <span>{{ marca_corta|default:"Blog" }}</span>
                         </h2>
-                        <p class="small text-secondary mb-3">
+                        <p class="small text-secondary mb-0">
                             {{ marca_descripcion|default:"Comunidad de lectura técnica, debate constructivo y desarrollo en Django. Comparte tus conocimientos con autores y lectores." }}
                         </p>
-                        <div class="d-grid">
-                            <a href="{% url 'blog:panel_post_create' %}" hx-boost="false" class="btn-forum btn-forum-primary justify-content-center">
-                                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Escribir
-                            </a>
-                        </div>
                     </div>
                 </div>
             {% endif %}

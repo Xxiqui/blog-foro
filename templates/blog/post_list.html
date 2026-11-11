@@ -14,11 +14,9 @@
                 <div class="flex-shrink-0">
                     {% avatar user.perfil 36 %}
                 </div>
-                <a href="{% url 'blog:panel_post_create' %}" hx-boost="false" class="form-control rounded-pill text-muted text-decoration-none bg-body-tertiary border-0 py-2 px-3 small d-flex align-items-center flex-grow-1">
-                    ¿Qué quieres compartir hoy con la comunidad?
-                </a>
-                <a href="{% url 'blog:panel_post_create' %}" hx-boost="false" class="btn-forum btn-forum-primary p-2 px-3 small" title="Escribir publicación">
-                    <i class="bi bi-pencil-square me-1"></i>Escribir
+                <a href="{% url 'blog:panel_post_create' %}" hx-boost="false" class="form-control rounded-pill text-muted text-decoration-none bg-body-tertiary border-0 py-2 px-3 small d-flex align-items-center justify-content-between flex-grow-1">
+                    <span>¿Qué quieres compartir hoy con la comunidad?</span>
+                    <i class="bi bi-pencil-square text-primary"></i>
                 </a>
             </div>
         </div>

@@ -7,8 +7,8 @@
 {% block content %}
 <div class="app-feed-container">
     <!-- Cabecera de Exploración -->
-    <div class="mb-4">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div class="mb-3">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
             <div>
                 <h1 class="h3 fw-bold mb-1 d-flex align-items-center gap-2">
                     <i class="bi bi-compass text-primary" aria-hidden="true"></i>
@@ -19,7 +19,34 @@
                 </p>
             </div>
             <a href="{% url 'blog:posts_populares' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                <i class="bi bi-fire text-danger me-1" aria-hidden="true"></i>Ver publicaciones más votadas
+                <i class="bi bi-fire text-danger me-1" aria-hidden="true"></i>Ver ranking más votados
+            </a>
+        </div>
+
+        <!-- Buscador integrado en Explorar -->
+        <form action="{% url 'blog:buscar_posts' %}" method="get" role="search" class="m-0 mb-3 position-relative">
+            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" aria-hidden="true"></i>
+            <input type="search"
+                   name="q"
+                   class="form-control rounded-pill ps-5 bg-surface border"
+                   placeholder="Buscar artículos, tecnologías, comunidades o autores..."
+                   value="{{ query|default:'' }}"
+                   autocomplete="off">
+        </form>
+
+        <!-- Pestañas de navegación rápida de Exploración -->
+        <div class="d-flex flex-wrap gap-2 pb-2 border-bottom">
+            <a href="#heading-comunidades" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-people-fill me-1 text-primary"></i>Comunidades ({{ comunidades|length }})
+            </a>
+            <a href="#heading-etiquetas" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-tags-fill me-1 text-info"></i>Temas en tendencia
+            </a>
+            <a href="#heading-autores" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-award-fill me-1 text-warning"></i>Autores recomendados ({{ autores|length }})
+            </a>
+            <a href="#heading-posts-destacados" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-fire me-1 text-danger"></i>Tendencias de la semana
             </a>
         </div>
     </div>

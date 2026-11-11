@@ -1034,25 +1034,35 @@
         verificarReintentoAccion();
     }
 
-    // Buscador global con sugerencias y atajos
+    // Buscador global (barra lateral derecha en escritorio, overlay en móvil)
     function inicializarBuscadorSugerencias() {
-        const searchInput = document.getElementById('header-search-input');
-        const dropdown = document.getElementById('search-suggestions-dropdown');
-        const searchContainer = document.getElementById('global-search-container');
         const mobileToggle = document.getElementById('mobile-search-toggle');
+        const mobileSearchBar = document.getElementById('mobile-search-bar');
+        const mobileClose = document.getElementById('mobile-search-close');
+        const mobileInput = document.getElementById('mobile-search-input');
 
-        if (mobileToggle && searchContainer) {
-            mobileToggle.addEventListener('click', function() {
-                searchContainer.classList.toggle('mobile-open');
-                if (searchContainer.classList.contains('mobile-open') && searchInput) {
-                    setTimeout(() => searchInput.focus(), 60);
+        const sidebarInput = document.getElementById('sidebar-search-input');
+
+        // Toggle de búsqueda móvil (< 1280px)
+        if (mobileToggle && mobileSearchBar) {
+            mobileToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                mobileSearchBar.classList.toggle('d-none');
+                if (!mobileSearchBar.classList.contains('d-none') && mobileInput) {
+                    setTimeout(() => mobileInput.focus(), 80);
                 }
             });
         }
+        if (mobileClose && mobileSearchBar) {
+            mobileClose.addEventListener('click', function() {
+                mobileSearchBar.classList.add('d-none');
+            });
+        }
 
-        // Mostrar / ocultar dropdown al recibir resultados de HTMX
+        // Mostrar / ocultar dropdown al recibir resultados de HTMX (sidebar o móvil)
         document.body.addEventListener('htmx:afterSwap', function(evt) {
-            if (evt.detail.target && evt.detail.target.id === 'search-suggestions-dropdown') {
+            if (evt.detail.target && (evt.detail.target.id === 'sidebar-search-suggestions' || evt.detail.target.id === 'mobile-search-suggestions' || evt.detail.target.id === 'search-suggestions-dropdown')) {
                 const dd = evt.detail.target;
                 const items = dd.querySelectorAll('.suggestion-item');
                 if (items.length > 0 || dd.innerText.trim().length > 0) {
@@ -1063,9 +1073,14 @@
             }
         });
 
-        // Navegación por teclado en el input de búsqueda (flechas, Enter, Esc)
-        if (searchInput && dropdown) {
-            searchInput.addEventListener('keydown', function(e) {
+        // Navegación por teclado en inputs de búsqueda
+        [sidebarInput, mobileInput].forEach(input => {
+            if (!input) return;
+            const form = input.closest('form');
+            const dropdown = form ? form.querySelector('.search-suggestions-dropdown') : null;
+
+            input.addEventListener('keydown', function(e) {
+                if (!dropdown) return;
                 const items = Array.from(dropdown.querySelectorAll('.suggestion-item'));
                 let activeIdx = items.findIndex(it => it.classList.contains('active'));
 
@@ -1091,21 +1106,21 @@
                     }
                 } else if (e.key === 'Escape') {
                     dropdown.classList.remove('show');
-                    if (searchContainer) searchContainer.classList.remove('mobile-open');
-                    searchInput.blur();
+                    if (mobileSearchBar) mobileSearchBar.classList.add('d-none');
+                    input.blur();
                 }
             });
+        });
 
-            // Cerrar dropdown al hacer clic fuera
-            document.addEventListener('click', function(e) {
-                if (searchContainer && !searchContainer.contains(e.target)) {
-                    dropdown.classList.remove('show');
-                    if (searchContainer.classList.contains('mobile-open') && (!mobileToggle || !mobileToggle.contains(e.target))) {
-                        searchContainer.classList.remove('mobile-open');
-                    }
+        // Cerrar dropdown al hacer clic fuera
+        document.addEventListener('click', function(e) {
+            document.querySelectorAll('.search-suggestions-dropdown.show').forEach(dd => {
+                const form = dd.closest('form');
+                if (form && !form.contains(e.target)) {
+                    dd.classList.remove('show');
                 }
             });
-        }
+        });
     }
 
     // Atajos de teclado del foro
@@ -1126,13 +1141,21 @@
             // Atajo / o Ctrl/Cmd+K para abrir búsqueda
             if (e.key === '/' || ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K'))) {
                 e.preventDefault();
-                const searchContainer = document.getElementById('global-search-container');
-                const searchInput = document.getElementById('header-search-input');
-                if (searchContainer) searchContainer.classList.add('mobile-open');
-                if (searchInput) {
-                    searchInput.focus();
-                    searchInput.select();
+                const sidebarInput = document.getElementById('sidebar-search-input');
+                const mobileSearchBar = document.getElementById('mobile-search-bar');
+                const mobileInput = document.getElementById('mobile-search-input');
+
+                if (window.innerWidth >= 1280 && sidebarInput) {
+                    sidebarInput.focus();
+                    sidebarInput.select();
+                } else {
+                    if (mobileSearchBar) mobileSearchBar.classList.remove('d-none');
+                    if (mobileInput) {
+                        mobileInput.focus();
+                        mobileInput.select();
+                    }
                 }
+            }
                 return;
             }
 

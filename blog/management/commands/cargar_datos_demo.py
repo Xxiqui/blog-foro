@@ -80,6 +80,36 @@ class Command(BaseCommand):
                     'sistemas de diseño con variables CSS y experiencia de usuario.'
                 ),
             },
+            {
+                'username': 'lucia_mendez',
+                'email': 'lucia.mendez@ejemplo.com',
+                'password': 'DemoPassword123!',
+                'first_name': 'Lucía',
+                'last_name': 'Méndez',
+                'is_staff': False,
+                'is_superuser': False,
+                'bio': 'Arquitecta Frontend especializada en rendimiento de aplicaciones web, React, TypeScript y microfrontends.',
+            },
+            {
+                'username': 'miguel_sanchez',
+                'email': 'miguel.sanchez@ejemplo.com',
+                'password': 'DemoPassword123!',
+                'first_name': 'Miguel',
+                'last_name': 'Sánchez',
+                'is_staff': False,
+                'is_superuser': False,
+                'bio': 'Ingeniero de datos y backend enfocado en pipelines distribuidos con Celery, Redis, FastAPI y arquitecturas asíncronas.',
+            },
+            {
+                'username': 'david_veiga',
+                'email': 'david.veiga@ejemplo.com',
+                'password': 'DemoPassword123!',
+                'first_name': 'David',
+                'last_name': 'Veiga',
+                'is_staff': False,
+                'is_superuser': False,
+                'bio': 'Site Reliability Engineer (SRE). Especialista en observabilidad con Prometheus, Grafana y automatización con Kubernetes.',
+            },
         ]
 
         perfiles = {}
@@ -147,6 +177,30 @@ class Command(BaseCommand):
                     ('Infraestructura reproducible', 'Documenta los pasos de construcción en Dockerfile o scripts claros.'),
                 ],
             },
+            {
+                'nombre': 'Arquitectura de Software',
+                'descripcion': (
+                    'Patrones de diseño limpios, microservicios, eventos distribuidos, '
+                    'CQRS y modularidad en sistemas de alta demanda con Python.'
+                ),
+                'reglas': [
+                    ('Justifica las decisiones de diseño', 'Explica el porqué del patrón elegido frente a alternativas más simples.'),
+                    ('Diagramas y diagramación clara', 'Acompaña explicaciones complejas con esquemas o diagramas de flujo.'),
+                    ('Código enfocado en la mantenibilidad', 'Prioriza la legibilidad y la facilidad de prueba en los ejemplos.'),
+                ],
+            },
+            {
+                'nombre': 'Inteligencia Artificial y ML',
+                'descripcion': (
+                    'Integración de modelos LLM, RAG (Retrieval-Augmented Generation), '
+                    'embeddings semánticos y pipelines de inferencia en aplicaciones web.'
+                ),
+                'reglas': [
+                    ('Seguridad y ética en IA', 'Verifica que los prompts y modelos respeten privacidad y no filtren datos sensibles.'),
+                    ('Métricas y evaluación', 'Comparte benchmarks concretos sobre latencia, precisión y costo de tokens.'),
+                    ('Enfócate en la integración con código real', 'Muestra cómo conectar modelos a bases de datos y APIs web.'),
+                ],
+            },
         ]
         categorias = {}
         for c_info in categorias_info:
@@ -165,9 +219,9 @@ class Command(BaseCommand):
                     },
                 )
 
-        self.stdout.write(self.style.SUCCESS('✔ 3 categorías con descripción y 3 reglas por comunidad creadas.'))
+        self.stdout.write(self.style.SUCCESS(f'✔ {len(categorias)} categorías con descripción y reglas creadas.'))
 
-        # 3. Crear 6 etiquetas
+        # 3. Crear etiquetas técnicas
         nombres_etiquetas = [
             'Python',
             'Django',
@@ -175,6 +229,16 @@ class Command(BaseCommand):
             'Docker',
             'Seguridad',
             'Rendimiento',
+            'FastAPI',
+            'Redis',
+            'React',
+            'TypeScript',
+            'Frontend',
+            'Testing',
+            'CleanCode',
+            'Kubernetes',
+            'IA',
+            'Microservicios',
         ]
         etiquetas = {}
         for nombre in nombres_etiquetas:
@@ -347,6 +411,130 @@ CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]</code></pr
                 """,
             },
             {
+                'titulo': 'Integración de Redis y Celery para colas asíncronas de alto rendimiento',
+                'autor': perfiles['miguel_sanchez'],
+                'categoria': categorias['Arquitectura de Software'],
+                'etiquetas': ['Redis', 'Python', 'Rendimiento'],
+                'estado': Post.Estado.PUBLICADO,
+                'contenido': """
+                    <h2>Procesamiento en segundo plano escalable</h2>
+                    <p>Descargar tareas pesadas como envío masivo de correos, generación de PDFs y procesamiento de imágenes a <strong>Celery</strong> con broker <strong>Redis</strong> mantiene las respuestas HTTP por debajo de 50ms.</p>
+                    <h3>Definición de tarea idempotente</h3>
+                    <pre><code class="language-python">@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def procesar_reporte_mensual(self, usuario_id):
+    try:
+        generar_balance_analitico(usuario_id)
+    except DatabaseError as exc:
+        raise self.retry(exc=exc)</code></pre>
+                    <p>Configurar <code>CELERY_TASK_ACKS_LATE = True</code> garantiza que los mensajes no se pierdan si un worker falla inesperadamente.</p>
+                """,
+            },
+            {
+                'titulo': 'Microfrontends con React y renderizado híbrido en Django',
+                'autor': perfiles['lucia_mendez'],
+                'categoria': categorias['Desarrollo Web'],
+                'etiquetas': ['React', 'TypeScript', 'Frontend'],
+                'estado': Post.Estado.PUBLICADO,
+                'contenido': """
+                    <h2>Uniendo lo mejor de dos mundos</h2>
+                    <p>Combinar la robustez del backend de <strong>Django</strong> con componentes interactivos construidos en <strong>React 19</strong> y <strong>TypeScript</strong> permite crear experiencias tipo SPA sin perder SEO ni la seguridad del servidor.</p>
+                    <h3>Incrustación sin fricción</h3>
+                    <p>Utilizamos puntos de montaje mediante <code>data-*</code> attributes en las plantillas Django para hidratar islas interactivas de forma progresiva.</p>
+                    <pre><code class="language-typescript">interface UserWidgetProps {
+    userId: number;
+    initialRole: string;
+}
+
+export const UserWidget: React.FC<UserWidgetProps> = ({ userId, initialRole }) => {
+    const [role, setRole] = useState(initialRole);
+    return &lt;div className="badge-pill"&gt;{role}&lt;/div&gt;;
+};</code></pre>
+                """,
+            },
+            {
+                'titulo': 'Monitoreo en tiempo real con Prometheus y Grafana en Kubernetes',
+                'autor': perfiles['david_veiga'],
+                'categoria': categorias['DevOps y Seguridad'],
+                'etiquetas': ['Kubernetes', 'Docker', 'Rendimiento'],
+                'estado': Post.Estado.PUBLICADO,
+                'contenido': """
+                    <h2>Observabilidad de infraestructura y métricas RED</h2>
+                    <p>En entornos de microservicios, medir <em>Rate, Errors y Duration</em> (RED) es imprescindible para detectar anomalías antes de que afecten a los usuarios finales.</p>
+                    <h3>Métricas clave a instrumentar</h3>
+                    <ul>
+                        <li><strong>Latencia P99:</strong> Tiempo de respuesta del 99% de las peticiones HTTP.</li>
+                        <li><strong>Saturación del pool de base de datos:</strong> Conexiones activas frente al límite máximo de PostgreSQL.</li>
+                        <li><strong>Tasa de fallos en colas:</strong> Tareas rechazadas o enviadas al dead-letter queue.</li>
+                    </ul>
+                """,
+            },
+            {
+                'titulo': 'Construcción de APIs ultra veloces con FastAPI y Pydantic v2',
+                'autor': perfiles['miguel_sanchez'],
+                'categoria': categorias['Desarrollo Web'],
+                'etiquetas': ['FastAPI', 'Python', 'Rendimiento'],
+                'estado': Post.Estado.PUBLICADO,
+                'contenido': """
+                    <h2>Por qué Pydantic v2 cambia las reglas del juego</h2>
+                    <p>Gracias al núcleo en Rust de <strong>Pydantic v2</strong>, la serialización y validación de esquemas en <strong>FastAPI</strong> es hasta 15 veces más rápida que en versiones anteriores.</p>
+                    <pre><code class="language-python">from pydantic import BaseModel, EmailStr, Field
+
+class UsuarioSchema(BaseModel):
+    id: int
+    email: EmailStr
+    activo: bool = True
+    puntos: int = Field(ge=0, default=0)</code></pre>
+                """,
+            },
+            {
+                'titulo': 'Arquitectura RAG: Embeddings semánticos y búsqueda vectorial con pgvector',
+                'autor': perfiles['elena_torres'],
+                'categoria': categorias['Inteligencia Artificial y ML'],
+                'etiquetas': ['IA', 'PostgreSQL', 'Python'],
+                'estado': Post.Estado.PUBLICADO,
+                'contenido': """
+                    <h2>Búsqueda semántica integrada directamente en PostgreSQL</h2>
+                    <p>La extensión <code>pgvector</code> permite almacenar y consultar vectores de alta dimensionalidad directamente en la misma base de datos relacional donde residen tus posts y usuarios.</p>
+                    <h3>Índices HNSW vs IVFFlat</h3>
+                    <p>Para conjuntos de datos con miles de documentos, los índices <strong>HNSW</strong> (Hierarchical Navigable Small World) ofrecen una relación óptima entre velocidad de recuperación y precisión en memoria.</p>
+                """,
+            },
+            {
+                'titulo': 'Patrones de diseño en Python: CQRS sin complicar la infraestructura',
+                'autor': perfiles['ana_garcia'],
+                'categoria': categorias['Arquitectura de Software'],
+                'etiquetas': ['CleanCode', 'Python', 'Django'],
+                'estado': Post.Estado.PUBLICADO,
+                'contenido': """
+                    <h2>Separando operaciones de lectura y escritura</h2>
+                    <p>El patrón <strong>CQRS</strong> (Command Query Responsibility Segregation) no requiere herramientas complejas ni múltiples bases de datos: en Django puede implementarse limpiamente separando servicios de mutación (Commands) y modelos de lectura optimizados (Queries).</p>
+                """,
+            },
+            {
+                'titulo': 'Estrategias avanzadas de caching para mitigar Cache Stampede',
+                'autor': perfiles['carlos_ruiz'],
+                'categoria': categorias['Bases de Datos'],
+                'etiquetas': ['Redis', 'PostgreSQL', 'Rendimiento'],
+                'estado': Post.Estado.PUBLICADO,
+                'contenido': """
+                    <h2>Qué ocurre cuando expira una clave con miles de lecturas por segundo</h2>
+                    <p>El fenómeno <em>Cache Stampede</em> o avalancha de caché ocurre cuando una clave muy solicitada expira y cientos de hilos intentan regenerarla simultáneamente atacando la base de datos.</p>
+                    <h3>Solución: Probabilistic Early Expiration (XFetch)</h3>
+                    <p>Computar anticipadamente la clave antes de su expiración física con un factor delta aleatorio elimina los picos de CPU al 100%.</p>
+                """,
+            },
+            {
+                'titulo': 'Testing integral en Django: Pruebas unitarias, de integración y carga',
+                'autor': perfiles['david_veiga'],
+                'categoria': categorias['DevOps y Seguridad'],
+                'etiquetas': ['Testing', 'Python', 'Django'],
+                'estado': Post.Estado.PUBLICADO,
+                'contenido': """
+                    <h2>Pirámide de pruebas aplicada a proyectos web</h2>
+                    <p>Una estrategia sólida de calidad combina pruebas de modelos rápidas en memoria con tests de integración de vistas y pruebas de carga con <strong>Locust</strong> simulando 1,000 usuarios concurrentes.</p>
+                """,
+            },
+            {
                 'titulo': 'Borrador: Guía avanzada de índices GIN y GiST en PostgreSQL 16',
                 'autor': perfiles['ana_garcia'],
                 'categoria': categorias['Bases de Datos'],
@@ -470,6 +658,62 @@ CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]</code></pr
                 'nombre': 'Mateo Gómez',
                 'email': 'mateo@ejemplo.com',
                 'texto': 'Desde que aplicamos select_related y prefetch_related redujimos las consultas de 50 a solo 3.',
+                'aprobado': True,
+            },
+            {
+                'post': posts_creados[7],
+                'nombre': 'David Veiga',
+                'email': 'david.veiga@ejemplo.com',
+                'texto': 'Gran artículo @miguel_sanchez. En producción con Kubernetes, Redis Sentinel nos ha dado una estabilidad impecable.',
+                'aprobado': True,
+            },
+            {
+                'post': posts_creados[8],
+                'nombre': 'Elena Torres',
+                'email': 'elena.torres@ejemplo.com',
+                'texto': 'El enfoque de islas en Django es perfecto para no tener que migrar toda la app a una SPA compleja.',
+                'aprobado': True,
+            },
+            {
+                'post': posts_creados[9],
+                'nombre': 'Carlos Ruiz',
+                'email': 'carlos.ruiz@ejemplo.com',
+                'texto': 'Las métricas RED nos salvaron en el último despliegue. Configurar alertas sobre el P99 de latencia es clave.',
+                'aprobado': True,
+            },
+            {
+                'post': posts_creados[10],
+                'nombre': 'Ana García',
+                'email': 'ana.garcia@ejemplo.com',
+                'texto': 'Pydantic v2 es impresionante en velocidad. La validación con Rust en FastAPI se siente casi instantánea.',
+                'aprobado': True,
+            },
+            {
+                'post': posts_creados[11],
+                'nombre': 'Miguel Sánchez',
+                'email': 'miguel.sanchez@ejemplo.com',
+                'texto': 'Tener pgvector dentro del mismo PostgreSQL nos ahorró levantar una base de datos vectorial dedicada.',
+                'aprobado': True,
+            },
+            {
+                'post': posts_creados[12],
+                'nombre': 'Lucía Méndez',
+                'email': 'lucia.mendez@ejemplo.com',
+                'texto': 'Separar Commands de Queries hace que los tests unitarios no tengan efectos secundarios en la base de datos.',
+                'aprobado': True,
+            },
+            {
+                'post': posts_creados[13],
+                'nombre': 'David Veiga',
+                'email': 'david.veiga@ejemplo.com',
+                'texto': 'El algoritmo probabilístico XFetch es una maravilla para evitar caídas cuando expira un cálculo pesado.',
+                'aprobado': True,
+            },
+            {
+                'post': posts_creados[14],
+                'nombre': 'Carlos Ruiz',
+                'email': 'carlos.ruiz@ejemplo.com',
+                'texto': 'Las pruebas con Locust nos permitieron simular 2,000 conexiones concurrentes y ajustar los workers de Gunicorn.',
                 'aprobado': True,
             },
         ]
@@ -648,13 +892,36 @@ CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]</code></pr
         # 8. Comunidades (MiembroCategoria), posts fijados en categoría y árbol de comentarios anidados
         elena_user = perfiles['elena_torres'].usuario
 
+        lucia_user = perfiles['lucia_mendez'].usuario
+        miguel_user = perfiles['miguel_sanchez'].usuario
+        david_user = perfiles['david_veiga'].usuario
+
         # Membresías a comunidades
         MiembroCategoria.objects.get_or_create(usuario=ana_user, categoria=categorias['Desarrollo Web'])
         MiembroCategoria.objects.get_or_create(usuario=ana_user, categoria=categorias['Bases de Datos'])
         MiembroCategoria.objects.get_or_create(usuario=carlos_user, categoria=categorias['Desarrollo Web'])
         MiembroCategoria.objects.get_or_create(usuario=carlos_user, categoria=categorias['DevOps y Seguridad'])
         MiembroCategoria.objects.get_or_create(usuario=elena_user, categoria=categorias['Desarrollo Web'])
-        MiembroCategoria.objects.get_or_create(usuario=elena_user, categoria=categorias['Bases de Datos'])
+        MiembroCategoria.objects.get_or_create(usuario=elena_user, categoria=categorias['Inteligencia Artificial y ML'])
+        MiembroCategoria.objects.get_or_create(usuario=lucia_user, categoria=categorias['Desarrollo Web'])
+        MiembroCategoria.objects.get_or_create(usuario=lucia_user, categoria=categorias['Arquitectura de Software'])
+        MiembroCategoria.objects.get_or_create(usuario=miguel_user, categoria=categorias['Arquitectura de Software'])
+        MiembroCategoria.objects.get_or_create(usuario=miguel_user, categoria=categorias['Bases de Datos'])
+        MiembroCategoria.objects.get_or_create(usuario=david_user, categoria=categorias['DevOps y Seguridad'])
+        MiembroCategoria.objects.get_or_create(usuario=david_user, categoria=categorias['Arquitectura de Software'])
+
+        # Likes y votos cruzados en posts adicionales
+        for idx, u in enumerate([lucia_user, miguel_user, david_user, elena_user]):
+            if idx + 7 < len(posts_creados):
+                p = posts_creados[idx + 7]
+                LikePost.objects.get_or_create(usuario=u, post=p)
+                VotoUtil.objects.update_or_create(usuario=u, post=p, defaults={'util': True})
+                VistaDiaria.objects.update_or_create(post=p, fecha=hoy, defaults={'cantidad': 25 + idx * 8})
+
+        # Seguimientos cruzados
+        Seguimiento.objects.get_or_create(seguidor=lucia_user, autor=perfiles['elena_torres'])
+        Seguimiento.objects.get_or_create(seguidor=miguel_user, autor=perfiles['ana_garcia'])
+        Seguimiento.objects.get_or_create(seguidor=david_user, autor=perfiles['carlos_ruiz'])
 
         # Fijar posts destacados en sus categorías (máximo 3 por categoría)
         for p_fijo in (posts_creados[0], posts_creados[6]):
