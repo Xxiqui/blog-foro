@@ -414,7 +414,8 @@
 
 {% block sidebar_right %}
 <!-- Barra Lateral Derecha en Pantallas Grandes (>= 1280px) -->
-<div class="vstack gap-3">
+<aside class="app-sidebar-right" aria-label="Información y secciones del artículo">
+    <div class="vstack gap-3">
     <!-- 1. Tabla de Contenidos con Scrollspy activo -->
     {% if toc_items %}
         <div class="card border mb-3 shadow-none bg-surface">
@@ -549,7 +550,8 @@
             </div>
         </div>
     {% endif %}
-</div>
+    </div>
+</aside>
 {% endblock %}
 
 {% block bottom_bar %}

@@ -40,6 +40,9 @@ media/
 # Testing & Mobile screenshots
 capturas_movil/
 capturas_antes/
+capturas_visual/
+capturas_diagnostico/
+capturas_despues/
 respaldos/
 
 # IDEs & OS

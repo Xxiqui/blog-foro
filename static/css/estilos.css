@@ -1,32 +1,4 @@
 /* ==========================================================================
-   ESTILOS.CSS - ENTRYPOINT DEL SISTEMA DE DISEÑO DEL FORO ADAPTABLE
-   @layer tokens, base, layout, components, utilities;
+   ESTILOS.CSS - ENTRYPOINT DEL SISTEMA DE DISEÑO (COMPATIBILIDAD CON APP.CSS)
    ========================================================================== */
-
-@layer tokens, base, layout, components, utilities;
-
-@import url("./tokens.css") layer(tokens);
-@import url("./base.css") layer(base);
-@import url("./layout.css") layer(layout);
-@import url("./components.css") layer(components);
-
-@layer utilities {
-    /* Clases de utilidad complementarias */
-    .text-muted { color: var(--color-text-muted) !important; }
-    .text-secondary { color: var(--color-text-secondary) !important; }
-    .text-accent { color: var(--color-accent) !important; }
-    .bg-surface { background-color: var(--color-surface) !important; }
-    .bg-surface-hover:hover { background-color: var(--color-surface-hover) !important; }
-    .border-subtle { border-color: var(--color-border) !important; }
-    
-    .min-w-0 { min-width: 0 !important; }
-    .max-w-100 { max-width: 100% !important; }
-    
-    .touch-target-44 {
-        min-width: var(--touch-target-min) !important;
-        min-height: var(--touch-target-min) !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-}
+@import url("./app.css");

@@ -85,21 +85,20 @@
     padding: var(--space-4);
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
 }
 
 .app-feed-container {
     width: 100%;
     max-width: var(--feed-max-width);
-    container-type: inline-size;
-    container-name: feed;
+    margin-inline: auto;
+    min-width: 0;
 }
 
 .app-article-container {
     width: 100%;
-    max-width: var(--article-max-width);
-    container-type: inline-size;
-    container-name: article;
+    margin-inline: auto;
+    min-width: 0;
 }
 
 /* Columna lateral derecha pegajosa con scroll propio */

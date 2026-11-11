@@ -183,6 +183,7 @@
 
 {% block sidebar_right %}
 <!-- Barra lateral específica de la Comunidad -->
+<aside class="app-sidebar-right" aria-label="Información de la comunidad">
 <div class="card border mb-3 shadow-none bg-surface">
     <div class="card-body p-3">
         <h2 class="h6 fw-bold mb-2 d-flex align-items-center gap-2">
@@ -242,6 +243,5 @@
         {% endif %}
     </div>
 </div>
-
-{% include "blog/includes/widget_descubrir_comunidades.html" %}
+</aside>
 {% endblock sidebar_right %}

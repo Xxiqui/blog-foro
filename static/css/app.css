@@ -1,0 +1,38 @@
+/* ==========================================================================
+   APP.CSS - PUNTO DE ENTRADA ÚNICO DEL SISTEMA DE DISEÑO
+   Orden de capas CSS (de menor a mayor prioridad en cascada):
+   bootstrap < tokens < base < layout < components < utilities
+   
+   Al importar Bootstrap 5.3 dentro de layer(bootstrap), todas las reglas
+   de tokens, base, layout y components tienen precedencia natural sobre
+   Bootstrap sin requerir !important.
+   ========================================================================== */
+
+@layer bootstrap, tokens, base, layout, components, utilities;
+
+@import url("../vendor/bootstrap/bootstrap.min.css") layer(bootstrap);
+@import url("./tokens.css") layer(tokens);
+@import url("./base.css") layer(base);
+@import url("./layout.css") layer(layout);
+@import url("./components.css") layer(components);
+
+@layer utilities {
+    /* Clases de utilidad complementarias */
+    .text-muted { color: var(--color-text-muted) !important; }
+    .text-secondary { color: var(--color-text-secondary) !important; }
+    .text-accent { color: var(--color-accent) !important; }
+    .bg-surface { background-color: var(--color-surface) !important; }
+    .bg-surface-hover:hover { background-color: var(--color-surface-hover) !important; }
+    .border-subtle { border-color: var(--color-border) !important; }
+    
+    .min-w-0 { min-width: 0 !important; }
+    .max-w-100 { max-width: 100% !important; }
+    
+    .touch-target-44 {
+        min-width: var(--touch-target-min, 44px) !important;
+        min-height: var(--touch-target-min, 44px) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+}
