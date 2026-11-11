@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Política de Privacidad | {{ site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+{% block title %}Política de Privacidad | {{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}
 {% block body_hx_boost %}hx-boost="false"{% endblock %}
 {% block app_body_class %}app-body--plano{% endblock %}
 {% block nav_left %}{% endblock %}
@@ -21,7 +21,7 @@
 
                 <h2 class="h5 fw-bold mt-4">1. Datos que recopilamos</h2>
                 <p class="text-secondary">
-                    En <strong>{{ site_name|default:"Blog con Panel de Autor" }}</strong> recopilamos únicamente los datos necesarios para crear tu cuenta de autor o lector (nombre de usuario, nombre visible, correo electrónico y, opcionalmente, tu foto de perfil pública cuando accedes mediante proveedores OAuth como Google o GitHub).
+                    En <strong>{{ marca_corta|default:site_name|default:"Blog" }}</strong> recopilamos únicamente los datos necesarios para crear tu cuenta de autor o lector (nombre de usuario, nombre visible, correo electrónico y, opcionalmente, tu foto de perfil pública cuando accedes mediante proveedores OAuth como Google o GitHub).
                 </p>
 
                 <h2 class="h5 fw-bold mt-4">2. Uso de la información</h2>

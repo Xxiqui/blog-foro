@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load blog_extras %}
 
-{% block title %}Buscar: {{ query }} | {{ site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+{% block title %}Buscar: {{ query }} | {{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">

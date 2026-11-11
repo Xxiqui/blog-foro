@@ -1,6 +1,6 @@
 {% extends "base_auth.html" %}
 
-{% block title %}Iniciar sesión | {{ marca|default:site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+{% block title %}Iniciar sesión | {{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -12,7 +12,7 @@
                     <div>
                         <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white bg-opacity-10 small fw-semibold mb-3">
                             <i class="bi bi-journal-richtext" aria-hidden="true"></i>
-                            <span>{{ marca|default:site_name|default:"Blog con Panel de Autor" }}</span>
+                            <span>{{ marca_corta|default:site_name|default:"Blog" }}</span>
                         </div>
                         <h2 class="h3 fw-bold mb-2">Únete a la conversación técnica</h2>
                         <p class="small text-white text-opacity-75 mb-0">
@@ -55,7 +55,7 @@
                                 <span>o</span>
                             </div>
 
-                            <button class="btn btn-outline-secondary rounded-pill w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold mb-3"
+                            <button class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold mb-3"
                                     type="button"
                                     data-bs-toggle="collapse"
                                     data-bs-target="#collapseLoginCorreo"
@@ -115,7 +115,7 @@
                                 {% endif %}
 
                                 <button type="submit"
-                                        class="btn btn-primary rounded-pill w-100 py-2 fw-semibold mt-2"
+                                        class="btn btn-primary w-100 py-2 fw-semibold mt-2"
                                         aria-label="Entrar a tu cuenta">
                                     <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>Entrar
                                 </button>

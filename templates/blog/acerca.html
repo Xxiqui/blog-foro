@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Acerca de | Blog con Panel de Autor{% endblock %}
+{% block title %}Acerca de | {{ marca_corta|default:"Blog" }}{% endblock %}
 {% block body_hx_boost %}hx-boost="false"{% endblock %}
 {% block app_body_class %}app-body--plano{% endblock %}
 {% block nav_left %}{% endblock %}
@@ -12,7 +12,7 @@
     <div class="col-lg-8">
         <div class="card border-0 p-4 p-md-5">
             <span class="badge-categoria mb-3 align-self-start">Sobre el proyecto</span>
-            <h1 class="h2 fw-bold mb-3">Acerca de Blog con Panel de Autor</h1>
+            <h1 class="h2 fw-bold mb-3">Acerca de {{ marca_corta|default:"Blog" }}</h1>
             <p class="lead text-secondary mb-4">
                 Una plataforma editorial diseñada para compartir conocimiento técnico sobre desarrollo de software, arquitectura backend, bases de datos y seguridad web.
             </p>

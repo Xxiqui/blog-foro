@@ -143,7 +143,7 @@
             </div>
         </div>
 
-        <!-- Miniatura a la derecha (si hay portada y la vista es compacta) -->
+        <!-- Miniatura a la derecha (solo si hay portada real) -->
         {% if vista_feed != 'tarjetas' and post.imagen_portada %}
             <div class="post-thumbnail-wrap ms-2 d-none d-sm-flex">
                 <a href="{{ post.get_absolute_url }}" tabindex="-1" aria-hidden="true" class="w-100 h-100 d-block">
@@ -153,10 +153,6 @@
                          decoding="async"
                          class="post-thumbnail-img">
                 </a>
-            </div>
-        {% elif vista_feed != 'tarjetas' and post.categoria %}
-            <div class="post-thumbnail-wrap ms-2 d-none d-sm-flex bg-body-secondary text-secondary">
-                <span class="fw-bold fs-4">c/</span>
             </div>
         {% endif %}
     </div>

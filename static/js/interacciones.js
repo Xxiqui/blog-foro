@@ -577,41 +577,85 @@
         });
     }
 
-    // 9. Modo Claro / Oscuro con soporte nativo Bootstrap 5.3 (data-bs-theme)
+    // 9. Modo Claro / Oscuro / Sistema con soporte nativo Bootstrap 5.3 (data-bs-theme)
     function inicializarTema() {
         const btnsTema = document.querySelectorAll('#theme-toggle-btn, .theme-toggle-btn, [data-action="toggle-theme"]');
         const iconosTema = document.querySelectorAll('#theme-toggle-icon, .theme-toggle-icon');
+        const selectorBtns = document.querySelectorAll('[data-theme-val]');
 
-        function aplicarTema(tema) {
-            document.documentElement.setAttribute('data-bs-theme', tema);
+        function getSystemTheme() {
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function aplicarTema(modo) {
+            const temaEfectivo = modo === 'system' ? getSystemTheme() : modo;
+            document.documentElement.setAttribute('data-bs-theme', temaEfectivo);
+
+            // Actualizar botones segmentados (3 opciones)
+            selectorBtns.forEach(btn => {
+                const val = btn.getAttribute('data-theme-val');
+                const activo = val === modo;
+                btn.classList.toggle('active', activo);
+                btn.setAttribute('aria-pressed', activo ? 'true' : 'false');
+            });
+
+            // Actualizar íconos de conmutador simple si existen
             iconosTema.forEach(ic => {
-                ic.className = tema === 'dark' ? 'bi bi-sun text-warning' : 'bi bi-moon-stars';
+                if (modo === 'system') {
+                    ic.className = 'bi bi-laptop text-primary';
+                } else if (temaEfectivo === 'dark') {
+                    ic.className = 'bi bi-moon-stars-fill text-warning';
+                } else {
+                    ic.className = 'bi bi-sun-fill text-warning';
+                }
             });
+
             btnsTema.forEach(btn => {
-                btn.setAttribute('aria-pressed', tema === 'dark' ? 'true' : 'false');
+                btn.setAttribute('aria-pressed', temaEfectivo === 'dark' ? 'true' : 'false');
             });
+
             const hljsLight = document.getElementById('hljs-theme-light');
             const hljsDark = document.getElementById('hljs-theme-dark');
             if (hljsLight && hljsDark) {
-                hljsLight.disabled = (tema === 'dark');
-                hljsDark.disabled = (tema !== 'dark');
+                hljsLight.disabled = (temaEfectivo === 'dark');
+                hljsDark.disabled = (temaEfectivo !== 'dark');
             }
         }
 
-        const guardado = localStorage.getItem('blog_theme') || localStorage.getItem('blog-tema') ||
-            (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        const guardado = localStorage.getItem('blog_theme') || 'system';
         aplicarTema(guardado);
 
+        // Click en botones segmentados
+        selectorBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const nuevoModo = btn.getAttribute('data-theme-val') || 'system';
+                localStorage.setItem('blog_theme', nuevoModo);
+                aplicarTema(nuevoModo);
+            });
+        });
+
+        // Conmutador simple (toggle rápido entre claro/oscuro)
         btnsTema.forEach(btn => {
             btn.addEventListener('click', (e) => {
+                if (btn.hasAttribute('data-bs-toggle')) return; // No interceptar si abre dropdown
                 e.preventDefault();
                 const actual = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light';
                 const nuevo = actual === 'dark' ? 'light' : 'dark';
                 localStorage.setItem('blog_theme', nuevo);
-                localStorage.setItem('blog-tema', nuevo);
                 aplicarTema(nuevo);
             });
         });
+
+        // Escuchar cambios del sistema en tiempo real
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                const modoActual = localStorage.getItem('blog_theme') || 'system';
+                if (modoActual === 'system') {
+                    aplicarTema('system');
+                }
+            });
+        }
     }
 
     // 10. Selector de vista Tarjetas | Compacta en hub de categoría y Comentarios anidados

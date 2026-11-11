@@ -149,7 +149,7 @@
                             {% if comentario.post.categoria %}
                                 <span class="mx-1">&bull;</span>
                                 <a href="{% url 'blog:posts_por_categoria' comentario.post.categoria.slug %}" class="badge-categoria">
-                                    c/{{ comentario.post.categoria.nombre }}
+                                    {{ comentario.post.categoria.nombre }}
                                 </a>
                             {% endif %}
                         </div>

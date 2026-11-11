@@ -59,11 +59,48 @@ p {
     overflow-wrap: anywhere;
 }
 
-/* Enlaces sobrios */
+/* Saltar al contenido accesible: oculto visualmente hasta recibir foco */
+.skip-link {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    z-index: 9999;
+    padding: var(--space-2) var(--space-4);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    border: 2px solid var(--color-accent);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: var(--shadow-md);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+    top: var(--space-3);
+    left: var(--space-3);
+    outline: none;
+    text-decoration: none;
+}
+
+/* Enlaces sobrios: text-decoration: none en navegación, barras, botones, tarjetas, pestañas y títulos;
+   subrayado solo en enlaces dentro de prosa (.prosa a, .ck-content a) y al enfocar con teclado */
 a {
     color: inherit;
     text-decoration: none;
     transition: color var(--transition-base);
+}
+
+.prosa a,
+.ck-content a,
+.post-content a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+a:focus-visible {
+    text-decoration: underline;
 }
 
 @media (hover: hover) {

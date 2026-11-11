@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load blog_extras %}
 
-{% block title %}Autores destacados | {{ site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+{% block title %}Autores destacados | {{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}
 
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom gap-3">
@@ -55,7 +55,7 @@
                         </p>
                     {% else %}
                         <p class="text-secondary-token small fst-italic flex-grow-1 mb-3">
-                            Autor en Blog con Panel de Autor.
+                            Autor en {{ marca_corta|default:"Blog" }}.
                         </p>
                     {% endif %}
 
@@ -74,7 +74,7 @@
                                 <strong>{{ autor.likes_recibidos_count|default:0 }}</strong>
                             </span>
                         </div>
-                        <a href="{{ autor.get_absolute_url }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                        <a href="{{ autor.get_absolute_url }}" class="btn btn-sm btn-outline-primary px-3">
                             Ver perfil
                         </a>
                     </div>

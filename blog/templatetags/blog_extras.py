@@ -348,8 +348,9 @@ def color_estable_usuario(username):
 def avatar(perfil, tamano=36, clase_extra=''):
     """
     Template tag `{% avatar perfil tamaño %}`:
-    Muestra la imagen del autor si existe, o un círculo con su inicial
-    sobre un color derivado de forma estable de su nombre de usuario.
+    Componente de avatar único (.avatar): círculo (border-radius: 50%, aspect-ratio: 1,
+    display: grid; place-items: center, object-fit: cover), tamaños xs 24, sm 32, md 40,
+    lg 64 y xl 96, inicial centrada.
     """
     try:
         px = int(tamano)
@@ -365,7 +366,19 @@ def avatar(perfil, tamano=36, clase_extra=''):
         usuario.get_full_name() if usuario else username
     ) or username
     inicial = (nombre_mostrar.strip()[:1] or username[:1] or 'A').upper()
-    clases = f'avatar-circle flex-shrink-0 {clase_extra}'.strip()
+
+    if px <= 26:
+        size_mod = 'avatar--xs'
+    elif px <= 35:
+        size_mod = 'avatar--sm'
+    elif px <= 50:
+        size_mod = 'avatar--md'
+    elif px <= 79:
+        size_mod = 'avatar--lg'
+    else:
+        size_mod = 'avatar--xl'
+
+    clases = f'avatar {size_mod} flex-shrink-0 {clase_extra}'.strip()
 
     if getattr(perfil, 'avatar', None):
         try:
@@ -373,8 +386,8 @@ def avatar(perfil, tamano=36, clase_extra=''):
             return mark_safe(
                 f'<img src="{escape(url_avatar)}" alt="Avatar de {escape(nombre_mostrar)}" '
                 f'width="{px}" height="{px}" loading="lazy" decoding="async" '
-                f'class="rounded-circle object-fit-cover flex-shrink-0 {escape(clase_extra)}" '
-                f'style="width:{px}px;height:{px}px;aspect-ratio:1/1;object-fit:cover;">'
+                f'class="{escape(clases)}" '
+                f'style="width:{px}px;height:{px}px;aspect-ratio:1/1;object-fit:cover;border-radius:50% !important;">'
             )
         except ValueError:
             pass
@@ -383,7 +396,7 @@ def avatar(perfil, tamano=36, clase_extra=''):
     font_size = max(11, round(px * 0.44))
     return mark_safe(
         f'<span class="{escape(clases)}" '
-        f'style="width:{px}px;height:{px}px;background-color:{color_bg};font-size:{font_size}px;" '
+        f'style="width:{px}px;height:{px}px;background-color:{color_bg};font-size:{font_size}px;border-radius:50% !important;" '
         f'aria-hidden="true" title="{escape(nombre_mostrar)}">{escape(inicial)}</span>'
     )
 

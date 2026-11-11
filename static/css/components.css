@@ -824,3 +824,114 @@
         padding-bottom: max(var(--space-6), var(--sab));
     }
 }
+
+/* --------------------------------------------------------------------------
+   14. COMPONENTE DE AVATAR ÚNICO (.avatar)
+   Círculo perfecto, relación 1:1, centrado de iniciales y soporte de tamaños
+   -------------------------------------------------------------------------- */
+.avatar,
+.avatar-circle,
+.avatar-img {
+    display: inline-grid;
+    place-items: center;
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    overflow: hidden;
+    flex-shrink: 0;
+    user-select: none;
+    font-weight: 700;
+    line-height: 1;
+    color: #ffffff;
+    vertical-align: middle;
+    text-align: center;
+}
+
+img.avatar,
+img.avatar-circle,
+img.avatar-img {
+    object-fit: cover;
+    display: inline-block;
+}
+
+.avatar--xs {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 11px !important;
+}
+
+.avatar--sm {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 13px !important;
+}
+
+.avatar--md {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 16px !important;
+}
+
+.avatar--lg {
+    width: 64px !important;
+    height: 64px !important;
+    font-size: 24px !important;
+}
+
+.avatar--xl {
+    width: 96px !important;
+    height: 96px !important;
+    font-size: 36px !important;
+}
+
+/* Selector de Tema de 3 Opciones (Claro / Oscuro / Sistema) */
+.theme-selector-group {
+    padding: var(--space-2) var(--space-3);
+}
+
+.theme-selector-group .theme-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-2);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.theme-segmented-control {
+    display: flex;
+    background-color: var(--color-surface-hover);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 2px;
+    gap: 2px;
+}
+
+.theme-segmented-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    border: none;
+    border-radius: calc(var(--radius-md) - 2px);
+    background: transparent;
+    cursor: pointer;
+    transition: background-color var(--transition-base), color var(--transition-base);
+}
+
+.theme-segmented-btn:hover {
+    color: var(--color-text);
+}
+
+.theme-segmented-btn.active {
+    background-color: var(--color-surface);
+    color: var(--color-accent);
+    box-shadow: var(--shadow-sm);
+}
+

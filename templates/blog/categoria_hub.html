@@ -2,7 +2,7 @@
 {% load blog_extras %}
 {% load static %}
 
-{% block title %}c/{{ categoria_actual.nombre }} | {{ marca|default:site_name }}{% endblock %}
+{% block title %}{{ categoria_actual.nombre }} | {{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}
 
 {% block content %}
 <div class="app-feed-container">
@@ -11,13 +11,10 @@
         <div class="card-body p-3 p-md-4">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div class="d-flex align-items-center gap-3 min-w-0">
-                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
-                         style="width: 52px; height: 52px; font-size: 1.25rem;">
-                        c/
-                    </div>
+                    {% avatar_categoria categoria_actual 52 %}
                     <div class="min-w-0">
                         <div class="d-flex align-items-center gap-2">
-                            <h1 class="h4 fw-bold mb-0 text-truncate">c/{{ categoria_actual.nombre }}</h1>
+                            <h1 class="h4 fw-bold mb-0 text-truncate">{{ categoria_actual.nombre }}</h1>
                         </div>
                         <div class="text-secondary small text-truncate mt-1">
                             <span>
@@ -188,7 +185,7 @@
     <div class="card-body p-3">
         <h2 class="h6 fw-bold mb-2 d-flex align-items-center gap-2">
             <i class="bi bi-info-circle text-primary" aria-hidden="true"></i>
-            <span>Acerca de c/{{ categoria_actual.nombre }}</span>
+            <span>Sobre esta comunidad</span>
         </h2>
         <p class="small text-secondary mb-3">
             {{ categoria_actual.descripcion|default:"Comunidad técnica dedicada a compartir artículos, guías prácticas y experiencias sobre este tema." }}

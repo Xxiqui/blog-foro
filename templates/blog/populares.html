@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 {% load blog_extras %}
 
-{% block title %}Más populares | {{ site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+{% block title %}Más populares | {{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}
 
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom gap-3">
     <div>
         <h1 class="h2 fw-bold mb-1">
-            <i class="bi bi-fire text-danger me-2" aria-hidden="true"></i>Artículos más populares
+            <i class="bi bi-fire text-danger me-2" aria-hidden="true"></i>Publicaciones más populares
         </h1>
         <p class="text-muted mb-0">
-            Los artículos más leídos y valorados por la comunidad.
+            Las publicaciones más leídas y valoradas por la comunidad.
         </p>
     </div>
 
@@ -112,7 +112,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="next" value="{{ request.get_full_path }}">
                             <button type="submit"
-                                    class="btn btn-sm {% if post.ya_dio_like %}btn-danger{% else %}btn-outline-danger{% endif %} rounded-pill px-3 d-inline-flex align-items-center"
+                                    class="btn btn-sm {% if post.ya_dio_like %}btn-danger{% else %}btn-outline-danger{% endif %} px-3 d-inline-flex align-items-center"
                                     aria-label="Me gusta en {{ post.titulo }}"
                                     aria-pressed="{% if post.ya_dio_like %}true{% else %}false{% endif %}">
                                 <i class="bi {% if post.ya_dio_like %}bi-heart-fill{% else %}bi-heart{% endif %}" data-like-icon aria-hidden="true"></i>

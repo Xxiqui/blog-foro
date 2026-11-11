@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>{% block title %}{{ marca|default:site_name|default:"Blog con Panel de Autor" }}{% endblock %}</title>
+    <title>{% block title %}{{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -31,7 +31,7 @@
         <div class="container py-2 d-flex justify-content-between align-items-center">
             <a class="navbar-brand fw-bold d-flex align-items-center gap-2 text-decoration-none text-body" href="{% url 'blog:post_list' %}">
                 <i class="bi bi-journal-richtext text-primary fs-4" aria-hidden="true"></i>
-                <span class="fs-5">{{ marca|default:site_name|default:"Blog con Panel de Autor" }}</span>
+                <span class="fs-5">{{ marca_corta|default:site_name|default:"Blog" }}</span>
             </a>
 
             <div class="d-flex align-items-center gap-2">
@@ -70,7 +70,7 @@
     <footer class="border-top py-3 bg-body mt-auto">
         <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 text-muted small">
             <div>
-                <span class="fw-semibold">{{ marca|default:site_name|default:"Blog con Panel de Autor" }}</span> &copy; {% now "Y" %}.
+                <span class="fw-semibold">{{ marca_corta|default:site_name|default:"Blog" }}</span> &copy; {% now "Y" %}.
             </div>
             <div class="d-flex align-items-center gap-3">
                 <a href="{% url 'blog:acerca' %}" class="text-muted text-decoration-none">Acerca de</a>

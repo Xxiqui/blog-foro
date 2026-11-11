@@ -275,9 +275,13 @@ AUTOR_DESTACADO_TOP_N = int(os.environ.get('AUTOR_DESTACADO_TOP_N', 3))
 AUTOR_DESTACADO_UMBRAL_PUNTOS = int(os.environ.get('AUTOR_DESTACADO_UMBRAL_PUNTOS', 8))
 
 # Nombre unificado de la marca y URL base del sitio
-MARCA = os.environ.get('MARCA', os.environ.get('SITE_NAME', 'Blog con Panel de Autor')).strip()
+MARCA = os.environ.get('MARCA', 'Blog').strip()
 MARCA_CORTA = os.environ.get('MARCA_CORTA', 'Blog').strip()
-SITE_NAME = MARCA
+MARCA_DESCRIPCION = os.environ.get(
+    'MARCA_DESCRIPCION',
+    'Comunidad de lectura técnica, debate constructivo y desarrollo en Django. Comparte tus conocimientos con autores y lectores.'
+).strip()
+SITE_NAME = MARCA_CORTA
 SITE_DOMAIN = os.environ.get('SITE_DOMAIN', 'localhost:8000').strip()
 SITE_URL = os.environ.get('SITE_URL', f'http://{SITE_DOMAIN}').rstrip('/')
 

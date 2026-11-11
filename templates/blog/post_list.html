@@ -2,7 +2,7 @@
 {% load blog_extras %}
 
 {% block title %}
-    {% if categoria_actual %}c/{{ categoria_actual.nombre }} | {% elif etiqueta_actual %}#{{ etiqueta_actual.nombre }} | {% endif %}{{ marca|default:site_name }}
+    {% if categoria_actual %}{{ categoria_actual.nombre }} | {% elif etiqueta_actual %}#{{ etiqueta_actual.nombre }} | {% endif %}{{ marca_corta|default:site_name|default:"Blog" }}
 {% endblock %}
 
 {% block content %}
@@ -12,13 +12,7 @@
         <div class="card border mb-3 shadow-none bg-surface d-none d-sm-block">
             <div class="card-body p-2 px-3 d-flex align-items-center gap-2">
                 <div class="flex-shrink-0">
-                    {% if user.perfil.avatar %}
-                        <img src="{{ user.perfil.avatar.url }}" alt="{{ user.perfil.nombre_mostrar }}" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;">
-                    {% else %}
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px; font-size: 13px;">
-                            {{ user.perfil.nombre_mostrar|slice:":1"|upper|default:user.username|slice:":1"|upper }}
-                        </div>
-                    {% endif %}
+                    {% avatar user.perfil 36 %}
                 </div>
                 <a href="{% url 'blog:panel_post_create' %}" hx-boost="false" class="form-control rounded-pill text-muted text-decoration-none bg-body-tertiary border-0 py-2 px-3 small d-flex align-items-center flex-grow-1">
                     ¿Qué quieres compartir hoy con la comunidad?
@@ -106,7 +100,7 @@
             <span class="small text-muted me-1">Filtros:</span>
             {% if filtro_comunidad %}
                 <span class="chip-filter">
-                    c/{{ filtro_comunidad }}
+                    {{ filtro_comunidad }}
                     <a href="{% query_transform comunidad=None page=None %}" class="text-secondary text-decoration-none ms-1" aria-label="Quitar filtro de comunidad">&times;</a>
                 </span>
             {% endif %}
@@ -136,7 +130,7 @@
             <div class="d-flex flex-wrap gap-1">
                 {% for c in comunidades_filtro %}
                     <a href="{% query_transform comunidad=c.slug page=None %}" class="chip-filter text-decoration-none {% if filtro_comunidad == c.slug %}bg-primary text-white{% endif %}">
-                        c/{{ c.nombre }}
+                        {{ c.nombre }}
                     </a>
                 {% endfor %}
             </div>

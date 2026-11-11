@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load blog_extras %}
 
-{% block title %}{% if object %}Editar Post{% else %}Nuevo Post{% endif %} | Panel de Autor{% endblock %}
+{% block title %}{% if object %}Editar publicación{% else %}Escribir{% endif %} | Panel de Autor{% endblock %}
 {% block body_hx_boost %}hx-boost="false"{% endblock %}
 {% block app_body_class %}app-body--plano{% endblock %}
 {% block nav_left %}{% endblock %}
@@ -18,12 +18,12 @@
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
             <div>
                 <h1 class="h3 fw-bold mb-1">
-                    {% if object %}Editar Post: {{ object.titulo }}{% else %}Crear Nuevo Post{% endif %}
+                    {% if object %}Editar publicación: {{ object.titulo }}{% else %}Escribir publicación{% endif %}
                 </h1>
-                <p class="text-secondary-token mb-0">Redacta tu artículo con el editor enriquecido CKEditor 5.</p>
+                <p class="text-secondary-token mb-0">Redacta tu publicación con el editor enriquecido CKEditor 5.</p>
             </div>
             <a href="{% url 'blog:panel_post_list' %}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver a mis posts
+                <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Volver a mis publicaciones
             </a>
         </div>
 

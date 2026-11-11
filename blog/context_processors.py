@@ -11,15 +11,21 @@ def notificaciones_context(request):
     """
     categorias_footer = Categoria.objects.all()
     comunidades_nav = Categoria.objects.all()[:8]
-    marca = getattr(settings, 'MARCA', getattr(settings, 'SITE_NAME', 'Blog con Panel de Autor'))
+    marca = getattr(settings, 'MARCA', 'Blog')
     marca_corta = getattr(settings, 'MARCA_CORTA', 'Blog')
-    site_name = marca
+    marca_descripcion = getattr(
+        settings,
+        'MARCA_DESCRIPCION',
+        'Comunidad de lectura técnica, debate constructivo y desarrollo en Django. Comparte tus conocimientos con autores y lectores.'
+    )
+    site_name = marca_corta
     social_ctx = obtener_proveedores_sociales_activos()
 
     if not getattr(request, 'user', None) or not request.user.is_authenticated:
         return {
             'marca': marca,
             'marca_corta': marca_corta,
+            'marca_descripcion': marca_descripcion,
             'site_name': site_name,
             'notificaciones_no_leidas_count': 0,
             'ultimas_notificaciones': (),
@@ -48,6 +54,7 @@ def notificaciones_context(request):
     return {
         'marca': marca,
         'marca_corta': marca_corta,
+        'marca_descripcion': marca_descripcion,
         'site_name': site_name,
         'notificaciones_no_leidas_count': no_leidas_count,
         'ultimas_notificaciones': ultimas_5,

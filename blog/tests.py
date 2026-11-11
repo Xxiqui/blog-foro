@@ -2559,7 +2559,8 @@ class ForoAdaptableFase4Tests(TestCase):
         self.assertContains(resp, 'article-action-rail-left')
         self.assertContains(resp, 'article-reading-column')
         self.assertContains(resp, 'Carlos Dev')
-        self.assertContains(resp, 'c/Backend Python')
+        self.assertContains(resp, 'Backend Python')
+        self.assertNotContains(resp, 'c/Backend Python')
 
         # Tabla de contenidos y Seguir leyendo
         self.assertContains(resp, 'Introducción')
@@ -2569,7 +2570,7 @@ class ForoAdaptableFase4Tests(TestCase):
 
         # Sidebar derecha (TOC, Autor, Comunidad)
         self.assertContains(resp, 'En este artículo')
-        self.assertContains(resp, 'c/Backend Python')
+        self.assertContains(resp, 'Backend Python')
 
         # El widget público "¿Te fue útil?" NO debe aparecer en el HTML
         self.assertNotContains(resp, 'data-utilidad-widget')
@@ -2841,7 +2842,8 @@ class ForoAdaptableFase6Tests(TestCase):
         url = reverse('blog:posts_por_categoria', kwargs={'slug': self.categoria.slug})
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, 'c/DevOps y Cloud')
+        self.assertContains(resp, 'DevOps y Cloud')
+        self.assertNotContains(resp, 'c/DevOps y Cloud')
         self.assertContains(resp, 'data-miembros-count')
         self.assertContains(resp, 'Reglas de la comunidad')
         self.assertContains(resp, 'Fijados')

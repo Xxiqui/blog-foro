@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Contacto | Blog con Panel de Autor{% endblock %}
+{% block title %}Contacto | {{ marca_corta|default:"Blog" }}{% endblock %}
 {% block body_hx_boost %}hx-boost="false"{% endblock %}
 {% block app_body_class %}app-body--plano{% endblock %}
 {% block nav_left %}{% endblock %}

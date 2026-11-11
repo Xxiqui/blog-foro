@@ -1,6 +1,6 @@
 {% extends "base_auth.html" %}
 
-{% block title %}Crear cuenta de Autor | {{ marca|default:site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+{% block title %}Crear cuenta | {{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -54,7 +54,7 @@
                                 <span>o</span>
                             </div>
 
-                            <button class="btn btn-outline-secondary rounded-pill w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold mb-3"
+                            <button class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold mb-3"
                                     type="button"
                                     data-bs-toggle="collapse"
                                     data-bs-target="#collapseRegistroCorreo"
@@ -179,7 +179,7 @@
                                 </div>
 
                                 <button type="submit"
-                                        class="btn btn-primary rounded-pill w-100 py-2 fw-semibold mt-2"
+                                        class="btn btn-primary w-100 py-2 fw-semibold mt-2"
                                         aria-label="Crear cuenta con correo electrónico">
                                     <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Crear cuenta
                                 </button>

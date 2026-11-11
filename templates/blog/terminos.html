@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Términos de Uso | {{ site_name|default:"Blog con Panel de Autor" }}{% endblock %}
+{% block title %}Términos de Uso | {{ marca_corta|default:site_name|default:"Blog" }}{% endblock %}
 {% block body_hx_boost %}hx-boost="false"{% endblock %}
 {% block app_body_class %}app-body--plano{% endblock %}
 {% block nav_left %}{% endblock %}
@@ -21,7 +21,7 @@
 
                 <h2 class="h5 fw-bold mt-4">1. Aceptación de los términos</h2>
                 <p class="text-secondary">
-                    Al acceder y participar en <strong>{{ site_name|default:"Blog con Panel de Autor" }}</strong>, aceptas mantener un trato respetuoso en las comunidades temáticas, comentarios y artículos publicados.
+                    Al acceder y participar en <strong>{{ marca_corta|default:site_name|default:"Blog" }}</strong>, aceptas mantener un trato respetuoso en las comunidades temáticas, comentarios y publicaciones.
                 </p>
 
                 <h2 class="h5 fw-bold mt-4">2. Contenido y autoría</h2>
