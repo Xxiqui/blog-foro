@@ -1280,28 +1280,35 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+    let inicializadoGlobal = false;
+    function inicializarTodo() {
         inicializarTema();
         inicializarLikes();
         inicializarVotosUtilidad();
-        inicializarVotosOptimistas();
         inicializarSeguimiento();
         inicializarUnirseCategoria();
         inicializarGuardarPost();
-        inicializarCompartir();
-        inicializarPollingNotificaciones();
-        inicializarPollingNovedadesFeed();
-        inicializarRestauracionScroll();
-        inicializarCopiarEnlaceMenu();
-        inicializarAutocompletadoMenciones();
-        inicializarVistaCategoria();
-        inicializarComentariosAnidados();
-        inicializarPollingNovedadesComentarios();
-        inicializarDropdownsSobreTarjetas();
-        inicializarModalAcceso();
         inicializarBuscadorSugerencias();
-        inicializarAtajosTeclado();
-    });
+        if (!inicializadoGlobal) {
+            inicializadoGlobal = true;
+            inicializarVotosOptimistas();
+            inicializarCompartir();
+            inicializarPollingNotificaciones();
+            inicializarPollingNovedadesFeed();
+            inicializarRestauracionScroll();
+            inicializarCopiarEnlaceMenu();
+            inicializarAutocompletadoMenciones();
+            inicializarVistaCategoria();
+            inicializarComentariosAnidados();
+            inicializarPollingNovedadesComentarios();
+            inicializarDropdownsSobreTarjetas();
+            inicializarModalAcceso();
+            inicializarAtajosTeclado();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', inicializarTodo);
+    document.addEventListener('htmx:load', inicializarTodo);
 
     window.BlogInteracciones = {
         enviarPostInteraccion,

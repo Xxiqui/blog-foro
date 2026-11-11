@@ -47,6 +47,10 @@ if _railway_domain:
     if _https_railway not in CSRF_TRUSTED_ORIGINS:
         CSRF_TRUSTED_ORIGINS.append(_https_railway)
 
+# Soporte para proxy inverso en Railway, Render y Docker (HTTPS seguro detrás del proxy)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
 # Permitir acceso desde dispositivos móviles en la red local durante desarrollo
 if DEBUG:
     import socket
