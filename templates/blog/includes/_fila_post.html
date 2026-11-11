@@ -29,31 +29,31 @@
                     <span class="ranking-badge ranking-badge-{{ ranking_pos }}" title="Posición #{{ ranking_pos }}">
                         #{{ ranking_pos }}
                     </span>
-                    <span>&bull;</span>
+                    <span class="meta-dot">&bull;</span>
                 {% endif %}
                 {% if post.categoria %}
                     <a href="{% url 'blog:posts_por_categoria' post.categoria.slug %}" class="community-chip text-decoration-none">
                         <i class="bi bi-hash" aria-hidden="true"></i>{{ post.categoria.nombre }}
                     </a>
-                    <span>&bull;</span>
+                    <span class="meta-dot">&bull;</span>
                 {% endif %}
                 <a href="{% url 'blog:autor_detail' post.autor.usuario.username %}" class="text-secondary text-decoration-none fw-medium text-truncate" style="max-width: 150px;" title="{{ post.autor.nombre_mostrar }} (@{{ post.autor.usuario.username }})">
                     {{ post.autor.nombre_mostrar }}
                 </a>
-                <span>&bull;</span>
-                <span title="{{ post.publicado_en|default:post.creado|date:'d/m/Y H:i' }}">
-                    {{ post.publicado_en|default:post.creado|timesince }} atrás
-                </span>
-                {% if post.fijado_en_categoria %}
+                <span class="meta-dot">&bull;</span>
+                <time datetime="{{ post.publicado_en|default:post.creado|date:'c' }}" title="{{ post.publicado_en|default:post.creado|date:'d/m/Y H:i' }}">
+                    {{ post.publicado_en|default:post.creado|fecha_relativa }}
+                </time>
+                {% if post.fijado_en_categoria and categoria_actual %}
                     <span class="badge bg-warning-subtle text-warning-emphasis ms-1">
-                        <i class="bi bi-pin-angle-fill me-1"></i>Fijado
+                        <i class="bi bi-pin-angle-fill me-1" aria-hidden="true"></i>Fijado
                     </span>
                 {% endif %}
             </div>
 
             <!-- Título del Post -->
             <h2 class="post-title-heading">
-                <a href="{{ post.get_absolute_url }}" class="text-body text-decoration-none post-title-link">
+                <a href="{{ post.get_absolute_url }}" class="post-title-link">
                     {{ post.titulo }}
                 </a>
             </h2>
@@ -151,7 +151,7 @@
 
         <!-- Miniatura a la derecha (solo si hay portada real) -->
         {% if vista_feed != 'tarjetas' and post.imagen_portada %}
-            <div class="post-thumbnail-wrap ms-2 d-none d-sm-flex">
+            <div class="post-thumbnail-wrap ms-2 flex-shrink-0 d-flex">
                 <a href="{{ post.get_absolute_url }}" tabindex="-1" aria-hidden="true" class="w-100 h-100 d-block">
                     <img src="{{ post.imagen_portada.url }}"
                          alt=""

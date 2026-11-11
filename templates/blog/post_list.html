@@ -32,46 +32,48 @@
     </div>
 
     <!-- Pestañas y selector de vista del Feed -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 pb-2 border-bottom gap-2">
-        <!-- Pestañas principales -->
-        <div class="feed-header-tabs mb-0 border-0 pb-0">
-            <a href="{% query_transform orden='mejores' page=None %}"
-               class="feed-tab-btn text-decoration-none {% if orden_actual == 'mejores' or not orden_actual %}active{% endif %}"
-               {% if orden_actual == 'mejores' or not orden_actual %}aria-current="page"{% endif %}>
-                <i class="bi bi-stars me-1" aria-hidden="true"></i>Mejores
-            </a>
-            <a href="{% query_transform orden='recientes' page=None %}"
-               class="feed-tab-btn text-decoration-none {% if orden_actual == 'recientes' %}active{% endif %}"
-               {% if orden_actual == 'recientes' %}aria-current="page"{% endif %}>
-                <i class="bi bi-clock me-1" aria-hidden="true"></i>Recientes
-            </a>
-            <div class="dropdown d-inline-block">
-                <a href="#"
-                   class="feed-tab-btn text-decoration-none dropdown-toggle {% if orden_actual == 'populares' %}active{% endif %}"
-                   role="button"
-                   data-bs-toggle="dropdown"
-                   aria-expanded="false">
-                    <i class="bi bi-fire me-1" aria-hidden="true"></i>Populares
-                    {% if filtro_periodo %}<span class="small text-muted">({{ filtro_periodo }})</span>{% endif %}
+    <div class="feed-controls-header mb-3 pb-2 border-bottom">
+        <!-- Pestañas principales con desplazamiento horizontal en móvil -->
+        <div class="feed-tabs-scroller-wrap">
+            <div class="feed-header-tabs mb-0 border-0 pb-0">
+                <a href="{% query_transform orden='mejores' page=None %}"
+                   class="feed-tab-btn text-decoration-none {% if orden_actual == 'mejores' or not orden_actual %}active{% endif %}"
+                   {% if orden_actual == 'mejores' or not orden_actual %}aria-current="page"{% endif %}>
+                    <i class="bi bi-stars me-1" aria-hidden="true"></i>Mejores
                 </a>
-                <ul class="dropdown-menu shadow border-0 py-1" style="font-size: 13px;">
-                    <li><a class="dropdown-item {% if filtro_periodo == 'hoy' %}active{% endif %}" href="{% query_transform orden='populares' periodo='hoy' page=None %}">Hoy</a></li>
-                    <li><a class="dropdown-item {% if filtro_periodo == 'semana' %}active{% endif %}" href="{% query_transform orden='populares' periodo='semana' page=None %}">Esta semana</a></li>
-                    <li><a class="dropdown-item {% if filtro_periodo == 'mes' %}active{% endif %}" href="{% query_transform orden='populares' periodo='mes' page=None %}">Este mes</a></li>
-                    <li><a class="dropdown-item {% if not filtro_periodo or filtro_periodo == 'siempre' %}active{% endif %}" href="{% query_transform orden='populares' periodo='siempre' page=None %}">De siempre</a></li>
-                </ul>
+                <a href="{% query_transform orden='recientes' page=None %}"
+                   class="feed-tab-btn text-decoration-none {% if orden_actual == 'recientes' %}active{% endif %}"
+                   {% if orden_actual == 'recientes' %}aria-current="page"{% endif %}>
+                    <i class="bi bi-clock me-1" aria-hidden="true"></i>Recientes
+                </a>
+                <div class="dropdown d-inline-block">
+                    <a href="#"
+                       class="feed-tab-btn text-decoration-none dropdown-toggle {% if orden_actual == 'populares' %}active{% endif %}"
+                       role="button"
+                       data-bs-toggle="dropdown"
+                       aria-expanded="false">
+                        <i class="bi bi-fire me-1" aria-hidden="true"></i>Populares
+                        {% if filtro_periodo %}<span class="small text-muted">({{ filtro_periodo }})</span>{% endif %}
+                    </a>
+                    <ul class="dropdown-menu shadow border-0 py-1" style="font-size: 13px;">
+                        <li><a class="dropdown-item {% if filtro_periodo == 'hoy' %}active{% endif %}" href="{% query_transform orden='populares' periodo='hoy' page=None %}">Hoy</a></li>
+                        <li><a class="dropdown-item {% if filtro_periodo == 'semana' %}active{% endif %}" href="{% query_transform orden='populares' periodo='semana' page=None %}">Esta semana</a></li>
+                        <li><a class="dropdown-item {% if filtro_periodo == 'mes' %}active{% endif %}" href="{% query_transform orden='populares' periodo='mes' page=None %}">Este mes</a></li>
+                        <li><a class="dropdown-item {% if not filtro_periodo or filtro_periodo == 'siempre' %}active{% endif %}" href="{% query_transform orden='populares' periodo='siempre' page=None %}">De siempre</a></li>
+                    </ul>
+                </div>
+                {% if user.is_authenticated %}
+                    <a href="{% query_transform orden='siguiendo' page=None %}"
+                       class="feed-tab-btn text-decoration-none {% if orden_actual == 'siguiendo' %}active{% endif %}"
+                       {% if orden_actual == 'siguiendo' %}aria-current="page"{% endif %}>
+                        <i class="bi bi-people me-1" aria-hidden="true"></i>Siguiendo
+                    </a>
+                {% endif %}
             </div>
-            {% if user.is_authenticated %}
-                <a href="{% query_transform orden='siguiendo' page=None %}"
-                   class="feed-tab-btn text-decoration-none {% if orden_actual == 'siguiendo' %}active{% endif %}"
-                   {% if orden_actual == 'siguiendo' %}aria-current="page"{% endif %}>
-                    <i class="bi bi-people me-1" aria-hidden="true"></i>Siguiendo
-                </a>
-            {% endif %}
         </div>
 
         <!-- Conmutador de vista Compacta | Tarjetas -->
-        <div class="d-flex align-items-center gap-1">
+        <div class="d-flex align-items-center gap-1 flex-shrink-0">
             <div class="btn-group btn-group-sm" role="group" aria-label="Cambiar vista del feed">
                 <a href="{% query_transform vista='compacta' %}"
                    class="btn btn-sm {% if vista_feed == 'compacta' or not vista_feed %}btn-primary{% else %}btn-outline-secondary{% endif %}"

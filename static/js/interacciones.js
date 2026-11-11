@@ -1189,6 +1189,19 @@
                 mostrarToast('Error de red al votar.', 'danger');
             }
         });
+
+        // Botón bajar voto (▼): si ya había votado a favor, deshace el voto
+        document.addEventListener('click', function(e) {
+            const downBtn = e.target.closest('.btn-voto-down:not(.btn-requiere-auth)');
+            if (!downBtn) return;
+            const rail = downBtn.closest('.vote-rail');
+            if (!rail) return;
+            const upBtn = rail.querySelector('.btn-voto');
+            if (upBtn && upBtn.classList.contains('active')) {
+                e.preventDefault();
+                upBtn.click();
+            }
+        });
     }
 
     function inicializarPollingNovedadesFeed() {

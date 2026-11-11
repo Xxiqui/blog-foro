@@ -4,6 +4,7 @@ import re
 import bleach
 from django import template
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import escape, strip_tags
 from django.utils.safestring import mark_safe
 from django.utils.text import slugify
@@ -245,6 +246,58 @@ def filtro_extracto_plano(valor, max_chars=160):
     except (TypeError, ValueError):
         limite = 160
     return extracto_plano(valor, max_chars=limite)
+
+
+@register.filter(name='fecha_relativa')
+def fecha_relativa(valor):
+    """
+    Formatea fechas relativas en español conciso:
+    - 'hace 8 min'
+    - 'hace 3 h'
+    - 'hace 2 días'
+    - 'hace 1 sem.' / 'hace 3 sem.'
+    - 'hace 2 meses' / 'hace 1 año'
+    """
+    if not valor:
+        return ''
+    try:
+        ahora = timezone.now()
+        if timezone.is_naive(valor):
+            valor = timezone.make_aware(valor, timezone.get_current_timezone())
+        delta = ahora - valor
+        segundos = int(delta.total_seconds())
+
+        if segundos < 0:
+            return 'en un momento'
+        if segundos < 60:
+            return 'hace un momento'
+        minutos = segundos // 60
+        if minutos < 60:
+            return f'hace {minutos} min'
+        horas = minutos // 60
+        if horas < 24:
+            return f'hace {horas} h'
+        dias = horas // 24
+        if dias == 1:
+            return 'hace 1 día'
+        if dias < 7:
+            return f'hace {dias} días'
+        semanas = dias // 7
+        if semanas == 1:
+            return 'hace 1 sem.'
+        if semanas < 5:
+            return f'hace {semanas} sem.'
+        meses = dias // 30
+        if meses == 1:
+            return 'hace 1 mes'
+        if meses < 12:
+            return f'hace {meses} meses'
+        anos = dias // 365
+        if anos == 1:
+            return 'hace 1 año'
+        return f'hace {anos} años'
+    except Exception:
+        return ''
 
 
 @register.filter(name='fragmento_resaltado')

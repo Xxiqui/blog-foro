@@ -18,7 +18,7 @@ Parámetros:
                         aria-pressed="{% if objeto_com.ya_dio_like %}true{% else %}false{% endif %}"
                         aria-label="Votar a favor, {{ objeto_com.total_likes|default:0 }} votos"
                         title="Votar a favor">
-                    <i class="bi bi-arrow-up-short" aria-hidden="true"></i>
+                    <i class="bi bi-caret-up-fill" aria-hidden="true"></i>
                 </button>
             {% else %}
                 <button type="button"
@@ -27,10 +27,26 @@ Parámetros:
                         aria-pressed="false"
                         aria-label="Votar a favor, {{ objeto_com.total_likes|default:0 }} votos"
                         title="Iniciar sesión para votar">
-                    <i class="bi bi-arrow-up-short" aria-hidden="true"></i>
+                    <i class="bi bi-caret-up-fill" aria-hidden="true"></i>
                 </button>
             {% endif %}
             <span class="vote-score" aria-live="polite" data-vote-score>{{ objeto_com.total_likes|default:0 }}</span>
+            {% if user.is_authenticated %}
+                <button type="button"
+                        class="vote-btn vote-btn--down d-none d-md-flex btn-voto-down"
+                        aria-label="Quitar voto"
+                        title="Quitar voto">
+                    <i class="bi bi-caret-down-fill" aria-hidden="true"></i>
+                </button>
+            {% else %}
+                <button type="button"
+                        class="vote-btn vote-btn--down d-none d-md-flex btn-requiere-auth"
+                        data-action="votar_comentario"
+                        aria-label="Iniciar sesión para votar"
+                        title="Iniciar sesión para votar">
+                    <i class="bi bi-caret-down-fill" aria-hidden="true"></i>
+                </button>
+            {% endif %}
         </div>
     {% endwith %}
 {% else %}
@@ -45,7 +61,7 @@ Parámetros:
                         aria-pressed="{% if post_obj.ya_dio_like %}true{% else %}false{% endif %}"
                         aria-label="Votar a favor, {{ post_obj.total_likes|default:0 }} votos"
                         title="Votar a favor">
-                    <i class="bi bi-arrow-up-short" aria-hidden="true"></i>
+                    <i class="bi bi-caret-up-fill" aria-hidden="true"></i>
                 </button>
             {% else %}
                 <button type="button"
@@ -54,10 +70,26 @@ Parámetros:
                         aria-pressed="false"
                         aria-label="Votar a favor, {{ post_obj.total_likes|default:0 }} votos"
                         title="Iniciar sesión para votar">
-                    <i class="bi bi-arrow-up-short" aria-hidden="true"></i>
+                    <i class="bi bi-caret-up-fill" aria-hidden="true"></i>
                 </button>
             {% endif %}
             <span class="vote-score" aria-live="polite" data-vote-score>{{ post_obj.total_likes|default:0 }}</span>
+            {% if user.is_authenticated %}
+                <button type="button"
+                        class="vote-btn vote-btn--down d-none d-md-flex btn-voto-down"
+                        aria-label="Quitar voto"
+                        title="Quitar voto">
+                    <i class="bi bi-caret-down-fill" aria-hidden="true"></i>
+                </button>
+            {% else %}
+                <button type="button"
+                        class="vote-btn vote-btn--down d-none d-md-flex btn-requiere-auth"
+                        data-action="votar_post"
+                        aria-label="Iniciar sesión para votar"
+                        title="Iniciar sesión para votar">
+                    <i class="bi bi-caret-down-fill" aria-hidden="true"></i>
+                </button>
+            {% endif %}
         </div>
     {% endwith %}
 {% endif %}
