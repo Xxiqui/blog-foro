@@ -22,7 +22,7 @@
         </a>
         <a href="{% url 'blog:autores_list' %}?orden=posts"
            class="btn btn-sm {% if orden_actual == 'posts' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-            <i class="bi bi-journal-text me-1" aria-hidden="true"></i>Por posts
+            <i class="bi bi-journal-text me-1" aria-hidden="true"></i>Por publicaciones
         </a>
         <a href="{% url 'blog:autores_list' %}?orden=seguidores"
            class="btn btn-sm {% if orden_actual == 'seguidores' %}btn-primary{% else %}btn-outline-primary{% endif %}">
@@ -61,9 +61,9 @@
 
                     <div class="d-flex justify-content-between align-items-center pt-3 border-top small text-secondary-token">
                         <div class="d-flex flex-wrap gap-2">
-                            <span title="Posts publicados">
+                            <span title="Publicaciones">
                                 <i class="bi bi-journal-richtext text-primary" aria-hidden="true"></i>
-                                <strong>{{ autor.posts_publicados_count }}</strong> posts
+                                <strong>{{ autor.posts_publicados_count }}</strong> publicaci{{ autor.posts_publicados_count|pluralize:"ón,ones" }}
                             </span>
                             <span title="Seguidores">
                                 <i class="bi bi-people text-success" aria-hidden="true"></i>

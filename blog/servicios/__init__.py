@@ -1,3 +1,7 @@
+from .comunidades import (
+    anotar_estadisticas_categorias,
+    estadisticas_comunidad,
+)
 from .publicacion import (
     despublicar,
     duplicar,
@@ -8,6 +12,8 @@ from .publicacion import (
 )
 
 __all__ = [
+    'anotar_estadisticas_categorias',
+    'estadisticas_comunidad',
     'guardar_borrador',
     'publicar',
     'programar',

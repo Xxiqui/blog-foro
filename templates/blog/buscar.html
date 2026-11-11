@@ -25,7 +25,11 @@
                 {% if query %}
                     <div class="mt-3 d-flex flex-wrap justify-content-between align-items-center gap-2 pt-3 border-top">
                         <div class="small text-muted">
-                            Se encontraron <strong>{{ total_resultados }}</strong> resultado(s) para
+                            {% if total_resultados == 1 %}
+                                Se encontró <strong>1</strong> resultado para
+                            {% else %}
+                                Se encontraron <strong>{{ total_resultados }}</strong> resultados para
+                            {% endif %}
                             <span class="fw-semibold text-body">"{{ query }}"</span>.
                         </div>
                         <div class="btn-group btn-group-sm" role="group" aria-label="Ordenar resultados de búsqueda">

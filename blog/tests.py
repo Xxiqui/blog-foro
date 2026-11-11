@@ -3067,6 +3067,88 @@ class ForoAdaptableFase8Tests(TestCase):
         self.assertEqual(data['nuevos_count'], total_publicados)
 
 
+class ForoAdaptableFase4DatosYTextosTests(TestCase):
+    """
+    Pruebas de la Fase 4: Estadísticas de comunidad unificadas sin producto cartesiano
+    y pluralización estricta en plantillas e interfaz.
+    """
+
+    def setUp(self):
+        from blog.servicios import anotar_estadisticas_categorias, estadisticas_comunidad
+        self.estadisticas_comunidad = estadisticas_comunidad
+        self.anotar_estadisticas_categorias = anotar_estadisticas_categorias
+
+        # Crear usuarios
+        self.user1 = User.objects.create_user(username='lector_fase4_1', password='pwd')
+        self.user2 = User.objects.create_user(username='lector_fase4_2', password='pwd')
+        self.autor = User.objects.create_user(username='autor_fase4', password='pwd')
+        from cuentas.models import Perfil
+        self.perfil_autor = getattr(self.autor, 'perfil', None) or Perfil.objects.create(usuario=self.autor, nombre_mostrar='Autor Fase 4')
+
+        # Crear comunidad
+        self.categoria = Categoria.objects.create(
+            nombre='Ciencia de Datos',
+            slug='ciencia-de-datos',
+            descripcion='Comunidad de prueba Fase 4'
+        )
+
+        # 2 miembros en la comunidad
+        MiembroCategoria.objects.create(usuario=self.user1, categoria=self.categoria)
+        MiembroCategoria.objects.create(usuario=self.user2, categoria=self.categoria)
+
+        # 3 posts publicados en la comunidad
+        for i in range(1, 4):
+            Post.objects.create(
+                titulo=f'Publicación de prueba {i}',
+                slug=f'publicacion-prueba-fase4-{i}',
+                autor=self.perfil_autor,
+                categoria=self.categoria,
+                contenido=f'Contenido {i}',
+                estado=Post.Estado.PUBLICADO,
+            )
+
+    def test_estadisticas_comunidad_sin_producto_cartesiano(self):
+        """Verifica que con 2 miembros y 3 posts el cálculo sea exacto (2 y 3, nunca 6)."""
+        stats = self.estadisticas_comunidad(self.categoria)
+        self.assertEqual(stats['total_miembros'], 2)
+        self.assertEqual(stats['total_posts'], 3)
+        self.assertEqual(stats['total_publicaciones'], 3)
+
+        # Prueba de queryset anotado (evita producto cartesiano en SQL)
+        cat_anotada = self.anotar_estadisticas_categorias(
+            Categoria.objects.filter(pk=self.categoria.pk)
+        ).first()
+        self.assertEqual(cat_anotada.total_miembros, 2)
+        self.assertEqual(cat_anotada.total_posts, 3)
+
+    def test_explorar_comunidades_metricas_exactas(self):
+        """Verifica que la vista /explorar/ muestre las métricas exactas de la comunidad."""
+        resp = self.client.get(reverse('blog:explorar'))
+        self.assertEqual(resp.status_code, 200)
+        comunidades = {c.slug: c for c in resp.context['comunidades']}
+        self.assertIn(self.categoria.slug, comunidades)
+        cat = comunidades[self.categoria.slug]
+        self.assertEqual(cat.total_miembros, 2)
+        self.assertEqual(cat.total_posts, 3)
+
+    def test_hub_comunidad_estadisticas_unificadas(self):
+        """Verifica que el hub de comunidad use las estadísticas unificadas."""
+        url = reverse('blog:posts_por_categoria', kwargs={'slug': self.categoria.slug})
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['stats_comunidad']['total_miembros'], 2)
+        self.assertEqual(resp.context['stats_comunidad']['total_posts'], 3)
+        self.assertContains(resp, '2</strong>\n                                miembro')
+
+    def test_sin_parentesis_plural_en_plantillas(self):
+        """Verifica que no existan cadenas crudas 'resultado(s)' o similares en buscar.html."""
+        resp = self.client.get(reverse('blog:buscar_posts'), {'q': 'Publicación'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, 'resultado(s)')
+        self.assertContains(resp, 'resultados para')
+
+
+
 
 
 

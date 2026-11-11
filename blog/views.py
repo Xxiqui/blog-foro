@@ -88,6 +88,7 @@ from .populares import (
 )
 from .ratelimit import es_peticion_ajax, limitar_tasa, login_requerido_interaccion
 from .search import buscar_posts
+from .servicios import anotar_estadisticas_categorias, estadisticas_comunidad
 from .templatetags.blog_extras import sanear_y_generar_toc
 
 User = get_user_model()
@@ -497,6 +498,12 @@ class PostPorCategoriaView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(obtener_contexto_sidebar(self.request))
+        stats = estadisticas_comunidad(self.categoria)
+        context['stats_comunidad'] = stats
+        self.categoria.total_miembros = stats['total_miembros']
+        self.categoria.total_posts = stats['total_posts']
+        self.categoria.publicaciones_semana = stats['publicaciones_semana']
+        self.categoria.total_comentarios = stats['total_comentarios']
         context['categoria_actual'] = self.categoria
         context['orden_actual'] = self.orden_actual
         context['post_destacado'] = None
@@ -772,9 +779,12 @@ class PostDetailView(DetailView):
             context['es_miembro_comunidad'] = False
 
         if self.object.categoria:
-            context['total_miembros_comunidad'] = self.object.categoria.miembros.count()
+            stats_cat = estadisticas_comunidad(self.object.categoria)
+            context['total_miembros_comunidad'] = stats_cat['total_miembros']
+            context['stats_comunidad'] = stats_cat
         else:
             context['total_miembros_comunidad'] = 0
+            context['stats_comunidad'] = None
 
         # Estadísticas de "¿Te fue útil?"
         votos_qs = self.object.votos_utilidad.all()
@@ -1489,7 +1499,8 @@ class ToggleUnirseCategoriaView(View):
             mensaje = f'Te has unido a la comunidad {categoria.nombre}.'
 
         invalidar_cache_ranking()
-        total = categoria.miembros.count()
+        stats = estadisticas_comunidad(categoria)
+        total = stats['total_miembros']
         if es_peticion_ajax(request):
             return JsonResponse(
                 {
@@ -1702,10 +1713,10 @@ class ExplorarView(TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
 
-        comunidades = Categoria.objects.all().annotate(
-            total_posts=Count('posts', filter=Q(posts__estado=Post.Estado.PUBLICADO)),
-            total_miembros=Count('miembros')
-        ).order_by('-total_miembros', '-total_posts')
+        comunidades = (
+            anotar_estadisticas_categorias(Categoria.objects.all())
+            .order_by('-total_miembros', '-total_posts')
+        )
 
         if user.is_authenticated:
             miembro_ids = set(user.membresias_categoria.values_list('categoria_id', flat=True))

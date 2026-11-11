@@ -233,8 +233,8 @@
                             {{ post.autor.bio|default:"Autor en la comunidad de lectura y discusión técnica." }}
                         </p>
                         <div class="d-flex align-items-center justify-content-center justify-content-sm-start gap-3 small text-muted">
-                            <span><strong class="text-body" data-seguidores-count="{{ post.autor.usuario.username }}">{{ total_seguidores_autor }}</strong> seguidores</span>
-                            <span><strong class="text-body">{{ post.autor.posts.count }}</strong> publicaciones</span>
+                            <span><strong class="text-body" data-seguidores-count="{{ post.autor.usuario.username }}">{{ total_seguidores_autor }}</strong> seguidor{{ total_seguidores_autor|pluralize:"es" }}</span>
+                            <span><strong class="text-body">{{ post.autor.posts.count }}</strong> publicaci{{ post.autor.posts.count|pluralize:"ón,ones" }}</span>
                             <a href="{% url 'blog:autor_detail' post.autor.usuario.username %}" class="text-primary text-decoration-none fw-semibold">
                                 Ver perfil &rarr;
                             </a>
@@ -457,8 +457,8 @@
                 {{ post.autor.bio|default:"Autor en la comunidad." }}
             </p>
             <div class="d-flex align-items-center justify-content-between mb-3 small text-muted">
-                <span><strong class="text-body" data-seguidores-count="{{ post.autor.usuario.username }}">{{ total_seguidores_autor }}</strong> seguidores</span>
-                <span><strong class="text-body">{{ post.autor.posts.count }}</strong> posts</span>
+                <span><strong class="text-body" data-seguidores-count="{{ post.autor.usuario.username }}">{{ total_seguidores_autor }}</strong> seguidor{{ total_seguidores_autor|pluralize:"es" }}</span>
+                <span><strong class="text-body">{{ post.autor.posts.count }}</strong> publicaci{{ post.autor.posts.count|pluralize:"ón,ones" }}</span>
             </div>
             <div class="d-grid">
                 {% if user.id != post.autor.usuario_id %}
@@ -497,7 +497,7 @@
                         <a href="{% url 'blog:posts_por_categoria' post.categoria.slug %}" class="fw-bold text-body text-decoration-none d-block text-truncate">
                             {{ post.categoria.nombre }}
                         </a>
-                        <span class="small text-muted">{{ total_miembros_comunidad|default:0 }} miembros</span>
+                        <span class="small text-muted">{{ total_miembros_comunidad|default:0 }} miembro{{ total_miembros_comunidad|default:0|pluralize }}</span>
                     </div>
                 </div>
                 <p class="small text-secondary mb-3">
