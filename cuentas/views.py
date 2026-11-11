@@ -47,6 +47,11 @@ class CustomLoginView(auth_views.LoginView):
     template_name = 'cuentas/login.html'
     redirect_authenticated_user = True
 
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and (request.GET.get('cambiar') or request.GET.get('otra')):
+            self.redirect_authenticated_user = False
+        return super().dispatch(request, *args, **kwargs)
+
     def form_valid(self, form):
         user = form.get_user()
         perfil = getattr(user, 'perfil', None)

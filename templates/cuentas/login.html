@@ -43,10 +43,21 @@
                 <!-- Panel del formulario -->
                 <div class="col-lg-7">
                     <div class="card-body p-4 p-md-5">
-                        <h1 class="h3 fw-bold mb-2 text-center text-lg-start">Iniciar sesión</h1>
+                        <h1 class="h3 fw-bold mb-2 text-center text-lg-start">{% if request.GET.cambiar %}Cambiar o añadir cuenta{% else %}Iniciar sesión{% endif %}</h1>
                         <p class="text-muted small mb-4 text-center text-lg-start">
-                            Accede a tu Panel de Autor con tu usuario o correo electrónico.
+                            {% if request.GET.cambiar %}
+                                Ingresa las credenciales de tu otra cuenta para conectarte.
+                            {% else %}
+                                Accede a tu Panel de Autor con tu usuario o correo electrónico.
+                            {% endif %}
                         </p>
+
+                        {% if request.GET.cambiar and user.is_authenticated %}
+                            <div class="alert alert-info py-2 px-3 small rounded-3 mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-person-check-fill flex-shrink-0"></i>
+                                <span>Actualmente conectado como <strong>@{{ user.username }}</strong>.</span>
+                            </div>
+                        {% endif %}
 
                         {% if hay_proveedores_sociales %}
                             {% include "cuentas/includes/botones_sociales.html" with next=next %}
