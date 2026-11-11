@@ -32,5 +32,5 @@ USER appuser
 EXPOSE 8000
 
 # Comando por defecto: aplicar migraciones y levantar Gunicorn (soporta $PORT dinámico en Railway/Render/Cloud Run o 8000 local)
-CMD ["sh", "-c", "python manage.py migrate --no-input && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3"]
+CMD ["sh", "-c", "python manage.py migrate --no-input && python manage.py cargar_datos_demo && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3"]
 
