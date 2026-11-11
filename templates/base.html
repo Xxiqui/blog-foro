@@ -274,6 +274,12 @@
                         <i class="bi bi-gear" aria-hidden="true"></i>
                         <span class="nav-label">Ajustes</span>
                     </a>
+                    {% if user.is_staff %}
+                        <a href="/admin/" hx-boost="false" class="nav-item-link" title="Panel de Administración Django">
+                            <i class="bi bi-shield-lock" aria-hidden="true"></i>
+                            <span class="nav-label">Admin Django</span>
+                        </a>
+                    {% endif %}
                 {% else %}
                     <button type="button" class="nav-item-link btn-requiere-auth bg-transparent border-0 text-start" data-action="guardados" title="Guardados">
                         <i class="bi bi-bookmark" aria-hidden="true"></i>
@@ -347,6 +353,16 @@
                                     <span class="text-truncate">Añadir otra cuenta</span>
                                 </a>
                             </li>
+
+                            {% if user.is_staff %}
+                                <!-- Acceso a Django Admin para administradores -->
+                                <li>
+                                    <a class="dropdown-item py-2 px-3 d-flex align-items-center gap-2 fw-medium text-warning-emphasis" href="/admin/" hx-boost="false">
+                                        <i class="bi bi-shield-lock text-warning fs-5 flex-shrink-0" aria-hidden="true"></i>
+                                        <span class="text-truncate">Admin Django</span>
+                                    </a>
+                                </li>
+                            {% endif %}
 
                             <!-- Desconectar cuenta actual -->
                             <li>
