@@ -3318,6 +3318,32 @@ class ForoAdaptableFase6EditorTests(TestCase):
         self.assertContains(resp, '&lt; 1 min de lectura')
 
 
+class ForoAdaptableFase7Tests(TestCase):
+    """Pruebas para la Fase 7: Páginas estáticas, errores, correos y embed."""
+
+    def test_paginas_estaticas_prosa(self):
+        """Verifica que las páginas estáticas carguen y tengan la clase .prosa."""
+        for nombre_url in ['blog:acerca', 'blog:privacidad', 'blog:terminos']:
+            resp = self.client.get(reverse(nombre_url))
+            self.assertEqual(resp.status_code, 200)
+            self.assertContains(resp, 'prosa')
+
+    def test_contacto_honeypot(self):
+        """Verifica que el formulario de contacto incluya el campo honeypot sitio_web."""
+        resp = self.client.get(reverse('blog:contacto'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'sitio_web')
+
+    def test_comando_previsualizar_correos(self):
+        """Verifica que el comando de management previsualizar_correos se ejecute correctamente."""
+        from django.core.management import call_command
+        import io
+        out = io.StringIO()
+        call_command('previsualizar_correos', stdout=out)
+        self.assertIn('Previsualización de correos generada', out.getvalue())
+
+
+
 
 
 
