@@ -137,6 +137,41 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnEnfoqueMobile) btnEnfoqueMobile.addEventListener('click', alternarModoEnfoque);
     if (btnSalirEnfoque) btnSalirEnfoque.addEventListener('click', alternarModoEnfoque);
 
+    // 4b. Manejo robusto de Configuración y SEO (desktop barra lateral + móvil offcanvas)
+    const btnMenuConfigSeo = document.getElementById('btnMenuConfigSeo');
+    if (btnMenuConfigSeo) {
+        btnMenuConfigSeo.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Salir de modo concentración si estaba activo para que la barra lateral sea visible
+            document.body.classList.remove('focus-mode-active');
+
+            const isDesktop = window.innerWidth >= 992;
+            if (isDesktop) {
+                // En escritorio: activar pestaña SEO en el panel lateral
+                const tabSeo = document.getElementById('tab-seo');
+                if (tabSeo && window.bootstrap && window.bootstrap.Tab) {
+                    const tabInst = window.bootstrap.Tab.getOrCreateInstance(tabSeo);
+                    tabInst.show();
+                }
+                const paneSeo = document.getElementById('pane-seo-wrap');
+                if (paneSeo) {
+                    paneSeo.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            } else {
+                // En móvil / tablet: abrir offcanvas inferior y activar pestaña SEO
+                const offcanvasEl = document.getElementById('offcanvasLateral');
+                if (offcanvasEl && window.bootstrap && window.bootstrap.Offcanvas) {
+                    const oc = window.bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+                    oc.show();
+                    const tabSeoMobile = offcanvasEl.querySelector('[data-bs-target="#pane-seo-wrap"]');
+                    if (tabSeoMobile && window.bootstrap && window.bootstrap.Tab) {
+                        window.bootstrap.Tab.getOrCreateInstance(tabSeoMobile).show();
+                    }
+                }
+            }
+        });
+    }
+
     // Soporte para visualViewport en teclados virtuales de iOS/Android
     if (window.visualViewport) {
         const actualizarViewportTeclado = () => {

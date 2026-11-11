@@ -72,26 +72,10 @@
             </div>
         </div>
 
-        <!-- Conmutador de vista Compacta | Tarjetas -->
-        <div class="d-flex align-items-center gap-1 flex-shrink-0">
-            <div class="btn-group btn-group-sm" role="group" aria-label="Cambiar vista del feed">
-                <a href="{% query_transform vista='compacta' %}"
-                   class="btn btn-sm {% if vista_feed == 'compacta' or not vista_feed %}btn-primary{% else %}btn-outline-secondary{% endif %}"
-                   title="Vista compacta (predeterminada)">
-                    <i class="bi bi-view-list" aria-hidden="true"></i>
-                    <span class="d-none d-md-inline ms-1">Compacta</span>
-                </a>
-                <a href="{% query_transform vista='tarjetas' %}"
-                   class="btn btn-sm {% if vista_feed == 'tarjetas' %}btn-primary{% else %}btn-outline-secondary{% endif %}"
-                   title="Vista en tarjetas">
-                    <i class="bi bi-card-image" aria-hidden="true"></i>
-                    <span class="d-none d-md-inline ms-1">Tarjetas</span>
-                </a>
-            </div>
-
-            <!-- Botón Filtros móvil (< 640px) -->
-            <button class="btn btn-sm btn-outline-secondary d-sm-none" type="button" data-bs-toggle="collapse" data-bs-target="#mobileFiltersDrawer" aria-expanded="false" aria-controls="mobileFiltersDrawer">
-                <i class="bi bi-funnel"></i>
+        <!-- Botón Filtros móvil (< 640px) -->
+        <div class="d-flex align-items-center gap-1 flex-shrink-0 d-sm-none">
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#mobileFiltersDrawer" aria-expanded="false" aria-controls="mobileFiltersDrawer" aria-label="Abrir filtros">
+                <i class="bi bi-funnel" aria-hidden="true"></i>
             </button>
         </div>
     </div>

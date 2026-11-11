@@ -357,3 +357,55 @@ class SocialAuthTests(TestCase):
         self.assertEqual(resp4.status_code, 200)
         self.assertContains(resp4, 'Contraseña actualizada')
 
+
+class AjustesViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='dev_test',
+            email='dev@ejemplo.com',
+            password='Password123!',
+            first_name='Dev',
+            last_name='Tester',
+        )
+
+    def test_ajustes_requiere_login(self):
+        resp = self.client.get(reverse('cuentas:ajustes'))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_ajustes_get_autenticado(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('cuentas:ajustes'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Ajustes y preferencias')
+        self.assertContains(resp, 'Perfil e Identidad')
+        self.assertContains(resp, 'Apariencia y Lectura')
+        self.assertContains(resp, 'Seguridad y Datos')
+
+    def test_ajustes_actualizar_perfil(self):
+        self.client.force_login(self.user)
+        resp = self.client.post(
+            reverse('cuentas:ajustes_tab', kwargs={'tab': 'perfil'}),
+            {
+                'tab_destino': 'perfil',
+                'first_name': 'Dev Modificado',
+                'last_name': 'Tester Modificado',
+                'email': 'dev_mod@ejemplo.com',
+                'bio': 'Nueva biografía de prueba.',
+            },
+        )
+        self.assertRedirects(resp, reverse('cuentas:ajustes_tab', kwargs={'tab': 'perfil'}))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, 'Dev Modificado')
+        self.assertEqual(self.user.perfil.bio, 'Nueva biografía de prueba.')
+
+    def test_exportar_datos_json(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse('cuentas:exportar_datos'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/json; charset=utf-8')
+        self.assertIn('mis_datos_foro_dev_test.json', resp['Content-Disposition'])
+        data = resp.json()
+        self.assertEqual(data['usuario']['username'], 'dev_test')
+        self.assertEqual(data['usuario']['email'], 'dev@ejemplo.com')
+
+

@@ -348,6 +348,11 @@
     background-color: var(--color-surface-hover);
 }
 
+.post-row:has(.dropdown-menu.show),
+.post-row:focus-within {
+    z-index: 20;
+}
+
 .post-row-inner {
     display: flex;
     padding: 10px 14px;
@@ -580,6 +585,127 @@
 
 .post-action-btn.active {
     color: var(--color-accent);
+}
+
+.btn-guardar-post.active {
+    color: var(--color-warning) !important;
+}
+
+.btn-guardar-post.active i {
+    color: var(--color-warning) !important;
+}
+
+/* Menús desplegables consistentes en temas claro y oscuro */
+.dropdown-menu {
+    background-color: var(--color-surface) !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--radius-md, 8px) !important;
+    box-shadow: var(--shadow-lg) !important;
+    z-index: 1060 !important;
+    padding: 0.35rem 0.25rem !important;
+}
+
+.dropdown-item {
+    color: var(--color-text) !important;
+    border-radius: var(--radius-sm, 4px);
+    padding: 0.4rem 0.75rem;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: var(--color-surface-hover) !important;
+    color: var(--color-text) !important;
+}
+
+.dropdown-item:active {
+    background-color: var(--color-accent-subtle) !important;
+    color: var(--color-accent) !important;
+}
+
+.dropdown-divider {
+    border-top: 1px solid var(--color-border) !important;
+    opacity: 1 !important;
+    margin: 0.35rem 0 !important;
+}
+
+/* Toolbar de bloques de código */
+.code-toolbar {
+    background-color: var(--color-surface-hover);
+    border: 1px solid var(--color-border);
+    border-bottom: none;
+    border-top-left-radius: var(--radius-md);
+    border-top-right-radius: var(--radius-md);
+    font-size: 12px;
+    user-select: none;
+}
+
+.code-toolbar + pre {
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+    margin-top: 0 !important;
+}
+
+.btn-copy-code {
+    font-size: 12px;
+    transition: color var(--transition-fast);
+}
+
+.btn-copy-code:hover {
+    color: var(--color-accent) !important;
+}
+
+/* Modo Zen / Lectura limpia */
+body.zen-mode-active .app-header,
+body.zen-mode-active .app-nav-left,
+body.zen-mode-active .app-sidebar-right,
+body.zen-mode-active .article-action-rail-left > *:not(#btn-zen-mode) {
+    display: none !important;
+}
+
+body.zen-mode-active .app-body {
+    padding-top: 1.5rem !important;
+}
+
+body.zen-mode-active .article-reading-column {
+    max-width: 820px !important;
+    margin: 0 auto !important;
+}
+
+body.zen-mode-active #btn-zen-mode {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1080;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+    border-radius: var(--radius-full);
+}
+
+/* Enlaces de Tabla de Contenidos */
+.toc-link {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-size: 13.5px;
+    display: block;
+    padding: 5px 8px;
+    border-radius: var(--radius-sm);
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.toc-link:hover,
+.toc-link.active {
+    background-color: var(--color-surface-hover);
+    color: var(--color-accent);
+}
+
+.toc-link.toc-h3 {
+    padding-left: 22px;
+    font-size: 12.5px;
 }
 
 /* Botón expandir vista rápida */

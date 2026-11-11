@@ -14,5 +14,8 @@ urlpatterns = [
     path('password/recuperar/<uidb64>/<token>/', views.CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('password/recuperar/completado/', views.CustomPasswordResetCompleteView.as_view(), name='password_reset_complete'),
     path('perfil/', views.EditarPerfilView.as_view(), name='editar_perfil'),
+    path('ajustes/', views.AjustesView.as_view(), name='ajustes'),
+    path('ajustes/exportar/datos/', views.ExportarMisDatosView.as_view(), name='exportar_datos'),
+    path('ajustes/<str:tab>/', views.AjustesView.as_view(), name='ajustes_tab'),
 ]
 

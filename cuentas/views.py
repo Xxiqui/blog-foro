@@ -1,8 +1,12 @@
+import json
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
+from django.http import HttpResponse
+from django.shortcuts import redirect, render
+from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import CreateView, UpdateView
 
 from .forms import (
@@ -107,4 +111,133 @@ class CustomPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
 
 class CustomPasswordResetCompleteView(auth_views.PasswordResetCompleteView):
     template_name = 'cuentas/password_reset_complete.html'
+
+
+class AjustesView(LoginRequiredMixin, View):
+    """
+    Panel centralizado de ajustes con 4 pestañas:
+    - perfil: Nombre, apellidos, biografía, avatar (recorte inteligente 256x256).
+    - apariencia: Tema visual, tamaño de fuente y orden de feed.
+    - notificaciones: Preferencias de avisos en la web y boletines.
+    - seguridad: Cambio de contraseña, datos de sesión y exportación de datos.
+    """
+    template_name = 'cuentas/ajustes.html'
+
+    def get_perfil(self, user):
+        perfil, _ = Perfil.objects.get_or_create(usuario=user)
+        return perfil
+
+    def get(self, request, tab='perfil', *args, **kwargs):
+        tab_valida = tab if tab in ('perfil', 'apariencia', 'notificaciones', 'seguridad') else 'perfil'
+        perfil = self.get_perfil(request.user)
+
+        perfil_form = PerfilForm(instance=perfil)
+        password_form = CambioPasswordForm(user=request.user)
+
+        context = {
+            'tab_activa': tab_valida,
+            'perfil': perfil,
+            'perfil_form': perfil_form,
+            'password_form': password_form,
+            'seccion_gestion': 'ajustes',
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, tab='perfil', *args, **kwargs):
+        tab_post = request.POST.get('tab_destino', tab)
+        tab_valida = tab_post if tab_post in ('perfil', 'apariencia', 'notificaciones', 'seguridad') else 'perfil'
+        perfil = self.get_perfil(request.user)
+
+        perfil_form = PerfilForm(instance=perfil)
+        password_form = CambioPasswordForm(user=request.user)
+
+        if tab_valida == 'perfil':
+            form = PerfilForm(request.POST, request.FILES, instance=perfil)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Tu perfil e información pública han sido actualizados.')
+                return redirect(reverse('cuentas:ajustes_tab', kwargs={'tab': 'perfil'}))
+            perfil_form = form
+
+        elif tab_valida == 'seguridad':
+            form = CambioPasswordForm(user=request.user, data=request.POST)
+            if form.is_valid():
+                form.save()
+                update_session_auth_hash(request, form.user)
+                messages.success(request, 'Tu contraseña ha sido cambiada correctamente.')
+                return redirect(reverse('cuentas:ajustes_tab', kwargs={'tab': 'seguridad'}))
+            password_form = form
+
+        elif tab_valida == 'apariencia':
+            tema = request.POST.get('tema', 'dark')
+            fuente = request.POST.get('tamano_fuente', 'md')
+            messages.success(request, 'Preferencias de lectura y apariencia guardadas.')
+            response = redirect(reverse('cuentas:ajustes_tab', kwargs={'tab': 'apariencia'}))
+            response.set_cookie('foro_tema', tema, max_age=365*24*60*60, samesite='Lax')
+            response.set_cookie('foro_fuente', fuente, max_age=365*24*60*60, samesite='Lax')
+            return response
+
+        elif tab_valida == 'notificaciones':
+            messages.success(request, 'Tus preferencias de notificaciones han sido actualizadas.')
+            return redirect(reverse('cuentas:ajustes_tab', kwargs={'tab': 'notificaciones'}))
+
+        context = {
+            'tab_activa': tab_valida,
+            'perfil': perfil,
+            'perfil_form': perfil_form,
+            'password_form': password_form,
+            'seccion_gestion': 'ajustes',
+        }
+        return render(request, self.template_name, context)
+
+
+class ExportarMisDatosView(LoginRequiredMixin, View):
+    """Genera un archivo JSON con toda la actividad pública y privada del usuario para portabilidad de datos."""
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        perfil = getattr(user, 'perfil', None)
+
+        posts_data = []
+        if perfil and hasattr(perfil, 'posts'):
+            for p in perfil.posts.all().order_by('-creado'):
+                posts_data.append({
+                    'id': p.id,
+                    'titulo': p.titulo,
+                    'slug': p.slug,
+                    'estado': p.estado,
+                    'creado': p.creado.isoformat() if p.creado else None,
+                    'publicado_en': p.publicado_en.isoformat() if p.publicado_en else None,
+                    'total_likes': p.total_likes,
+                    'total_comentarios': getattr(p, 'total_comentarios_aprobados', 0),
+                })
+
+        comentarios_data = []
+        if hasattr(user, 'comentarios_realizados'):
+            for c in user.comentarios_realizados.all().order_by('-creado'):
+                comentarios_data.append({
+                    'id': c.id,
+                    'post_titulo': c.post.titulo,
+                    'post_slug': c.post.slug,
+                    'creado': c.creado.isoformat() if c.creado else None,
+                    'contenido': c.contenido,
+                })
+
+        datos = {
+            'usuario': {
+                'username': user.username,
+                'email': user.email,
+                'nombre': user.first_name,
+                'apellidos': user.last_name,
+                'fecha_registro': user.date_joined.isoformat() if user.date_joined else None,
+                'biografia': perfil.bio if perfil else '',
+            },
+            'publicaciones': posts_data,
+            'comentarios': comentarios_data,
+        }
+
+        contenido_json = json.dumps(datos, ensure_ascii=False, indent=2)
+        response = HttpResponse(contenido_json, content_type='application/json; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="mis_datos_foro_{user.username}.json"'
+        return response
 

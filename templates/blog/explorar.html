@@ -2,75 +2,181 @@
 {% load static %}
 {% load blog_extras %}
 
-{% block title %}Explorar comunidades y temas | {{ marca|default:site_name }}{% endblock %}
+{% block title %}Explorar comunidades, temas y autores | {{ site_name|default:"Blog" }}{% endblock %}
 
 {% block content %}
 <div class="app-feed-container">
+    <!-- Cabecera de Exploración -->
     <div class="mb-4">
-        <h1 class="h3 fw-bold mb-1">Explorar</h1>
-        <p class="text-secondary small mb-0">Descubre comunidades activas, publicaciones en tendencia y autores para seguir.</p>
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <h1 class="h3 fw-bold mb-1 d-flex align-items-center gap-2">
+                    <i class="bi bi-compass text-primary" aria-hidden="true"></i>
+                    <span>Explorar la comunidad</span>
+                </h1>
+                <p class="text-secondary small mb-0">
+                    Descubre comunidades temáticas, tendencias tecnológicas y autores destacados para seguir.
+                </p>
+            </div>
+            <a href="{% url 'blog:posts_populares' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                <i class="bi bi-fire text-danger me-1" aria-hidden="true"></i>Ver publicaciones más votadas
+            </a>
+        </div>
     </div>
 
-    <!-- Sección 1: Comunidades -->
-    <section class="card border mb-4 bg-surface shadow-none" aria-labelledby="heading-comunidades">
-        <div class="card-header bg-surface border-bottom py-3 d-flex align-items-center justify-content-between">
-            <h2 class="h6 fw-bold mb-0 d-flex align-items-center gap-2" id="heading-comunidades">
-                <i class="bi bi-people text-primary" aria-hidden="true"></i>
-                <span>Comunidades activas</span>
+    <!-- 1. Comunidades Técnicas en Grid -->
+    <section class="mb-5" aria-labelledby="heading-comunidades">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="h6 fw-bold mb-0 d-flex align-items-center gap-2 text-uppercase tracking-wide" id="heading-comunidades" style="font-size: 13px; letter-spacing: 0.5px;">
+                <i class="bi bi-people-fill text-primary" aria-hidden="true"></i>
+                <span>Comunidades activas ({{ comunidades|length }})</span>
             </h2>
-            <span class="small text-muted">{{ comunidades|length }} disponibles</span>
+            <span class="small text-muted">Únete con un clic para personalizar tu feed</span>
         </div>
-        <div class="card-body p-0">
-            <div class="list-group list-group-flush">
-                {% for com in comunidades %}
-                    <div class="list-group-item bg-transparent d-flex align-items-center justify-content-between p-3 flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-3 min-w-0">
-                            {% avatar_categoria com 44 %}
-                            <div class="min-w-0">
-                                <a href="{% url 'blog:posts_por_categoria' com.slug %}" class="fw-semibold text-body text-decoration-none text-truncate d-block">
-                                    {{ com.nombre }}
-                                </a>
-                                <div class="small text-muted text-truncate">
-                                    <strong data-miembros-count="{{ com.slug }}">{{ com.total_miembros }}</strong> miembro{{ com.total_miembros|pluralize }} &bull; {{ com.total_posts }} publicaci{{ com.total_posts|pluralize:"ón,ones" }}
+
+        <div class="row g-3">
+            {% for com in comunidades %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card h-100 p-3 bg-surface border hover-border d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                {% avatar_categoria com 36 %}
+                                <div class="min-w-0 flex-grow-1">
+                                    <a href="{% url 'blog:posts_por_categoria' com.slug %}" class="fw-bold text-body text-decoration-none text-truncate d-block">
+                                        {{ com.nombre }}
+                                    </a>
+                                    <span class="text-muted" style="font-size: 12px;">
+                                        <strong data-miembros-count="{{ com.slug }}">{{ com.total_miembros }}</strong> miembro{{ com.total_miembros|pluralize }} &bull; {{ com.total_posts }} publicaci{{ com.total_posts|pluralize:"ón,ones" }}
+                                    </span>
                                 </div>
                             </div>
+                            {% if com.descripcion %}
+                                <p class="text-secondary small mb-3 text-truncate-2" style="font-size: 12.5px; line-height: 1.4;">
+                                    {{ com.descripcion|truncatewords:20 }}
+                                </p>
+                            {% endif %}
                         </div>
-                        <div class="d-flex align-items-center gap-2">
+
+                        <div class="d-flex align-items-center justify-content-between pt-2 border-top mt-2">
+                            <a href="{% url 'blog:posts_por_categoria' com.slug %}" class="small text-decoration-none text-muted">
+                                Explorar temas &rarr;
+                            </a>
                             {% if user.is_authenticated %}
                                 <form method="post" action="{% url 'blog:categoria_unirse_toggle' com.slug %}"
                                       data-ajax-unirse data-categoria-slug="{{ com.slug }}" class="d-inline">
                                     {% csrf_token %}
                                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
                                     <button type="submit"
-                                            class="btn-forum {% if com.es_miembro %}btn-forum-outline active{% else %}btn-forum-primary{% endif %}"
+                                            class="btn btn-sm rounded-pill px-3 fw-semibold {% if com.es_miembro %}btn-outline-secondary active{% else %}btn-primary{% endif %}"
                                             aria-label="{% if com.es_miembro %}Salir de {{ com.nombre }}{% else %}Unirse a {{ com.nombre }}{% endif %}"
                                             aria-pressed="{% if com.es_miembro %}true{% else %}false{% endif %}">
                                         <i class="bi {% if com.es_miembro %}bi-check-lg{% else %}bi-plus-lg{% endif %} me-1" data-unirse-icon aria-hidden="true"></i>
-                                        <span data-unirse-label>{% if com.es_miembro %}Unido{% else %}Únete{% endif %}</span>
+                                        <span data-unirse-label>{% if com.es_miembro %}Unido{% else %}Unirse{% endif %}</span>
                                     </button>
                                 </form>
                             {% else %}
-                                <button type="button" class="btn-forum btn-forum-primary btn-requiere-auth" data-action="unirse_categoria">
-                                    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Únete
+                                <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 fw-semibold btn-requiere-auth" data-action="unirse_categoria">
+                                    <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Unirse
                                 </button>
                             {% endif %}
                         </div>
                     </div>
-                {% empty %}
-                    <div class="p-4 text-center text-muted small">No hay comunidades disponibles en este momento.</div>
-                {% endfor %}
-            </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="card p-4 text-center text-muted small bg-surface">No hay comunidades disponibles en este momento.</div>
+                </div>
+            {% endfor %}
         </div>
     </section>
 
-    <!-- Sección 2: Tendencias de la semana (Publicaciones) -->
-    <section class="mb-4" aria-labelledby="heading-posts-tendencia">
+    <!-- 2. Temas y Etiquetas Populares -->
+    <section class="card p-3 p-sm-4 border mb-5 bg-surface" aria-labelledby="heading-etiquetas">
+        <h2 class="h6 fw-bold mb-3 d-flex align-items-center gap-2 text-uppercase tracking-wide" id="heading-etiquetas" style="font-size: 13px; letter-spacing: 0.5px;">
+            <i class="bi bi-tags-fill text-info" aria-hidden="true"></i>
+            <span>Temas y etiquetas en tendencia</span>
+        </h2>
+        <div class="d-flex flex-wrap gap-2">
+            {% for tag in etiquetas_tendencia %}
+                <a href="{% url 'blog:posts_por_etiqueta' tag.slug %}" class="chip-filter text-decoration-none py-1 px-3 d-inline-flex align-items-center gap-2">
+                    <span class="fw-semibold">#{{ tag.nombre }}</span>
+                    <span class="badge bg-body-secondary text-secondary rounded-pill">{{ tag.total_posts }}</span>
+                </a>
+            {% empty %}
+                <div class="text-muted small">No hay etiquetas con publicaciones actualmente.</div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- 3. Creadores y Autores Recomendados en Grid -->
+    <section class="mb-5" aria-labelledby="heading-autores">
         <div class="d-flex align-items-center justify-content-between mb-3">
-            <h2 class="h6 fw-bold mb-0 d-flex align-items-center gap-2" id="heading-posts-tendencia">
+            <h2 class="h6 fw-bold mb-0 d-flex align-items-center gap-2 text-uppercase tracking-wide" id="heading-autores" style="font-size: 13px; letter-spacing: 0.5px;">
+                <i class="bi bi-award-fill text-warning" aria-hidden="true"></i>
+                <span>Autores para seguir ({{ autores|length }})</span>
+            </h2>
+            <span class="small text-muted">Sigue autores para ver sus artículos en tu feed "Siguiendo"</span>
+        </div>
+
+        <div class="row g-3">
+            {% for autor in autores %}
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <div class="card h-100 p-3 bg-surface border hover-border text-center d-flex flex-column align-items-center justify-content-between">
+                        <div class="w-100 d-flex flex-column align-items-center">
+                            <a href="{% url 'blog:autor_detail' autor.usuario.username %}" class="text-decoration-none mb-2">
+                                {% avatar autor 64 %}
+                            </a>
+                            <a href="{% url 'blog:autor_detail' autor.usuario.username %}" class="fw-bold text-body text-decoration-none text-truncate d-block w-100" title="{{ autor.nombre_mostrar }}">
+                                {{ autor.nombre_mostrar|default:autor.usuario.username }}
+                            </a>
+                            <div class="text-secondary small mb-2">@{{ autor.usuario.username }}</div>
+                            <div class="badge bg-body-tertiary text-secondary border mb-3" style="font-size: 11px;">
+                                {{ autor.total_posts }} post{{ autor.total_posts|pluralize }} &bull; <strong data-seguidores-count="{{ autor.usuario.username }}">{{ autor.total_seguidores }}</strong> seguidor{{ autor.total_seguidores|pluralize:"es" }}
+                            </div>
+                        </div>
+
+                        <div class="w-100 pt-2 border-top">
+                            {% if user.is_authenticated and user != autor.usuario %}
+                                <form method="post" action="{% url 'blog:autor_seguir_toggle' autor.usuario.username %}"
+                                      data-ajax-seguir data-autor-username="{{ autor.usuario.username }}" class="w-100">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit"
+                                            class="btn btn-sm w-100 rounded-pill fw-semibold {% if autor.siguiendo_usuario %}btn-outline-secondary active{% else %}btn-primary{% endif %}"
+                                            aria-label="{% if autor.siguiendo_usuario %}Dejar de seguir a {{ autor.nombre_mostrar }}{% else %}Seguir a {{ autor.nombre_mostrar }}{% endif %}"
+                                            aria-pressed="{% if autor.siguiendo_usuario %}true{% else %}false{% endif %}">
+                                        <i class="bi {% if autor.siguiendo_usuario %}bi-person-check-fill{% else %}bi-person-plus{% endif %} me-1" data-seguir-icon aria-hidden="true"></i>
+                                        <span data-seguir-label>{% if autor.siguiendo_usuario %}Siguiendo{% else %}Seguir{% endif %}</span>
+                                    </button>
+                                </form>
+                            {% elif not user.is_authenticated %}
+                                <button type="button" class="btn btn-sm btn-primary w-100 rounded-pill fw-semibold btn-requiere-auth" data-action="seguir_autor">
+                                    <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Seguir
+                                </button>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary w-100 py-1">Tu perfil</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="card p-4 text-center text-muted small bg-surface">No hay autores con publicaciones disponibles.</div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- 4. Tendencias de la semana -->
+    <section class="mb-4" aria-labelledby="heading-posts-destacados">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="h6 fw-bold mb-0 d-flex align-items-center gap-2 text-uppercase tracking-wide" id="heading-posts-destacados" style="font-size: 13px; letter-spacing: 0.5px;">
                 <i class="bi bi-fire text-danger" aria-hidden="true"></i>
                 <span>Tendencias de la semana</span>
             </h2>
-            <a href="{% url 'blog:posts_populares' %}" class="small text-decoration-none fw-semibold">Ver populares</a>
+            <a href="{% url 'blog:posts_populares' %}" class="small text-decoration-none fw-semibold">
+                Ver ranking completo &rarr;
+            </a>
         </div>
         {% if posts_tendencia %}
             <div class="feed-list" id="feed-posts-tendencia">
@@ -81,85 +187,6 @@
         {% else %}
             <div class="card p-4 text-center text-muted small bg-surface">No hay publicaciones destacadas esta semana.</div>
         {% endif %}
-    </section>
-
-    <!-- Sección 3: Etiquetas en tendencia -->
-    <section class="card border mb-4 bg-surface shadow-none" aria-labelledby="heading-etiquetas">
-        <div class="card-header bg-surface border-bottom py-3">
-            <h2 class="h6 fw-bold mb-0 d-flex align-items-center gap-2" id="heading-etiquetas">
-                <i class="bi bi-tag text-primary" aria-hidden="true"></i>
-                <span>Temas y etiquetas en tendencia</span>
-            </h2>
-        </div>
-        <div class="card-body p-3">
-            <div class="d-flex flex-wrap gap-2">
-                {% for tag in etiquetas_tendencia %}
-                    <a href="{% url 'blog:posts_por_etiqueta' tag.slug %}" class="chip-filter text-decoration-none py-1 px-3">
-                        <span class="fw-medium">#{{ tag.nombre }}</span>
-                        <span class="badge bg-body-secondary text-secondary rounded-pill ms-1">{{ tag.total_posts }}</span>
-                    </a>
-                {% empty %}
-                    <div class="text-muted small">No hay etiquetas con publicaciones actualmente.</div>
-                {% endfor %}
-            </div>
-        </div>
-    </section>
-
-    <!-- Sección 4: Autores sugeridos -->
-    <section class="card border mb-4 bg-surface shadow-none" aria-labelledby="heading-autores">
-        <div class="card-header bg-surface border-bottom py-3">
-            <h2 class="h6 fw-bold mb-0 d-flex align-items-center gap-2" id="heading-autores">
-                <i class="bi bi-person-check text-primary" aria-hidden="true"></i>
-                <span>Autores para seguir</span>
-            </h2>
-        </div>
-        <div class="card-body p-0">
-            <div class="list-group list-group-flush">
-                {% for autor in autores %}
-                    <div class="list-group-item bg-transparent d-flex align-items-center justify-content-between p-3 flex-wrap gap-2">
-                        <div class="d-flex align-items-center gap-3 min-w-0">
-                            {% if autor.avatar %}
-                                <img src="{{ autor.avatar.url }}" alt="{{ autor.nombre_mostrar }}" class="rounded-circle flex-shrink-0" style="width: 44px; height: 44px; object-fit: cover;">
-                            {% else %}
-                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0" style="width: 44px; height: 44px;">
-                                    {{ autor.nombre_mostrar|slice:":1"|upper|default:autor.usuario.username|slice:":1"|upper }}
-                                </div>
-                            {% endif %}
-                            <div class="min-w-0">
-                                <a href="{% url 'blog:autor_detail' autor.usuario.username %}" class="fw-semibold text-body text-decoration-none text-truncate d-block">
-                                    {{ autor.nombre_mostrar|default:autor.usuario.username }}
-                                </a>
-                                <div class="small text-muted text-truncate">
-                                    @{{ autor.usuario.username }} &bull; {{ autor.total_posts }} publicaci{{ autor.total_posts|pluralize:"ón,ones" }} &bull; <strong data-seguidores-count="{{ autor.usuario.username }}">{{ autor.total_seguidores }}</strong> seguidor{{ autor.total_seguidores|pluralize:"es" }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            {% if user.is_authenticated and user != autor.usuario %}
-                                <form method="post" action="{% url 'blog:autor_seguir_toggle' autor.usuario.username %}"
-                                      data-ajax-seguir data-autor-username="{{ autor.usuario.username }}" class="d-inline">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                    <button type="submit"
-                                            class="btn-forum {% if autor.siguiendo_usuario %}btn-forum-outline active{% else %}btn-forum-primary{% endif %}"
-                                            aria-label="{% if autor.siguiendo_usuario %}Dejar de seguir a {{ autor.nombre_mostrar }}{% else %}Seguir a {{ autor.nombre_mostrar }}{% endif %}"
-                                            aria-pressed="{% if autor.siguiendo_usuario %}true{% else %}false{% endif %}">
-                                        <i class="bi {% if autor.siguiendo_usuario %}bi-person-check-fill{% else %}bi-person-plus{% endif %} me-1" data-seguir-icon aria-hidden="true"></i>
-                                        <span data-seguir-label>{% if autor.siguiendo_usuario %}Siguiendo{% else %}Seguir{% endif %}</span>
-                                    </button>
-                                </form>
-                            {% elif not user.is_authenticated %}
-                                <button type="button" class="btn-forum btn-forum-primary btn-requiere-auth" data-action="seguir_autor">
-                                    <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Seguir
-                                </button>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% empty %}
-                    <div class="p-4 text-center text-muted small">No hay autores con publicaciones disponibles.</div>
-                {% endfor %}
-            </div>
-        </div>
     </section>
 </div>
 {% endblock %}

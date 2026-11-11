@@ -122,50 +122,50 @@
     --bs-link-decoration: none;
 }
 
-/* COLOR: TEMA OSCURO */
+/* COLOR: TEMA OSCURO (Obsidian & Indigo Premium) */
 [data-bs-theme="dark"],
 :root[data-theme="dark"] {
-    --color-bg: #0b0f19;
-    --color-surface: #111827;
-    --color-surface-hover: #1f2937;
-    --color-surface-active: #374151;
-    --color-surface-raised: #1e293b;
+    --color-bg: #090d16;
+    --color-surface: #101726;
+    --color-surface-hover: #172033;
+    --color-surface-active: #1e293b;
+    --color-surface-raised: #141d2e;
 
-    --color-text: #f9fafb;
-    --color-text-secondary: #cbd5e1;
-    --color-text-muted: #94a3b8;
-    --color-text-dim: #64748b;
+    --color-text: #f8fafc;
+    --color-text-secondary: #94a3b8;
+    --color-text-muted: #64748b;
+    --color-text-dim: #475569;
     --color-text-visited: #94a3b8;
 
-    --color-border: #1f2937;
-    --color-border-subtle: #192231;
+    --color-border: #1e293b;
+    --color-border-subtle: #151e2e;
     --color-border-focus: #3b82f6;
 
     --color-accent: #3b82f6;
     --color-accent-hover: #60a5fa;
     --color-accent-active: #2563eb;
-    --color-accent-subtle: rgba(59, 130, 246, 0.12);
+    --color-accent-subtle: rgba(59, 130, 246, 0.14);
     --color-accent-contrast: #ffffff;
 
     --color-upvote: #f97316;
     --color-upvote-subtle: rgba(249, 115, 22, 0.15);
     --color-danger: #ef4444;
     --color-danger-subtle: rgba(239, 68, 68, 0.15);
-    --color-success: #22c55e;
-    --color-success-subtle: rgba(34, 197, 94, 0.15);
+    --color-success: #10b981;
+    --color-success-subtle: rgba(16, 185, 129, 0.15);
     --color-warning: #f59e0b;
     --color-warning-subtle: rgba(245, 158, 11, 0.15);
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
 
     /* Mapeo unificado de variables Bootstrap 5.3 a tokens del sistema (Tema Oscuro) */
     --bs-body-font-family: var(--font-sans);
     --bs-body-bg: var(--color-bg);
-    --bs-body-bg-rgb: 11, 15, 25;
+    --bs-body-bg-rgb: 9, 13, 22;
     --bs-body-color: var(--color-text);
-    --bs-body-color-rgb: 249, 250, 251;
+    --bs-body-color-rgb: 248, 250, 252;
     --bs-secondary-color: var(--color-text-secondary);
     --bs-tertiary-color: var(--color-text-muted);
     --bs-tertiary-bg: var(--color-surface-hover);
@@ -188,34 +188,34 @@
 /* TEMA AUTOMÁTICO DEL SISTEMA SI NO HAY PREFERENCIA EXPLÍCITA */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]):not([data-bs-theme="light"]) {
-        --color-bg: #0b0f19;
-        --color-surface: #111827;
-        --color-surface-hover: #1f2937;
-        --color-surface-active: #374151;
-        --color-surface-raised: #1e293b;
+        --color-bg: #090d16;
+        --color-surface: #101726;
+        --color-surface-hover: #172033;
+        --color-surface-active: #1e293b;
+        --color-surface-raised: #141d2e;
 
-        --color-text: #f9fafb;
-        --color-text-secondary: #cbd5e1;
-        --color-text-muted: #94a3b8;
-        --color-text-dim: #64748b;
+        --color-text: #f8fafc;
+        --color-text-secondary: #94a3b8;
+        --color-text-muted: #64748b;
+        --color-text-dim: #475569;
         --color-text-visited: #94a3b8;
 
-        --color-border: #1f2937;
-        --color-border-subtle: #192231;
+        --color-border: #1e293b;
+        --color-border-subtle: #151e2e;
         --color-border-focus: #3b82f6;
 
         --color-accent: #3b82f6;
         --color-accent-hover: #60a5fa;
         --color-accent-active: #2563eb;
-        --color-accent-subtle: rgba(59, 130, 246, 0.12);
+        --color-accent-subtle: rgba(59, 130, 246, 0.14);
         --color-accent-contrast: #ffffff;
 
         --color-upvote: #f97316;
         --color-upvote-subtle: rgba(249, 115, 22, 0.15);
         --color-danger: #ef4444;
         --color-danger-subtle: rgba(239, 68, 68, 0.15);
-        --color-success: #22c55e;
-        --color-success-subtle: rgba(34, 197, 94, 0.15);
+        --color-success: #10b981;
+        --color-success-subtle: rgba(16, 185, 129, 0.15);
         --color-warning: #f59e0b;
         --color-warning-subtle: rgba(245, 158, 11, 0.15);
     }

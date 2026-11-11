@@ -1,20 +1,6 @@
 {% load blog_extras %}
 
-<article class="post-row {% if vista_feed == 'tarjetas' %}post-row-card{% endif %}" id="post-{{ post.slug }}" data-post-slug="{{ post.slug }}">
-    <!-- Si la vista es Tarjetas y hay portada, mostrar como banda superior -->
-    {% if vista_feed == 'tarjetas' and post.imagen_portada %}
-        <div class="post-card-banner">
-            <a href="{{ post.get_absolute_url }}" class="d-block" tabindex="-1" aria-hidden="true">
-                <img src="{{ post.imagen_portada.url }}"
-                     alt=""
-                     loading="lazy"
-                     decoding="async"
-                     class="w-100 object-fit-cover"
-                     style="max-height: 220px;">
-            </a>
-        </div>
-    {% endif %}
-
+<article class="post-row" id="post-{{ post.slug }}" data-post-slug="{{ post.slug }}">
     <div class="post-row-inner">
         <!-- Riel de Votos -->
         <div class="me-1">
@@ -120,27 +106,42 @@
                     <span class="small d-none d-md-inline">Vista previa</span>
                 </button>
 
-                <!-- Menú ⋯ (Copiar enlace, Reportar) -->
+                <!-- Menú ⋯ (Copiar enlace, Insertar, Ocultar, Reportar, Autor) -->
                 <div class="dropdown d-inline-block ms-auto">
-                    <button class="post-action-btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Más opciones" aria-label="Más opciones">
+                    <button class="post-action-btn p-1" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Más opciones" aria-label="Más opciones para {{ post.titulo }}">
                         <i class="bi bi-three-dots" aria-hidden="true"></i>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 py-1" style="font-size: 13px;">
+                    <ul class="dropdown-menu dropdown-menu-end shadow py-1" style="min-width: 195px;">
                         <li>
                             <button type="button" class="dropdown-item py-1 btn-copiar-enlace" data-url="{{ request.scheme }}://{{ request.get_host }}{{ post.get_absolute_url }}">
-                                <i class="bi bi-link-45deg me-2"></i>Copiar enlace
+                                <i class="bi bi-link-45deg me-2 text-primary" aria-hidden="true"></i>Copiar enlace
                             </button>
                         </li>
                         <li>
-                            <a href="{% url 'blog:post_embed' post.slug %}" class="dropdown-item py-1" target="_blank" rel="noopener">
-                                <i class="bi bi-code-slash me-2"></i>Insertar artículo
-                            </a>
+                            <button type="button" class="dropdown-item py-1" data-embed-modal-trigger data-embed-url="{% url 'blog:post_embed' post.slug %}" data-embed-title="{{ post.titulo|escape }}">
+                                <i class="bi bi-code-slash me-2 text-info" aria-hidden="true"></i>Insertar en web
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item py-1 btn-ocultar-post" data-post-slug="{{ post.slug }}">
+                                <i class="bi bi-eye-slash me-2 text-secondary" aria-hidden="true"></i>Ocultar del feed
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item py-1 btn-reportar-post" data-post-slug="{{ post.slug }}" data-post-title="{{ post.titulo|escape }}">
+                                <i class="bi bi-flag me-2 text-danger" aria-hidden="true"></i>Reportar
+                            </button>
                         </li>
                         {% if user.is_authenticated and user.id == post.autor.usuario_id %}
                             <li><hr class="dropdown-divider my-1"></li>
                             <li>
                                 <a href="{% url 'blog:panel_post_update' post.slug %}" hx-boost="false" class="dropdown-item py-1 text-primary">
-                                    <i class="bi bi-pencil me-2"></i>Editar en Estudio
+                                    <i class="bi bi-pencil me-2" aria-hidden="true"></i>Editar en Estudio
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'blog:panel_dashboard' %}" class="dropdown-item py-1">
+                                    <i class="bi bi-graph-up me-2" aria-hidden="true"></i>Ver estadísticas
                                 </a>
                             </li>
                         {% endif %}
@@ -150,7 +151,7 @@
         </div>
 
         <!-- Miniatura a la derecha (solo si hay portada real) -->
-        {% if vista_feed != 'tarjetas' and post.imagen_portada %}
+        {% if post.imagen_portada %}
             <div class="post-thumbnail-wrap ms-2 flex-shrink-0 d-flex">
                 <a href="{{ post.get_absolute_url }}" tabindex="-1" aria-hidden="true" class="w-100 h-100 d-block">
                     <img src="{{ post.imagen_portada.url }}"

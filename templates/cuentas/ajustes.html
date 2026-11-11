@@ -1,0 +1,318 @@
+{% extends "blog/panel/base_gestion.html" %}
+{% load blog_extras %}
+
+{% block title %}Ajustes y Cuenta | {{ site_name|default:"Blog" }}{% endblock %}
+
+{% block gestion_content %}
+<div class="gestion-card">
+    <div class="gestion-card-header pb-2">
+        <div>
+            <h1 class="h4 fw-bold mb-1">Ajustes y preferencias</h1>
+            <p class="text-secondary small mb-0">Gestiona tu identidad de autor, preferencias de lectura, avisos y seguridad.</p>
+        </div>
+    </div>
+
+    <!-- Pestañas de Navegación de Ajustes -->
+    <div class="border-bottom mb-4">
+        <ul class="nav nav-underline small fw-semibold flex-nowrap overflow-x-auto" role="tablist">
+            <li class="nav-item">
+                <a href="{% url 'cuentas:ajustes_tab' 'perfil' %}" class="nav-link py-2 px-3 {% if tab_activa == 'perfil' %}active{% endif %}">
+                    <i class="bi bi-person me-1" aria-hidden="true"></i>Perfil e Identidad
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'cuentas:ajustes_tab' 'apariencia' %}" class="nav-link py-2 px-3 {% if tab_activa == 'apariencia' %}active{% endif %}">
+                    <i class="bi bi-palette me-1" aria-hidden="true"></i>Apariencia y Lectura
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'cuentas:ajustes_tab' 'notificaciones' %}" class="nav-link py-2 px-3 {% if tab_activa == 'notificaciones' %}active{% endif %}">
+                    <i class="bi bi-bell me-1" aria-hidden="true"></i>Notificaciones
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'cuentas:ajustes_tab' 'seguridad' %}" class="nav-link py-2 px-3 {% if tab_activa == 'seguridad' %}active{% endif %}">
+                    <i class="bi bi-shield-lock me-1" aria-hidden="true"></i>Seguridad y Datos
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Contenido de la pestaña activa -->
+    {% if tab_activa == 'perfil' %}
+        <form method="post" enctype="multipart/form-data" action="{% url 'cuentas:ajustes_tab' 'perfil' %}" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="tab_destino" value="perfil">
+
+            <div class="row g-4 mb-4">
+                <!-- Avatar a la izquierda -->
+                <div class="col-12 col-md-4 text-center text-md-start">
+                    <label class="form-label fw-semibold small d-block mb-2">Foto de perfil</label>
+                    <div class="d-flex flex-column align-items-center align-items-md-start gap-3">
+                        {% avatar perfil 96 %}
+                        <div class="w-100">
+                            {{ perfil_form.avatar }}
+                            {% if perfil_form.avatar.errors %}
+                                <div class="invalid-feedback d-block">{{ perfil_form.avatar.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text small mt-1">Formato JPG, PNG o WebP. Se optimiza automáticamente a 256x256 px.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campos de texto a la derecha -->
+                <div class="col-12 col-md-8">
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label for="{{ perfil_form.first_name.id_for_label }}" class="form-label fw-semibold small">Nombre</label>
+                            {{ perfil_form.first_name }}
+                            {% if perfil_form.first_name.errors %}
+                                <div class="invalid-feedback d-block">{{ perfil_form.first_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="{{ perfil_form.last_name.id_for_label }}" class="form-label fw-semibold small">Apellidos</label>
+                            {{ perfil_form.last_name }}
+                            {% if perfil_form.last_name.errors %}
+                                <div class="invalid-feedback d-block">{{ perfil_form.last_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ perfil_form.email.id_for_label }}" class="form-label fw-semibold small">Correo electrónico</label>
+                        {{ perfil_form.email }}
+                        {% if perfil_form.email.errors %}
+                            <div class="invalid-feedback d-block">{{ perfil_form.email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ perfil_form.bio.id_for_label }}" class="form-label fw-semibold small">Biografía profesional</label>
+                        {{ perfil_form.bio }}
+                        {% if perfil_form.bio.errors %}
+                            <div class="invalid-feedback d-block">{{ perfil_form.bio.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text small">Visible en tu perfil público y al pie de cada uno de tus artículos.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                <a href="{% url 'blog:autor_detail' request.user.username %}" class="btn btn-outline-secondary btn-sm px-3 rounded-pill">
+                    Ver perfil público
+                </a>
+                <button type="submit" class="btn btn-primary btn-sm px-4 rounded-pill fw-semibold">
+                    <i class="bi bi-check2 me-1" aria-hidden="true"></i>Guardar cambios
+                </button>
+            </div>
+        </form>
+
+    {% elif tab_activa == 'apariencia' %}
+        <form method="post" action="{% url 'cuentas:ajustes_tab' 'apariencia' %}">
+            {% csrf_token %}
+            <input type="hidden" name="tab_destino" value="apariencia">
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold mb-2">Tema visual preferido</label>
+                <div class="row g-3">
+                    <div class="col-sm-4">
+                        <label class="card p-3 border h-100 cursor-pointer text-center bg-surface hover-border">
+                            <input type="radio" name="tema" value="dark" class="form-check-input mb-2 mx-auto" checked>
+                            <i class="bi bi-moon-stars fs-4 text-primary mb-1"></i>
+                            <div class="fw-semibold small">Obsidian & Indigo</div>
+                            <div class="text-secondary" style="font-size: 11px;">Fondo oscuro descansado, contraste AA y slate azulado</div>
+                        </label>
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="card p-3 border h-100 cursor-pointer text-center bg-surface hover-border">
+                            <input type="radio" name="tema" value="light" class="form-check-input mb-2 mx-auto">
+                            <i class="bi bi-sun fs-4 text-warning mb-1"></i>
+                            <div class="fw-semibold small">Alabaster & Slate</div>
+                            <div class="text-secondary" style="font-size: 11px;">Fondo marfil puro, tipografía nítida para luz diurna</div>
+                        </label>
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="card p-3 border h-100 cursor-pointer text-center bg-surface hover-border">
+                            <input type="radio" name="tema" value="system" class="form-check-input mb-2 mx-auto">
+                            <i class="bi bi-laptop fs-4 text-secondary mb-1"></i>
+                            <div class="fw-semibold small">Automático del Sistema</div>
+                            <div class="text-secondary" style="font-size: 11px;">Sigue las preferencias de tu sistema operativo</div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold mb-2">Tamaño de tipografía para lectura</label>
+                <div class="row g-3">
+                    <div class="col-sm-4">
+                        <label class="card p-3 border h-100 cursor-pointer text-center bg-surface hover-border">
+                            <input type="radio" name="tamano_fuente" value="sm" class="form-check-input mb-2 mx-auto">
+                            <div class="fw-semibold small">Compacto (15px)</div>
+                            <div class="text-secondary" style="font-size: 11px;">Máxima densidad de código y artículos</div>
+                        </label>
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="card p-3 border h-100 cursor-pointer text-center bg-surface hover-border">
+                            <input type="radio" name="tamano_fuente" value="md" class="form-check-input mb-2 mx-auto" checked>
+                            <div class="fw-semibold small">Estándar (17px)</div>
+                            <div class="text-secondary" style="font-size: 11px;">Lectura balanceada de alta legibilidad</div>
+                        </label>
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="card p-3 border h-100 cursor-pointer text-center bg-surface hover-border">
+                            <input type="radio" name="tamano_fuente" value="lg" class="form-check-input mb-2 mx-auto">
+                            <div class="fw-semibold small">Confortable (19px)</div>
+                            <div class="text-secondary" style="font-size: 11px;">Mayor tamaño para pantallas grandes o lectura relajada</div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end pt-3 border-top">
+                <button type="submit" class="btn btn-primary btn-sm px-4 rounded-pill fw-semibold">
+                    <i class="bi bi-check2 me-1" aria-hidden="true"></i>Guardar preferencias
+                </button>
+            </div>
+        </form>
+
+    {% elif tab_activa == 'notificaciones' %}
+        <form method="post" action="{% url 'cuentas:ajustes_tab' 'notificaciones' %}">
+            {% csrf_token %}
+            <input type="hidden" name="tab_destino" value="notificaciones">
+
+            <div class="mb-4">
+                <h2 class="h6 fw-bold mb-3">Notificaciones en la plataforma</h2>
+                <div class="d-flex flex-column gap-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="notif-respuestas" checked>
+                        <label class="form-check-label small" for="notif-respuestas">
+                            <strong>Respuestas a mis publicaciones</strong>
+                            <div class="text-secondary">Avisarme cuando alguien comente o responda en uno de mis artículos.</div>
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="notif-menciones" checked>
+                        <label class="form-check-label small" for="notif-menciones">
+                            <strong>Menciones @usuario</strong>
+                            <div class="text-secondary">Avisarme cuando otro desarrollador me mencione en un post o comentario.</div>
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="notif-seguidores" checked>
+                        <label class="form-check-label small" for="notif-seguidores">
+                            <strong>Nuevos seguidores</strong>
+                            <div class="text-secondary">Avisarme cuando otro miembro empiece a seguir mi perfil.</div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4 pt-3 border-top">
+                <h2 class="h6 fw-bold mb-3">Boletín y correos electrónicos</h2>
+                <div class="d-flex flex-column gap-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="email-boletin" checked>
+                        <label class="form-check-label small" for="email-boletin">
+                            <strong>Resumen semanal de tendencias</strong>
+                            <div class="text-secondary">Un correo cada viernes con los artículos más votados de la semana.</div>
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="email-autores" checked>
+                        <label class="form-check-label small" for="email-autores">
+                            <strong>Novedades de autores que sigo</strong>
+                            <div class="text-secondary">Notificación por correo cuando un autor seguido publique un nuevo post.</div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end pt-3 border-top">
+                <button type="submit" class="btn btn-primary btn-sm px-4 rounded-pill fw-semibold">
+                    <i class="bi bi-check2 me-1" aria-hidden="true"></i>Guardar notificaciones
+                </button>
+            </div>
+        </form>
+
+    {% elif tab_activa == 'seguridad' %}
+        <div class="row g-4">
+            <div class="col-12 col-lg-7">
+                <div class="card p-3 border bg-surface">
+                    <h2 class="h6 fw-bold mb-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-key text-primary" aria-hidden="true"></i>Cambiar contraseña
+                    </h2>
+                    <form method="post" action="{% url 'cuentas:ajustes_tab' 'seguridad' %}" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="tab_destino" value="seguridad">
+
+                        <div class="mb-3">
+                            <label for="{{ password_form.old_password.id_for_label }}" class="form-label small fw-semibold">Contraseña actual</label>
+                            {{ password_form.old_password }}
+                            {% if password_form.old_password.errors %}
+                                <div class="invalid-feedback d-block">{{ password_form.old_password.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ password_form.new_password1.id_for_label }}" class="form-label small fw-semibold">Nueva contraseña</label>
+                            {{ password_form.new_password1 }}
+                            {% if password_form.new_password1.errors %}
+                                <div class="invalid-feedback d-block">{{ password_form.new_password1.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text small">Mínimo 8 caracteres, combina números y letras.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ password_form.new_password2.id_for_label }}" class="form-label small fw-semibold">Confirmar nueva contraseña</label>
+                            {{ password_form.new_password2 }}
+                            {% if password_form.new_password2.errors %}
+                                <div class="invalid-feedback d-block">{{ password_form.new_password2.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary btn-sm px-4 rounded-pill fw-semibold">
+                                Actualizar contraseña
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-5">
+                <!-- Portabilidad de datos -->
+                <div class="card p-3 border bg-surface mb-3">
+                    <h2 class="h6 fw-bold mb-2 d-flex align-items-center gap-2">
+                        <i class="bi bi-filetype-json text-info" aria-hidden="true"></i>Descargar mis datos
+                    </h2>
+                    <p class="small text-secondary mb-3">
+                        Obtén una copia completa en JSON con tu perfil, artículos publicados, borradores y comentarios.
+                    </p>
+                    <a href="{% url 'cuentas:exportar_datos' %}" class="btn btn-sm btn-outline-secondary w-100 rounded-pill">
+                        <i class="bi bi-download me-1" aria-hidden="true"></i>Exportar archivo JSON
+                    </a>
+                </div>
+
+                <!-- Zona de peligro -->
+                <div class="card p-3 border border-danger-subtle bg-danger-subtle bg-opacity-10">
+                    <h2 class="h6 fw-bold text-danger mb-2 d-flex align-items-center gap-2">
+                        <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>Zona de cuidado
+                    </h2>
+                    <p class="small text-secondary mb-3">
+                        Si deseas cerrar o eliminar tu cuenta de forma permanente, ponte en contacto con los administradores del sitio.
+                    </p>
+                    <form method="post" action="{% url 'cuentas:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill">
+                            <i class="bi bi-box-arrow-right me-1" aria-hidden="true"></i>Cerrar todas las sesiones
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

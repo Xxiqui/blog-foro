@@ -79,6 +79,16 @@
 
             <!-- Botón Compartir / Menú desplegable con Insertar </> -->
             {% include "blog/includes/share_dropdown.html" with post=post btn_class='action-rail-btn' hide_label=True %}
+
+            <!-- Botón Modo Zen (Lectura limpia) -->
+            <button type="button" class="action-rail-btn mt-2" id="btn-zen-mode" title="Modo Zen (Lectura sin distracciones)" aria-label="Alternar modo lectura limpia">
+                <i class="bi bi-arrows-angle-expand" id="icon-zen-mode" aria-hidden="true"></i>
+            </button>
+
+            <!-- Botón Índice de contenidos (visible si hay subtítulos) -->
+            <button type="button" class="action-rail-btn d-none" id="btn-toc-toggle" data-bs-toggle="offcanvas" data-bs-target="#offcanvasToc" title="Índice de contenidos" aria-label="Ver índice de contenidos">
+                <i class="bi bi-list-nested" aria-hidden="true"></i>
+            </button>
         </aside>
 
         <!-- Columna de lectura central (máximo 720 px, tipografía Inter 18px / 1.7) -->
@@ -738,6 +748,31 @@
                 if (form && mainTextarea.value.trim().length > 0) {
                     form.submit();
                 }
+            }
+        });
+    }
+
+    // 6. Modo Zen de lectura limpia
+    const btnZen = document.getElementById('btn-zen-mode');
+    const iconZen = document.getElementById('icon-zen-mode');
+    if (btnZen) {
+        btnZen.addEventListener('click', () => {
+            const activo = document.body.classList.toggle('zen-mode-active');
+            if (iconZen) {
+                iconZen.className = activo ? 'bi bi-arrows-angle-contract' : 'bi bi-arrows-angle-expand';
+            }
+            if (window.BlogInteracciones && window.BlogInteracciones.mostrarToast) {
+                window.BlogInteracciones.mostrarToast(
+                    activo ? 'Modo Zen activado. Lectura sin distracciones.' : 'Modo Zen desactivado.',
+                    'info'
+                );
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.body.classList.contains('zen-mode-active')) {
+                document.body.classList.remove('zen-mode-active');
+                if (iconZen) iconZen.className = 'bi bi-arrows-angle-expand';
             }
         });
     }

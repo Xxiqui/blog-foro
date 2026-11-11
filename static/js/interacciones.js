@@ -297,9 +297,12 @@
         });
     }
 
-    // 5d. Manejador de botón Guardar en "Guardados" (marcador con deshacer)
+    // 5d. Manejador de botón Guardar en "Guardados" (formularios y botones de feed directo)
     function inicializarGuardarPost() {
+        // Soporte para formularios clásicos
         document.querySelectorAll('form[data-ajax-guardar]').forEach((form) => {
+            if (form.dataset.guardarInit) return;
+            form.dataset.guardarInit = 'true';
             form.addEventListener('submit', async function (e) {
                 e.preventDefault();
                 const btn = form.querySelector('button[type="submit"]');
@@ -341,6 +344,80 @@
                 }
             });
         });
+
+        // Soporte delegado para botones directos de feed .btn-guardar-post
+        if (!document.dataset?.guardarBtnDelegated) {
+            if (!document.dataset) document.dataset = {};
+            document.dataset.guardarBtnDelegated = 'true';
+
+            document.addEventListener('click', async function (e) {
+                const btn = e.target.closest('.btn-guardar-post');
+                if (!btn || btn.classList.contains('btn-requiere-auth')) return;
+                const url = btn.getAttribute('data-url');
+                if (!url) return;
+
+                e.preventDefault();
+                if (btn.disabled) return;
+
+                // Estado previo para posible reversión
+                const eraActivo = btn.getAttribute('data-guardado') === 'true' || btn.classList.contains('active');
+                const nuevoEstado = !eraActivo;
+
+                // Optimistic UI inmediato
+                btn.setAttribute('data-guardado', nuevoEstado ? 'true' : 'false');
+                btn.setAttribute('aria-pressed', nuevoEstado ? 'true' : 'false');
+                btn.classList.toggle('active', nuevoEstado);
+                const icono = btn.querySelector('i');
+                if (icono) {
+                    icono.className = nuevoEstado ? 'bi bi-bookmark-fill text-warning' : 'bi bi-bookmark';
+                }
+                const texto = btn.querySelector('span');
+                if (texto) {
+                    texto.textContent = nuevoEstado ? 'Guardado' : 'Guardar';
+                }
+
+                btn.disabled = true;
+                try {
+                    const data = await enviarPostInteraccion(url, new FormData());
+                    if (!data || !data.ok) {
+                        // Revertir
+                        btn.setAttribute('data-guardado', eraActivo ? 'true' : 'false');
+                        btn.setAttribute('aria-pressed', eraActivo ? 'true' : 'false');
+                        btn.classList.toggle('active', eraActivo);
+                        if (icono) icono.className = eraActivo ? 'bi bi-bookmark-fill text-warning' : 'bi bi-bookmark';
+                        if (texto) texto.textContent = eraActivo ? 'Guardado' : 'Guardar';
+                        mostrarToast('No se pudo actualizar el guardado.', 'danger');
+                        return;
+                    }
+
+                    const activoServidor = Boolean(data.activo);
+                    btn.setAttribute('data-guardado', activoServidor ? 'true' : 'false');
+                    btn.setAttribute('aria-pressed', activoServidor ? 'true' : 'false');
+                    btn.classList.toggle('active', activoServidor);
+                    if (icono) icono.className = activoServidor ? 'bi bi-bookmark-fill text-warning' : 'bi bi-bookmark';
+                    if (texto) texto.textContent = activoServidor ? 'Guardado' : 'Guardar';
+
+                    if (activoServidor) {
+                        mostrarToast('Guardado en tus artículos', 'success', {
+                            enlaceTexto: 'Ver guardados',
+                            enlaceUrl: '/guardados/',
+                        });
+                    } else {
+                        mostrarToast('Quitado de tus guardados', 'secondary');
+                    }
+                } catch (_) {
+                    // Revertir
+                    btn.setAttribute('data-guardado', eraActivo ? 'true' : 'false');
+                    btn.setAttribute('aria-pressed', eraActivo ? 'true' : 'false');
+                    btn.classList.toggle('active', eraActivo);
+                    if (icono) icono.className = eraActivo ? 'bi bi-bookmark-fill text-warning' : 'bi bi-bookmark';
+                    if (texto) texto.textContent = eraActivo ? 'Guardado' : 'Guardar';
+                    mostrarToast('Error de conexión al guardar.', 'danger');
+                } finally {
+                    btn.disabled = false;
+                }
+            });
+        }
     }
 
     // 6. Botones de compartir (Copiar enlace y Web Share API móvil)
@@ -1261,7 +1338,8 @@
         });
     }
 
-    function inicializarCopiarEnlaceMenu() {
+    function inicializarAccionesMenuPost() {
+        // 1. Copiar enlace
         document.addEventListener('click', function (e) {
             const btn = e.target.closest('.btn-copiar-enlace');
             if (btn) {
@@ -1278,6 +1356,110 @@
                 }
             }
         });
+
+        // 2. Ocultar post del feed
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn-ocultar-post');
+            if (!btn) return;
+            e.preventDefault();
+            const slug = btn.getAttribute('data-post-slug');
+            const card = document.getElementById('post-' + slug) || btn.closest('.post-row');
+            if (card) {
+                card.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.96)';
+                setTimeout(() => {
+                    card.style.display = 'none';
+                }, 260);
+                mostrarToast('Publicación oculta de tu feed.', 'secondary', {
+                    texto: 'Deshacer',
+                    callback: () => {
+                        card.style.display = '';
+                        setTimeout(() => {
+                            card.style.opacity = '1';
+                            card.style.transform = 'scale(1)';
+                        }, 10);
+                    }
+                });
+            }
+        });
+
+        // 3. Reportar post (abrir modal)
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.btn-reportar-post');
+            if (!btn) return;
+            e.preventDefault();
+            const slug = btn.getAttribute('data-post-slug');
+            const title = btn.getAttribute('data-post-title') || 'esta publicación';
+            const modalEl = document.getElementById('modalReportarPost');
+            if (modalEl && window.bootstrap) {
+                const titleEl = document.getElementById('reportar-post-titulo');
+                const slugInput = document.getElementById('reportar-post-slug');
+                if (titleEl) titleEl.textContent = `"${title}"`;
+                if (slugInput) slugInput.value = slug;
+                const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            }
+        });
+
+        // 4. Formulario de reporte
+        document.addEventListener('submit', function (e) {
+            if (e.target && e.target.id === 'form-reportar-post') {
+                e.preventDefault();
+                const modalEl = document.getElementById('modalReportarPost');
+                if (modalEl && window.bootstrap) {
+                    const modal = window.bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                }
+                mostrarToast('Gracias. Tu reporte ha sido enviado a los moderadores para revisión.', 'info');
+                e.target.reset();
+            }
+        });
+    }
+
+    // Mejora de bloques de código (<pre><code>): etiqueta de lenguaje y botón de copiar
+    function inicializarBloquesCodigo() {
+        document.querySelectorAll('.prosa pre, .ck-content pre, article pre').forEach((pre) => {
+            if (pre.dataset.codeToolbarInit) return;
+            pre.dataset.codeToolbarInit = 'true';
+
+            const codeEl = pre.querySelector('code');
+            let lang = 'CÓDIGO';
+            if (codeEl) {
+                const classMatch = (codeEl.className || '').match(/language-([a-zA-Z0-9_\-]+)/);
+                if (classMatch) {
+                    lang = classMatch[1].toUpperCase();
+                }
+            }
+
+            const toolbar = document.createElement('div');
+            toolbar.className = 'code-toolbar d-flex align-items-center justify-content-between px-3 py-1';
+            toolbar.innerHTML = `
+                <span class="code-lang-badge small font-monospace text-muted fw-semibold">${lang}</span>
+                <button type="button" class="btn btn-sm btn-link text-decoration-none text-muted p-0 btn-copy-code small" title="Copiar código">
+                    <i class="bi bi-clipboard me-1" aria-hidden="true"></i><span>Copiar</span>
+                </button>
+            `;
+
+            pre.parentNode.insertBefore(toolbar, pre);
+
+            const copyBtn = toolbar.querySelector('.btn-copy-code');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', async () => {
+                    const text = (codeEl ? codeEl.innerText : pre.innerText).trim();
+                    if (!text) return;
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        copyBtn.innerHTML = '<i class="bi bi-check-lg text-success me-1"></i><span class="text-success">¡Copiado!</span>';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = '<i class="bi bi-clipboard me-1"></i><span>Copiar</span>';
+                        }, 2000);
+                    } catch (_) {
+                        mostrarToast('No se pudo copiar el texto.', 'warning');
+                    }
+                });
+            }
+        });
     }
 
     let inicializadoGlobal = false;
@@ -1289,6 +1471,7 @@
         inicializarUnirseCategoria();
         inicializarGuardarPost();
         inicializarBuscadorSugerencias();
+        inicializarBloquesCodigo();
         if (!inicializadoGlobal) {
             inicializadoGlobal = true;
             inicializarVotosOptimistas();
@@ -1296,7 +1479,7 @@
             inicializarPollingNotificaciones();
             inicializarPollingNovedadesFeed();
             inicializarRestauracionScroll();
-            inicializarCopiarEnlaceMenu();
+            inicializarAccionesMenuPost();
             inicializarAutocompletadoMenciones();
             inicializarVistaCategoria();
             inicializarComentariosAnidados();
