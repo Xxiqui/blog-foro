@@ -23,17 +23,27 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes', 't')
 
+_default_allowed_hosts = 'localhost,127.0.0.1,0.0.0.0,testserver,.railway.app,.up.railway.app,.onrender.com'
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,testserver').split(',')
+    for host in os.environ.get('ALLOWED_HOSTS', _default_allowed_hosts).split(',')
     if host.strip()
 ]
 
+_railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '').strip()
+if _railway_domain and _railway_domain not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_railway_domain)
+
+_default_csrf = 'http://localhost:8000,http://127.0.0.1:8000,https://*.railway.app,https://*.up.railway.app,https://*.onrender.com'
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
-    for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000').split(',')
+    for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', _default_csrf).split(',')
     if origin.strip()
 ]
+if _railway_domain:
+    _https_railway = f'https://{_railway_domain}'
+    if _https_railway not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_https_railway)
 
 # Permitir acceso desde dispositivos móviles en la red local durante desarrollo
 if DEBUG:
