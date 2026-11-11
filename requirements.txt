@@ -11,5 +11,3 @@ requests>=2.31.0
 django-allauth[socialaccount]>=65.0.0
 django-htmx==1.21.0
 
-
-
