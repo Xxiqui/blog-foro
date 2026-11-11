@@ -1,7 +1,7 @@
 /**
  * Adaptador y sincronizador de CKEditor 5
  */
-import { stripHtml, countWords, estimateReadTime } from './util.js';
+import { stripHtml, countWords, estimateReadTime, formatReadTime } from './util.js';
 
 let editorInstance = null;
 const changeListeners = [];
@@ -59,13 +59,18 @@ function configurarEventosEditor() {
 function actualizarMetricas(htmlContent) {
     const plainText = stripHtml(htmlContent);
     const words = countWords(plainText);
-    const readTime = estimateReadTime(words);
+    const readTime = formatReadTime(words);
 
     const elWords = document.getElementById('canvasWordCount');
     const elTime = document.getElementById('canvasReadingTime');
 
-    if (elWords) elWords.innerHTML = `<i class="bi bi-file-text me-1" aria-hidden="true"></i>${words} palabras`;
-    if (elTime) elTime.innerHTML = `<i class="bi bi-clock me-1" aria-hidden="true"></i>${readTime} min de lectura`;
+    if (elWords) {
+        const palabraTexto = words === 1 ? '1 palabra' : `${words} palabras`;
+        elWords.innerHTML = `<i class="bi bi-file-text me-1" aria-hidden="true"></i>${palabraTexto}`;
+    }
+    if (elTime) {
+        elTime.innerHTML = `<i class="bi bi-clock me-1" aria-hidden="true"></i>${readTime}`;
+    }
 }
 
 function notificarCambios(content) {

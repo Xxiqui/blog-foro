@@ -39,6 +39,12 @@ export function estimateReadTime(wordCount, wpm = 200) {
     return Math.max(1, Math.ceil(wordCount / wpm));
 }
 
+export function formatReadTime(wordCount, wpm = 200) {
+    if (wordCount < 200) return '< 1 min de lectura';
+    const minutes = Math.ceil(wordCount / wpm);
+    return `${minutes} min de lectura`;
+}
+
 export function slugify(text) {
     if (!text) return '';
     return text

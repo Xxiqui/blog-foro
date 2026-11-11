@@ -148,7 +148,14 @@ document.addEventListener('DOMContentLoaded', () => {
         actualizarViewportTeclado();
     }
 
-    // 5. Atajos de teclado
+    // 5. Atajos de teclado y Guardado manual
+    const btnGuardarManual = document.getElementById('btnGuardarManual');
+    if (btnGuardarManual) {
+        btnGuardarManual.addEventListener('click', () => {
+            autoguardado.guardarInmediato('manual');
+        });
+    }
+
     initAtajos({
         onGuardar: () => autoguardado.guardarInmediato('manual'),
         onPublicar: () => {

@@ -2,7 +2,7 @@
     <!-- Izquierda: Flecha de volver (44px) y punto/chip de estado -->
     <div class="d-flex align-items-center gap-1 gap-sm-2 min-w-0">
         <a href="{% url 'blog:panel_post_list' %}" class="btn btn-sm btn-outline-secondary touch-target-44 d-flex align-items-center justify-content-center"
-           title="Volver a la lista de posts del panel" aria-label="Volver a la lista de posts">
+           title="Volver a Mis publicaciones" aria-label="Volver a Mis publicaciones">
             <i class="bi bi-arrow-left fs-5" aria-hidden="true"></i>
         </a>
 
@@ -22,7 +22,7 @@
         </span>
     </div>
 
-    <!-- Centro: Estado de guardado solo con ícono en móvil (texto >= sm), accesible con aria-live -->
+    <!-- Centro: Punto de estado de guardado, accesible con aria-live -->
     <div class="d-flex align-items-center px-1">
         <span class="editor-save-indicator small text-muted d-flex align-items-center gap-1"
               id="editorSaveIndicator"
@@ -33,8 +33,15 @@
         </span>
     </div>
 
-    <!-- Derecha: Acciones directas (en desktop >= md), botón Publicar compacto (NUNCA cortado) y Menú ⋯ -->
+    <!-- Derecha: Disquete guardar manual, Publicar y Menú ⋯ -->
     <div class="d-flex align-items-center gap-1 gap-sm-2 flex-shrink-0">
+        <!-- Disquete de guardado manual -->
+        <button type="button" class="btn btn-sm btn-outline-secondary touch-target-44 d-inline-flex align-items-center justify-content-center"
+                id="btnGuardarManual"
+                title="Guardar cambios (Ctrl+S)" aria-label="Guardar cambios manualmente">
+            <i class="bi bi-floppy fs-6" aria-hidden="true"></i>
+        </button>
+
         <!-- En desktop (>= md): Botón Vista previa en vivo -->
         <button type="button" class="btn btn-sm btn-outline-secondary d-none d-md-inline-flex align-items-center gap-1 touch-target-44 px-3"
                 id="btnAbrirVistaPrevia"
@@ -86,7 +93,7 @@
                         <span>Vista previa en vivo</span>
                     </button>
                 </li>
-                <li class="d-lg-none">
+                <li>
                     <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" data-bs-toggle="offcanvas" data-bs-target="#offcanvasLateral">
                         <i class="bi bi-sliders text-info" aria-hidden="true"></i>
                         <span>Configuración y SEO</span>

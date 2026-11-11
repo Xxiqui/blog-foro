@@ -3275,6 +3275,50 @@ class ForoAdaptableFase5Tests(TestCase):
             self.assertEqual(img_guardada.size, (256, 256))
 
 
+class ForoAdaptableFase6EditorTests(TestCase):
+    """Pruebas para la Fase 6: Estudio de escritura (editor) y métricas."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='autor_fase6',
+            email='autor6@test.com',
+            password='TestPassword123!',
+        )
+        self.perfil = getattr(self.user, 'perfil', None) or Perfil.objects.create(
+            usuario=self.user,
+            rol=Perfil.Rol.AUTOR,
+        )
+        self.categoria = Categoria.objects.create(nombre='Fase 6 Tech', slug='fase-6-tech')
+        self.post = Post.objects.create(
+            titulo='Post para Test de Editor Fase 6',
+            slug='post-test-editor-fase-6',
+            autor=self.perfil,
+            categoria=self.categoria,
+            contenido='<p>Contenido inicial del post para pruebas del editor.</p>',
+            estado=Post.Estado.BORRADOR,
+        )
+
+    def test_editor_barra_y_lienzo_elementos(self):
+        """Verifica que la barra y el lienzo tengan los elementos requeridos: disquete, indicadores y métricas."""
+        self.client.force_login(self.user)
+        url = reverse('blog:panel_post_update', kwargs={'slug': self.post.slug})
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+
+        # 1. Barra superior: botón guardar manual, indicador de estado y menú
+        self.assertContains(resp, 'id="btnGuardarManual"')
+        self.assertContains(resp, 'id="editorSaveIndicator"')
+        self.assertContains(resp, 'id="editorStatusBadge"')
+        self.assertContains(resp, 'id="btnAbrirModalPublicar"')
+        self.assertContains(resp, 'id="btnAccionDuplicar"')
+
+        # 2. Lienzo inferior: contador de palabras y tiempo de lectura
+        self.assertContains(resp, 'id="canvasWordCount"')
+        self.assertContains(resp, 'id="canvasReadingTime"')
+        self.assertContains(resp, '&lt; 1 min de lectura')
+
+
+
 
 
 
