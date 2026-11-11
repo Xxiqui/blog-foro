@@ -12,7 +12,7 @@
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                 <div class="d-flex align-items-center gap-3 min-w-0">
                     <div class="flex-shrink-0">
-                        {% avatar perfil_autor 64 %}
+                        {% avatar perfil_autor 96 %}
                     </div>
                     <div class="min-w-0">
                         <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -62,31 +62,31 @@
                 </div>
             </div>
 
-            <!-- Suscripción por correo (acordeón o bloque sutil) -->
+            <!-- Suscripción por correo en acordeón colapsable <details> -->
             {% if form_suscripcion and not es_dueno %}
-                <div class="pt-3 mt-3 border-top">
-                    <form method="post" action="{% url 'blog:suscripcion_crear' %}" class="row g-2 align-items-center">
+                <details class="author-sub-details pt-3 mt-3 border-top">
+                    <summary class="small fw-semibold text-secondary cursor-pointer py-1">
+                        <i class="bi bi-envelope-at text-primary me-1" aria-hidden="true"></i>
+                        <span>Recibir notificaciones por correo de este autor</span>
+                    </summary>
+                    <form method="post" action="{% url 'blog:suscripcion_crear' %}" class="row g-2 align-items-center mt-2">
                         {% csrf_token %}
                         <input type="hidden" name="next" value="{{ request.get_full_path }}">
                         <input type="hidden" name="autor_id" value="{{ perfil_autor.pk }}">
                         {{ form_suscripcion.sitio_web }}
-                        <div class="col-md-6 small text-secondary">
-                            <i class="bi bi-envelope-at text-primary me-1" aria-hidden="true"></i>
-                            <strong>Suscripción por correo:</strong> recibe alertas cuando publique un nuevo artículo.
-                        </div>
-                        <div class="col-sm-8 col-md-4">
+                        <div class="col-sm-8 col-md-5">
                             <input type="email" name="email" class="form-control form-control-sm"
                                    placeholder="tu@correo.com"
                                    aria-label="Correo para suscribirte a {{ perfil_autor.nombre_mostrar }}"
                                    value="{{ form_suscripcion.email.value|default:'' }}" required>
                         </div>
-                        <div class="col-sm-4 col-md-2 d-grid">
+                        <div class="col-sm-4 col-md-3 d-grid">
                             <button type="submit" class="btn-forum btn-forum-outline btn-sm justify-content-center">
                                 Suscribirme
                             </button>
                         </div>
                     </form>
-                </div>
+                </details>
             {% endif %}
         </div>
     </header>

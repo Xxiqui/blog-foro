@@ -252,8 +252,6 @@
                             el.textContent = data.total;
                         }
                     });
-
-                    mostrarToast(data.mensaje || (activo ? 'Ahora sigues a este autor.' : 'Dejaste de seguir a este autor.'), 'info');
                 } finally {
                     btn.disabled = false;
                 }
@@ -292,11 +290,6 @@
                             el.textContent = data.total;
                         });
                     }
-
-                    mostrarToast(
-                        data.mensaje || (activo ? 'Te has unido a la comunidad.' : 'Has salido de la comunidad.'),
-                        'info'
-                    );
                 } finally {
                     btn.disabled = false;
                 }

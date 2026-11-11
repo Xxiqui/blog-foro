@@ -40,82 +40,9 @@
     <!-- Columna principal: Feed de posts de autores seguidos y comunidades unidas -->
     <div class="col-lg-8">
         {% if posts %}
-            <div class="row row-cols-1 row-cols-md-2 g-4">
+            <div class="vstack gap-2 mb-4" id="siguiendo-feed">
                 {% for post in posts %}
-                    <div class="col">
-                        <article class="card h-100 border-0 shadow-sm post-card">
-                            <a href="{{ post.get_absolute_url }}" class="text-decoration-none d-block" tabindex="-1" aria-hidden="true">
-                                {% portada_post post %}
-                            </a>
-                            <div class="card-body d-flex flex-column p-4">
-                                <div class="mb-2 d-flex flex-wrap gap-1 align-items-center">
-                                    {% if post.categoria %}
-                                        <a href="{{ post.categoria.get_absolute_url }}" class="badge-categoria">
-                                            {{ post.categoria.nombre }}
-                                        </a>
-                                    {% else %}
-                                        <span class="badge-categoria">Sin categoría</span>
-                                    {% endif %}
-                                    <small class="text-secondary-token ms-auto">
-                                        {{ post.publicado_en|date:"d M Y" }}
-                                    </small>
-                                </div>
-
-                                <h2 class="h5 card-title fw-bold mb-2 line-clamp-3 card-title-mobile-clamp" title="{{ post.titulo }}">
-                                    <a href="{{ post.get_absolute_url }}" class="text-decoration-none text-body">
-                                        {{ post.titulo }}
-                                    </a>
-                                </h2>
-
-                                <p class="card-text text-secondary-token small flex-grow-1">
-                                    {{ post.contenido|extracto_plano:150 }}
-                                </p>
-
-                                <div class="mt-3 pt-3 border-top post-card-footer d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-2">
-                                    <div class="author-meta-block w-100 w-md-auto d-flex align-items-center justify-content-between justify-content-md-start">
-                                        <a href="{{ post.autor.get_absolute_url }}" class="author-name-link small min-w-0 flex-grow-1">
-                                            {% avatar post.autor 28 %}
-                                            <span class="author-name-text text-truncate">{{ post.autor.nombre_mostrar }}</span>
-                                        </a>
-                                        <div class="author-badge-container flex-shrink-0 ms-2">{% insignia post.autor %}</div>
-                                    </div>
-
-                                    <div class="card-actions-row d-flex align-items-center justify-content-between justify-content-md-end gap-1 flex-grow-1 flex-md-grow-0">
-                                        <form method="post"
-                                              action="{% url 'blog:post_like_toggle' slug=post.slug %}"
-                                              data-ajax-like
-                                              class="d-inline">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                            <button type="submit"
-                                                    class="btn btn-sm {% if post.ya_dio_like %}btn-danger{% else %}btn-outline-danger{% endif %} px-2 py-1 d-inline-flex align-items-center"
-                                                    aria-pressed="{% if post.ya_dio_like %}true{% else %}false{% endif %}"
-                                                    aria-label="Me gusta ({{ post.total_likes|default:0 }})"
-                                                    title="{% if post.ya_dio_like %}Ya te gusta{% else %}Me gusta{% endif %}">
-                                                <i class="bi {% if post.ya_dio_like %}bi-heart-fill{% else %}bi-heart{% endif %}" data-like-icon aria-hidden="true"></i>
-                                                <span data-like-count class="ms-1 small">{{ post.total_likes|default:0 }}</span>
-                                            </button>
-                                        </form>
-
-                                        <form method="post"
-                                              action="{% url 'blog:post_guardar_toggle' slug=post.slug %}"
-                                              data-ajax-guardar
-                                              class="d-inline">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                            <button type="submit"
-                                                    class="btn btn-sm {% if post.ya_guardado %}btn-warning{% else %}btn-outline-secondary{% endif %} px-2 py-1"
-                                                    aria-pressed="{% if post.ya_guardado %}true{% else %}false{% endif %}"
-                                                    aria-label="{% if post.ya_guardado %}Quitar de guardados{% else %}Guardar para leer después{% endif %}"
-                                                    title="{% if post.ya_guardado %}Guardado en tu lista{% else %}Guardar para leer después{% endif %}">
-                                                <i class="bi {% if post.ya_guardado %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}" data-guardar-icon aria-hidden="true"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </article>
-                    </div>
+                    {% include "blog/includes/_fila_post.html" with post=post %}
                 {% endfor %}
             </div>
 

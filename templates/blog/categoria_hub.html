@@ -204,23 +204,24 @@
             </div>
             <div class="col-6 border-start">
                 <div class="fw-bold fs-6">{{ categoria_actual.publicaciones_semana|default:0 }}</div>
-                <div class="text-muted small">Posts semana</div>
+                <div class="text-muted small">Publicaciones / sem.</div>
             </div>
         </div>
 
         <div class="d-grid gap-2">
             <a href="{% url 'blog:categoria_rss_feed' categoria_actual.slug %}"
                class="btn-forum btn-forum-outline justify-content-center btn-sm text-decoration-none">
-                <i class="bi bi-rss-fill text-warning me-2" aria-hidden="true"></i>Canal RSS de la comunidad
+                <i class="bi bi-rss-fill text-warning me-2" aria-hidden="true"></i>Canal RSS
             </a>
         </div>
 
         {% if form_suscripcion %}
-        <div class="pt-3 border-top mt-3">
-            <h3 class="h6 fw-bold small mb-1">
-                <i class="bi bi-envelope-paper-heart text-primary me-1" aria-hidden="true"></i>Suscripción por correo
-            </h3>
-            <p class="text-muted mb-2" style="font-size: 0.78rem;">
+        <details class="pt-3 border-top mt-3">
+            <summary class="small fw-semibold text-secondary cursor-pointer py-1">
+                <i class="bi bi-envelope-paper-heart text-primary me-1" aria-hidden="true"></i>
+                <span>Suscripción por correo</span>
+            </summary>
+            <p class="text-muted my-2" style="font-size: 0.78rem;">
                 Recibe un aviso por correo cada vez que se publique en esta comunidad.
             </p>
             <form method="post" action="{% url 'blog:suscripcion_crear' %}" class="vstack gap-2">
@@ -236,7 +237,7 @@
                     <i class="bi bi-send me-1" aria-hidden="true"></i>Suscribirme
                 </button>
             </form>
-        </div>
+        </details>
         {% endif %}
     </div>
 </div>

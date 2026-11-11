@@ -25,6 +25,12 @@
         <div class="post-main-content">
             <!-- Línea de Metadatos -->
             <div class="post-meta-line">
+                {% if ranking_pos %}
+                    <span class="ranking-badge ranking-badge-{{ ranking_pos }}" title="Posición #{{ ranking_pos }}">
+                        #{{ ranking_pos }}
+                    </span>
+                    <span>&bull;</span>
+                {% endif %}
                 {% if post.categoria %}
                     <a href="{% url 'blog:posts_por_categoria' post.categoria.slug %}" class="community-chip text-decoration-none">
                         <i class="bi bi-hash" aria-hidden="true"></i>{{ post.categoria.nombre }}
