@@ -234,6 +234,50 @@
     margin: 0;
 }
 
+/* Logo / Marca superior en la columna izquierda (Estilo X) */
+.nav-brand-box {
+    padding: 4px 6px 12px 6px;
+    display: flex;
+    align-items: center;
+}
+
+.nav-brand-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    color: var(--color-text);
+    padding: 8px 12px;
+    border-radius: var(--radius-full, 9999px);
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.nav-brand-btn:hover {
+    background-color: var(--color-surface-hover);
+    color: var(--color-primary);
+}
+
+.nav-brand-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--color-text);
+}
+
+@media (min-width: 1024px) and (max-width: 1279.98px) {
+    .nav-brand-box {
+        justify-content: center;
+        padding: 4px 0 12px 0;
+    }
+    .nav-brand-btn {
+        padding: 8px;
+        justify-content: center;
+    }
+    .nav-brand-title {
+        display: none !important;
+    }
+}
+
 .nav-item-link {
     display: flex;
     align-items: center;

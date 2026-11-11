@@ -143,6 +143,36 @@
    BREAKPOINTS REGLAMENTARIOS
    ========================================================================== */
 
+/* Integración de Layout Estilo X (sin barra superior global separada en escritorio) */
+@media (min-width: 1024px) {
+    :root {
+        --header-height: 0px;
+    }
+    .app-header {
+        display: none !important;
+    }
+    .app-nav-left {
+        top: 0 !important;
+        height: 100dvh !important;
+        padding-top: var(--space-2) !important;
+    }
+    .app-sidebar-right {
+        top: 0 !important;
+        height: 100dvh !important;
+        padding-top: var(--space-3) !important;
+    }
+    .app-main {
+        padding-top: var(--space-3);
+    }
+    .gestion-subnav {
+        top: 0 !important;
+        height: 100dvh !important;
+    }
+    .gestion-container {
+        min-height: 100dvh !important;
+    }
+}
+
 /* 1. MÓVIL (< 640px) */
 @media (max-width: 639.98px) {
     .app-main {

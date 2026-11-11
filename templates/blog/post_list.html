@@ -7,29 +7,7 @@
 
 {% block content %}
 <div class="app-feed-container" id="feed-root-container" data-ultimo-id="{{ posts.0.id|default:0 }}">
-    <!-- Compositor rápido al inicio del feed (con sesión, desde 640 px) -->
-    {% if user.is_authenticated %}
-        <div class="card border mb-3 shadow-none bg-surface d-none d-sm-block">
-            <div class="card-body p-2 px-3 d-flex align-items-center gap-2">
-                <div class="flex-shrink-0">
-                    {% avatar user.perfil 36 %}
-                </div>
-                <a href="{% url 'blog:panel_post_create' %}" hx-boost="false" class="form-control rounded-pill text-muted text-decoration-none bg-body-tertiary border-0 py-2 px-3 small d-flex align-items-center justify-content-between flex-grow-1">
-                    <span>¿Qué quieres compartir hoy con la comunidad?</span>
-                    <i class="bi bi-pencil-square text-primary"></i>
-                </a>
-            </div>
-        </div>
-    {% endif %}
-
-    <!-- Chip flotante de Publicaciones Nuevas (sondeo de 60s) -->
-    <div id="banner-nuevas-publicaciones" class="d-none text-center sticky-top mb-3" style="top: calc(var(--header-height) + 12px); z-index: 1010;">
-        <button type="button" class="btn-forum btn-forum-primary shadow rounded-pill px-3 py-1" id="btn-cargar-novedades">
-            <i class="bi bi-arrow-up-circle-fill me-1"></i><span id="contador-novedades-texto">Nuevas publicaciones</span>
-        </button>
-    </div>
-
-    <!-- Pestañas y selector de vista del Feed -->
+    <!-- Pestañas y selector de vista del Feed (Estilo X en la parte superior) -->
     <div class="feed-controls-header mb-3 pb-2 border-bottom">
         <!-- Pestañas principales con desplazamiento horizontal en móvil -->
         <div class="feed-tabs-scroller-wrap">
@@ -76,6 +54,28 @@
                 <i class="bi bi-funnel" aria-hidden="true"></i>
             </button>
         </div>
+    </div>
+
+    <!-- Compositor rápido en el feed (con sesión, desde 640 px) -->
+    {% if user.is_authenticated %}
+        <div class="card border mb-3 shadow-none bg-surface d-none d-sm-block">
+            <div class="card-body p-2 px-3 d-flex align-items-center gap-2">
+                <div class="flex-shrink-0">
+                    {% avatar user.perfil 36 %}
+                </div>
+                <a href="{% url 'blog:panel_post_create' %}" hx-boost="false" class="form-control rounded-pill text-muted text-decoration-none bg-body-tertiary border-0 py-2 px-3 small d-flex align-items-center justify-content-between flex-grow-1">
+                    <span>¿Qué quieres compartir hoy con la comunidad?</span>
+                    <i class="bi bi-pencil-square text-primary"></i>
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Chip flotante de Publicaciones Nuevas (sondeo de 60s) -->
+    <div id="banner-nuevas-publicaciones" class="d-none text-center sticky-top mb-3" style="top: 12px; z-index: 1010;">
+        <button type="button" class="btn-forum btn-forum-primary shadow rounded-pill px-3 py-1" id="btn-cargar-novedades">
+            <i class="bi bi-arrow-up-circle-fill me-1"></i><span id="contador-novedades-texto">Nuevas publicaciones</span>
+        </button>
     </div>
 
     <!-- Filtros activos en chips -->
