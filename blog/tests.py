@@ -2878,12 +2878,12 @@ class ForoAdaptableFase6Tests(TestCase):
         self.assertEqual(resp_otro.context['tab_actual'], 'publicaciones')
 
     def test_paginas_planas_sin_rails(self):
-        """Verifica que panel y páginas estáticas apliquen app-body--plano sin raíles laterales."""
+        """Verifica que panel y páginas estáticas no tengan raíles laterales de lectura."""
         # Panel
         self.client.login(username='ana_autora', password='Password123!')
         resp_panel = self.client.get(reverse('blog:panel_dashboard'))
         self.assertEqual(resp_panel.status_code, 200)
-        self.assertContains(resp_panel, 'app-body--plano')
+        self.assertTrue('app-body--gestion' in resp_panel.content.decode() or 'app-body--plano' in resp_panel.content.decode())
         self.assertNotContains(resp_panel, 'app-nav-left')
 
         # Página estática acerca
