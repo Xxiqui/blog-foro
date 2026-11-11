@@ -166,10 +166,12 @@
                 </div>
             </header>
 
-            <!-- Portada (altura máxima 240px, rounded) -->
-            <div class="article-cover-compact mb-4">
-                {% portada_post post "post-cover-detail-img" %}
-            </div>
+            <!-- Portada (altura máxima 240px, rounded - solo si hay imagen real) -->
+            {% if post.imagen_portada or post.portada_url %}
+                <div class="article-cover-compact mb-4">
+                    {% portada_post post "post-cover-detail-img" %}
+                </div>
+            {% endif %}
 
             <!-- Tabla de Contenidos desplegable en tablet/móvil (< 1280px) si hay >= 3 encabezados -->
             {% if toc_items %}
@@ -205,7 +207,7 @@
 
             <!-- Etiquetas / Chips del artículo -->
             {% if post.etiquetas.all %}
-                <div class="pt-3 border-top d-flex flex-wrap align-items-center gap-2 mb-3">
+                <div class="pt-3 border-top d-flex flex-wrap align-items-center gap-2 mb-4">
                     <span class="small text-muted fw-semibold">
                         <i class="bi bi-tags me-1" aria-hidden="true"></i>Temas:
                     </span>
@@ -217,13 +219,7 @@
                 </div>
             {% endif %}
 
-            <!-- Barra para Compartir al pie del artículo -->
-            <div class="py-3 border-top d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-                <span class="small text-muted">¿Te resultó interesante este artículo? Compártelo con tu red o insértalo en tu sitio.</span>
-                {% include "blog/includes/share_dropdown.html" with post=post %}
-            </div>
-
-            <!-- Cuadro del autor al final del artículo -->
+            <!-- Cuadro del autor al final del artículo (Única presentación biográfica completa) -->
             <div class="card border mb-4 bg-surface shadow-none">
                 <div class="card-body p-3 p-sm-4 d-flex flex-column flex-sm-row align-items-center align-items-sm-start gap-3">
                     <a href="{% url 'blog:autor_detail' post.autor.usuario.username %}" class="text-decoration-none flex-shrink-0">
@@ -449,55 +445,7 @@
         </div>
     {% endif %}
 
-    <!-- 2. Tarjeta del Autor con botón Seguir -->
-    <div class="card border mb-3 shadow-none bg-surface">
-        <div class="card-body p-3">
-            <div class="d-flex align-items-center gap-3 mb-2">
-                <a href="{% url 'blog:autor_detail' post.autor.usuario.username %}" class="text-decoration-none flex-shrink-0">
-                    {% avatar post.autor 44 %}
-                </a>
-                <div class="min-w-0">
-                    <a href="{% url 'blog:autor_detail' post.autor.usuario.username %}" class="fw-bold text-body text-decoration-none d-block text-truncate">
-                        {{ post.autor.nombre_mostrar }}
-                    </a>
-                    <span class="small text-muted">@{{ post.autor.usuario.username }}</span>
-                </div>
-            </div>
-            <p class="small text-secondary mb-3">
-                {{ post.autor.bio|default:"Autor en la comunidad." }}
-            </p>
-            <div class="d-flex align-items-center justify-content-between mb-3 small text-muted">
-                <span><strong class="text-body" data-seguidores-count="{{ post.autor.usuario.username }}">{{ total_seguidores_autor }}</strong> seguidor{{ total_seguidores_autor|pluralize:"es" }}</span>
-                <span><strong class="text-body">{{ post.autor.posts.count }}</strong> publicaci{{ post.autor.posts.count|pluralize:"ón,ones" }}</span>
-            </div>
-            <div class="d-grid">
-                {% if user.id != post.autor.usuario_id %}
-                    {% if user.is_authenticated %}
-                        <form method="post" action="{% url 'blog:autor_seguir_toggle' post.autor.usuario.username %}" data-ajax-seguir data-autor-username="{{ post.autor.usuario.username }}">
-                            {% csrf_token %}
-                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                            <button type="submit"
-                                    class="btn-forum {% if siguiendo_autor %}btn-forum-subtle{% else %}btn-forum-primary{% endif %} w-100 justify-content-center"
-                                    aria-label="{% if siguiendo_autor %}Dejar de seguir{% else %}Seguir{% endif %}">
-                                <i data-seguir-icon class="bi {% if siguiendo_autor %}bi-person-check-fill text-primary{% else %}bi-person-plus{% endif %} me-1" aria-hidden="true"></i>
-                                <span data-seguir-label>{% if siguiendo_autor %}Siguiendo{% else %}Seguir autor{% endif %}</span>
-                            </button>
-                        </form>
-                    {% else %}
-                        <button type="button" class="btn-forum btn-forum-primary justify-content-center btn-requiere-auth" data-action="seguir">
-                            <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Seguir autor
-                        </button>
-                    {% endif %}
-                {% else %}
-                    <a href="{% url 'blog:panel_post_update' post.slug %}" hx-boost="false" class="btn-forum btn-forum-subtle justify-content-center text-primary">
-                        <i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar en Estudio
-                    </a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. Tarjeta de Comunidad con botón Únete -->
+    <!-- 2. Tarjeta de Comunidad con botón Únete -->
     {% if post.categoria %}
         <div class="card border mb-3 shadow-none bg-surface">
             <div class="card-body p-3">
@@ -637,43 +585,6 @@
                 window.hljs.highlightElement(block);
             });
         }
-
-        postBody.querySelectorAll('pre').forEach((pre) => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'code-block-wrapper';
-            pre.parentNode.insertBefore(wrapper, pre);
-            wrapper.appendChild(pre);
-
-            const copyBtn = document.createElement('button');
-            copyBtn.type = 'button';
-            copyBtn.className = 'btn-copy-code';
-            copyBtn.setAttribute('aria-label', 'Copiar bloque de código');
-            copyBtn.innerHTML = '<i class="bi bi-clipboard me-1" aria-hidden="true"></i><span>Copiar</span>';
-
-            copyBtn.addEventListener('click', async () => {
-                const codeText = pre.innerText || pre.textContent || '';
-                try {
-                    await navigator.clipboard.writeText(codeText);
-                } catch (_) {
-                    const ta = document.createElement('textarea');
-                    ta.value = codeText;
-                    document.body.appendChild(ta);
-                    ta.select();
-                    document.execCommand('copy');
-                    ta.remove();
-                }
-                const span = copyBtn.querySelector('span');
-                if (span) span.textContent = '¡Copiado!';
-                if (window.BlogInteracciones && window.BlogInteracciones.mostrarToast) {
-                    window.BlogInteracciones.mostrarToast('Código copiado al portapapeles.', 'success');
-                }
-                setTimeout(() => {
-                    if (span) span.textContent = 'Copiar';
-                }, 2000);
-            });
-
-            wrapper.appendChild(copyBtn);
-        });
     }
 
     // 3. Tabla de contenidos: Scrollspy con IntersectionObserver

@@ -13,6 +13,13 @@
     <!-- Subnavegación lateral de 240px (escritorio) o barra horizontal con scroll (móvil) -->
     <aside class="gestion-subnav" aria-label="Navegación de gestión y cuenta">
         <div class="gestion-subnav-inner">
+            <div class="mb-3 pb-2 border-bottom">
+                <a href="{% url 'blog:post_list' %}" class="gestion-nav-link text-body fw-bold">
+                    <i class="bi bi-arrow-left text-primary" aria-hidden="true"></i>
+                    <span>Volver al Foro</span>
+                </a>
+            </div>
+
             <!-- Sección 1: Panel del autor -->
             <div class="gestion-nav-group">
                 <span class="gestion-nav-header">Panel del autor</span>

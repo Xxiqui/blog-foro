@@ -158,7 +158,8 @@
                          alt=""
                          loading="lazy"
                          decoding="async"
-                         class="post-thumbnail-img">
+                         class="post-thumbnail-img"
+                         onerror="var p = this.closest('.post-thumbnail-wrap'); if(p) p.style.display='none';">
                 </a>
             </div>
         {% endif %}

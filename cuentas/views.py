@@ -128,7 +128,7 @@ class AjustesView(LoginRequiredMixin, View):
         return perfil
 
     def get(self, request, tab='perfil', *args, **kwargs):
-        tab_valida = tab if tab in ('perfil', 'apariencia', 'notificaciones', 'seguridad') else 'perfil'
+        tab_valida = tab if tab in ('perfil', 'apariencia', 'feed', 'notificaciones', 'seguridad') else 'perfil'
         perfil = self.get_perfil(request.user)
 
         perfil_form = PerfilForm(instance=perfil)
@@ -145,7 +145,7 @@ class AjustesView(LoginRequiredMixin, View):
 
     def post(self, request, tab='perfil', *args, **kwargs):
         tab_post = request.POST.get('tab_destino', tab)
-        tab_valida = tab_post if tab_post in ('perfil', 'apariencia', 'notificaciones', 'seguridad') else 'perfil'
+        tab_valida = tab_post if tab_post in ('perfil', 'apariencia', 'feed', 'notificaciones', 'seguridad') else 'perfil'
         perfil = self.get_perfil(request.user)
 
         perfil_form = PerfilForm(instance=perfil)
@@ -170,11 +170,27 @@ class AjustesView(LoginRequiredMixin, View):
 
         elif tab_valida == 'apariencia':
             tema = request.POST.get('tema', 'dark')
+            acento = request.POST.get('acento', 'indigo')
             fuente = request.POST.get('tamano_fuente', 'md')
+            tipografia = request.POST.get('tipografia', 'inter')
+            ancho = request.POST.get('ancho_lectura', 'normal')
+
             messages.success(request, 'Preferencias de lectura y apariencia guardadas.')
             response = redirect(reverse('cuentas:ajustes_tab', kwargs={'tab': 'apariencia'}))
             response.set_cookie('foro_tema', tema, max_age=365*24*60*60, samesite='Lax')
+            response.set_cookie('foro_acento', acento, max_age=365*24*60*60, samesite='Lax')
             response.set_cookie('foro_fuente', fuente, max_age=365*24*60*60, samesite='Lax')
+            response.set_cookie('foro_tipografia', tipografia, max_age=365*24*60*60, samesite='Lax')
+            response.set_cookie('foro_ancho', ancho, max_age=365*24*60*60, samesite='Lax')
+            return response
+
+        elif tab_valida == 'feed':
+            orden_inicio = request.POST.get('orden_inicio', 'mejores')
+            etiquetas_silenciadas = request.POST.get('etiquetas_silenciadas', '')
+            messages.success(request, 'Tus preferencias de feed han sido guardadas.')
+            response = redirect(reverse('cuentas:ajustes_tab', kwargs={'tab': 'feed'}))
+            response.set_cookie('foro_orden_inicio', orden_inicio, max_age=365*24*60*60, samesite='Lax')
+            response.set_cookie('foro_silenciadas', etiquetas_silenciadas, max_age=365*24*60*60, samesite='Lax')
             return response
 
         elif tab_valida == 'notificaciones':

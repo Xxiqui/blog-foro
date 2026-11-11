@@ -247,25 +247,30 @@
    5. SHELL DE GESTIÓN (Panel del autor y Mi cuenta)
    ========================================================================== */
 .app-body--gestion {
-    display: block !important;
+    display: flex !important;
     width: 100% !important;
-    max-width: 1160px !important;
-    margin-inline: auto !important;
-    padding: var(--space-4) var(--space-3) !important;
+    max-width: 1440px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
 }
 
 .gestion-container {
     display: flex;
-    gap: var(--space-5);
-    align-items: flex-start;
     width: 100%;
+    min-height: calc(100dvh - var(--header-height));
+    gap: 0;
 }
 
 .gestion-subnav {
-    width: 240px;
+    width: 260px;
     flex-shrink: 0;
     position: sticky;
-    top: calc(var(--header-height) + var(--space-4));
+    top: var(--header-height);
+    height: calc(100dvh - var(--header-height));
+    padding: var(--space-4) var(--space-3);
+    border-right: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+    overflow-y: auto;
 }
 
 .gestion-subnav-inner {
@@ -304,8 +309,25 @@
     transition: background-color var(--transition-base), color var(--transition-base);
 }
 
+.gestion-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: var(--radius-full, 9999px);
+    color: var(--color-text-secondary);
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+    margin-bottom: 3px;
+}
+
 .gestion-nav-link i {
-    font-size: 16px;
+    font-size: 18px;
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
     color: var(--color-text-muted);
 }
 
@@ -315,9 +337,9 @@
 }
 
 .gestion-nav-link.active {
-    background-color: var(--color-surface-hover);
+    background-color: var(--color-accent-subtle);
     color: var(--color-accent);
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .gestion-nav-link.active i {
@@ -327,8 +349,9 @@
 .gestion-canvas {
     flex: 1;
     min-width: 0;
-    max-width: 880px;
     width: 100%;
+    padding: var(--space-4) var(--space-5);
+    background-color: var(--color-bg);
 }
 
 @media (max-width: 767.98px) {

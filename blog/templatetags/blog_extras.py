@@ -433,23 +433,28 @@ def avatar(perfil, tamano=36, clase_extra=''):
 
     clases = f'avatar {size_mod} flex-shrink-0 {clase_extra}'.strip()
 
+    color_bg = color_estable_usuario(username)
+    font_size = max(11, round(px * 0.44))
+
     if getattr(perfil, 'avatar', None):
         try:
             url_avatar = perfil.avatar.url
             return mark_safe(
+                f'<span class="{escape(clases)}" style="width:{px}px;height:{px}px;display:inline-flex;align-items:center;justify-content:center;position:relative;border-radius:50% !important;overflow:hidden;">'
                 f'<img src="{escape(url_avatar)}" alt="Avatar de {escape(nombre_mostrar)}" '
                 f'width="{px}" height="{px}" loading="lazy" decoding="async" '
-                f'class="{escape(clases)}" '
-                f'style="width:{px}px;height:{px}px;aspect-ratio:1/1;object-fit:cover;border-radius:50% !important;">'
+                f'style="width:100%;height:100%;aspect-ratio:1/1;object-fit:cover;border-radius:50% !important;display:block;" '
+                f'onerror="this.style.display=\'none\'; if(this.nextElementSibling) this.nextElementSibling.style.display=\'inline-flex\';">'
+                f'<span style="display:none;width:100%;height:100%;background-color:{color_bg};color:#ffffff;font-size:{font_size}px;font-weight:700;align-items:center;justify-content:center;border-radius:50% !important;" '
+                f'aria-hidden="true" title="{escape(nombre_mostrar)}">{escape(inicial)}</span>'
+                f'</span>'
             )
         except ValueError:
             pass
 
-    color_bg = color_estable_usuario(username)
-    font_size = max(11, round(px * 0.44))
     return mark_safe(
         f'<span class="{escape(clases)}" '
-        f'style="width:{px}px;height:{px}px;background-color:{color_bg};font-size:{font_size}px;border-radius:50% !important;" '
+        f'style="width:{px}px;height:{px}px;background-color:{color_bg};color:#ffffff;font-size:{font_size}px;font-weight:700;border-radius:50% !important;display:inline-flex;align-items:center;justify-content:center;" '
         f'aria-hidden="true" title="{escape(nombre_mostrar)}">{escape(inicial)}</span>'
     )
 
@@ -535,23 +540,29 @@ def portada_post(post, altura_clase=''):
     if not url_imagen:
         url_imagen = getattr(post, 'portada_url', None)
 
-    if url_imagen:
-        srcset = getattr(post, 'portada_srcset', '')
-        srcset_attr = f'srcset="{escape(srcset)}" sizes="(max-width: 768px) 100vw, 640px"' if srcset else ''
-        return mark_safe(
-            f'<div class="post-cover-wrapper {escape(altura_clase)}">'
-            f'<img src="{escape(url_imagen)}" alt="{titulo}" {srcset_attr} '
-            f'class="post-cover-img" loading="lazy" decoding="async" width="640" height="360" '
-            f'style="aspect-ratio:16/9;object-fit:cover;">'
-            f'</div>'
-        )
-
     categoria = getattr(post, 'categoria', None)
     cat_slug = getattr(categoria, 'slug', '') or 'general'
     cat_nombre = getattr(categoria, 'nombre', '') or 'General'
     grad_idx = indice_degradado_categoria(cat_slug)
     icono = CATEGORIA_ICONOS.get(cat_slug, 'bi-journal-richtext')
     grad_css = degradado_portada_post(post)
+
+    if url_imagen:
+        srcset = getattr(post, 'portada_srcset', '')
+        srcset_attr = f'srcset="{escape(srcset)}" sizes="(max-width: 768px) 100vw, 640px"' if srcset else ''
+        return mark_safe(
+            f'<div class="post-cover-wrapper {escape(altura_clase)} position-relative overflow-hidden">'
+            f'<img src="{escape(url_imagen)}" alt="{titulo}" {srcset_attr} '
+            f'class="post-cover-img" loading="lazy" decoding="async" width="640" height="360" '
+            f'style="aspect-ratio:16/9;object-fit:cover;" '
+            f'onerror="this.style.display=\'none\'; if(this.nextElementSibling) this.nextElementSibling.style.display=\'flex\';">'
+            f'<div class="post-cover-placeholder-content cat-grad-{grad_idx}" '
+            f'style="display:none;background:{grad_css};width:100%;height:100%;align-items:center;justify-content:center;" '
+            f'role="img" aria-label="Portada ilustrativa de {escape(cat_nombre)}: {titulo}">'
+            f'<i class="bi {icono} post-cover-icon" aria-hidden="true"></i>'
+            f'</div>'
+            f'</div>'
+        )
 
     return mark_safe(
         f'<div class="post-cover-wrapper post-cover-gradient cat-grad-{grad_idx} {escape(altura_clase)}" '

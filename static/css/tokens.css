@@ -48,12 +48,12 @@
     --sal: env(safe-area-inset-left, 0px);
     --sar: env(safe-area-inset-right, 0px);
 
-    /* Dimensiones clave */
+    /* Dimensiones clave (Estilo X / Integrado) */
     --header-height: 56px;
-    --nav-rail-width: 64px;
-    --nav-left-width: 220px;
-    --feed-max-width: 680px;
-    --article-max-width: 720px;
+    --nav-rail-width: 68px;
+    --nav-left-width: 260px;
+    --feed-max-width: 700px;
+    --article-max-width: 740px;
     --sidebar-right-width: 320px;
     --bottom-bar-height: 54px;
     --touch-target-min: 44px;
@@ -234,3 +234,35 @@
         scroll-behavior: auto !important;
     }
 }
+
+/* Modificadores de tamaño de tipografía de lectura */
+html[data-font-size="sm"] {
+    --font-size-reading: 15px;
+}
+html[data-font-size="md"] {
+    --font-size-reading: 17px;
+}
+html[data-font-size="lg"] {
+    --font-size-reading: 19px;
+}
+
+/* Modificadores de color de acento dinámico */
+html[data-accent="emerald"] {
+    --color-accent: #10b981;
+    --color-accent-hover: #34d399;
+    --color-accent-active: #059669;
+    --color-accent-subtle: rgba(16, 185, 129, 0.15);
+}
+html[data-accent="purple"] {
+    --color-accent: #8b5cf6;
+    --color-accent-hover: #a78bfa;
+    --color-accent-active: #7c3aed;
+    --color-accent-subtle: rgba(139, 92, 246, 0.15);
+}
+html[data-accent="amber"] {
+    --color-accent: #f59e0b;
+    --color-accent-hover: #fbbf24;
+    --color-accent-active: #d97706;
+    --color-accent-subtle: rgba(245, 158, 11, 0.15);
+}
+

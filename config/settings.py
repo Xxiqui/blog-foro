@@ -203,6 +203,11 @@ WHITENOISE_MANIFEST_STRICT = False
 # Archivos multimedia (subidos por usuarios y CKEditor)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = Path(os.environ.get('MEDIA_ROOT', BASE_DIR / 'media'))
+try:
+    for _sub in ('avatares', 'uploads', 'portadas', 'categorias/avatares', 'categorias/banners'):
+        (MEDIA_ROOT / _sub).mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
 
 # Redirecciones de autenticación
 LOGIN_URL = 'cuentas:login'
