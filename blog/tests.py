@@ -2837,6 +2837,15 @@ class ForoAdaptableFase6Tests(TestCase):
         self.assertContains(resp, 'Tendencias de la semana')
         self.assertContains(resp, 'Autores para seguir')
 
+    def test_explorar_view_autenticado(self):
+        """Verifica que un usuario autenticado cargue /explorar/ con estado de membresía y seguimiento."""
+        self.client.force_login(self.lector_user)
+        resp = self.client.get(reverse('blog:explorar'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('comunidades', resp.context)
+        self.assertIn('autores', resp.context)
+        self.assertContains(resp, 'Explorar la comunidad')
+
     def test_categoria_hub_view(self):
         """Verifica la cabecera compacta <= 120px, reglas colapsables y publicaciones fijadas."""
         url = reverse('blog:posts_por_categoria', kwargs={'slug': self.categoria.slug})

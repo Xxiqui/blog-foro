@@ -1741,7 +1741,7 @@ class ExplorarView(TemplateView):
         )
 
         if user.is_authenticated:
-            miembro_ids = set(user.membresias_categoria.values_list('categoria_id', flat=True))
+            miembro_ids = set(user.membresias_categorias.values_list('categoria_id', flat=True))
             for c in comunidades:
                 c.es_miembro = c.pk in miembro_ids
         else:
@@ -1771,11 +1771,15 @@ class ExplorarView(TemplateView):
 
         autores = list(construir_queryset_autores_destacados(orden='puntuacion')[:8])
         if user.is_authenticated:
-            siguiendo_ids = set(user.siguiendo_autores.values_list('autor_id', flat=True))
+            siguiendo_ids = set(user.siguiendo.values_list('autor_id', flat=True))
             for a in autores:
+                a.total_posts = getattr(a, 'posts_publicados_count', 0)
+                a.total_seguidores = getattr(a, 'seguidores_count', 0)
                 a.siguiendo_usuario = a.pk in siguiendo_ids
         else:
             for a in autores:
+                a.total_posts = getattr(a, 'posts_publicados_count', 0)
+                a.total_seguidores = getattr(a, 'seguidores_count', 0)
                 a.siguiendo_usuario = False
 
         context.update({

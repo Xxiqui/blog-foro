@@ -1,77 +1,122 @@
 {% extends "base.html" %}
+{% load static %}
+{% load blog_extras %}
 
-{% block title %}Mis Notificaciones | {{ marca_corta|default:"Blog" }}{% endblock %}
+{% block title %}Notificaciones | {{ site_name|default:"Blog" }}{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-9">
-        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-2">
-            <div>
-                <h1 class="h3 fw-bold mb-1">
-                    <i class="bi bi-bell me-2 text-primary"></i>Mis Notificaciones
-                </h1>
-                <p class="text-muted mb-0 small">
-                    Revisa la actividad en tus artículos, comentarios, menciones y reportes.
+<div class="app-feed-container">
+    <!-- Cabecera de Notificaciones (Estilo X) -->
+    <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom flex-wrap gap-2">
+        <div>
+            <h1 class="h4 fw-bold mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-bell text-primary" aria-hidden="true"></i>
+                <span>Mis Notificaciones</span>
+            </h1>
+            <p class="text-secondary small mb-0">
+                Mantente al día con las interacciones en tus artículos, comentarios y seguidores.
+            </p>
+        </div>
+        {% if notificaciones %}
+            <form method="post" action="{% url 'blog:notificaciones_marcar_todas' %}" class="m-0">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-medium">
+                    <i class="bi bi-check2-all me-1" aria-hidden="true"></i>Marcar todas como leídas
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    <!-- Lista de Notificaciones -->
+    <div class="card bg-surface border rounded-3 overflow-hidden shadow-none mb-4">
+        {% for notif in notificaciones %}
+            <div class="p-3 border-bottom d-flex align-items-start gap-3 transition-colors {% if not notif.leida %}bg-primary-subtle bg-opacity-10 border-start border-start-3 border-primary{% endif %}"
+                 style="position: relative;">
+                
+                <!-- Ícono del tipo de notificación -->
+                <div class="flex-shrink-0 pt-1" style="font-size: 1.25rem;">
+                    {% if notif.tipo == 'LIKE_POST' or notif.tipo == 'LIKE_COMENTARIO' %}
+                        <i class="bi bi-heart-fill text-danger" title="Me gusta" aria-hidden="true"></i>
+                    {% elif notif.tipo == 'COMENTARIO_NUEVO' or notif.tipo == 'RESPUESTA_COMENTARIO' %}
+                        <i class="bi bi-chat-dots-fill text-info" title="Comentario" aria-hidden="true"></i>
+                    {% elif notif.tipo == 'SEGUIDOR_NUEVO' %}
+                        <i class="bi bi-person-plus-fill text-primary" title="Nuevo seguidor" aria-hidden="true"></i>
+                    {% elif notif.tipo == 'POST_NUEVO' %}
+                        <i class="bi bi-journal-text text-primary" title="Nueva publicación" aria-hidden="true"></i>
+                    {% elif notif.tipo == 'MENCION' %}
+                        <i class="bi bi-at text-primary" title="Mención" aria-hidden="true"></i>
+                    {% elif notif.tipo == 'COMENTARIO_APROBADO' %}
+                        <i class="bi bi-check-circle-fill text-success" title="Aprobado" aria-hidden="true"></i>
+                    {% else %}
+                        <i class="bi bi-bell-fill text-secondary" title="Notificación" aria-hidden="true"></i>
+                    {% endif %}
+                </div>
+
+                <!-- Avatar si hay actor -->
+                {% if notif.actor and notif.actor.perfil %}
+                    <div class="flex-shrink-0">
+                        <a href="{% url 'blog:autor_detail' notif.actor.username %}" class="text-decoration-none">
+                            {% avatar notif.actor.perfil 36 %}
+                        </a>
+                    </div>
+                {% endif %}
+
+                <!-- Contenido principal de la notificación -->
+                <div class="flex-grow-1 min-w-0" style="min-width: 0;">
+                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                        <span class="badge bg-secondary-subtle text-secondary border" style="font-size: 11px;">
+                            {{ notif.get_tipo_display }}
+                        </span>
+                        {% if not notif.leida %}
+                            <span class="badge bg-primary rounded-pill" style="font-size: 11px;">No leída</span>
+                        {% endif %}
+                        <span class="text-secondary small" style="font-size: 12px;">
+                            {{ notif.creado|fecha_relativa }}
+                        </span>
+                    </div>
+
+                    <a href="{% url 'blog:notificacion_ir' notif.pk %}"
+                       class="text-decoration-none text-body fw-medium d-block text-hover-primary"
+                       style="line-height: 1.45; word-wrap: break-word; overflow-wrap: break-word;">
+                        {{ notif.mensaje }}
+                    </a>
+                </div>
+
+                <!-- Acciones a la derecha -->
+                <div class="flex-shrink-0 d-flex align-items-center gap-1 ms-auto">
+                    <a href="{% url 'blog:notificacion_ir' notif.pk %}"
+                       class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1"
+                       title="Ver contenido">
+                        <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                        <span class="d-none d-sm-inline ms-1">Ver</span>
+                    </a>
+                    {% if not notif.leida %}
+                        <form method="post" action="{% url 'blog:notificacion_leer' notif.pk %}" class="m-0 d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-primary rounded-circle p-1"
+                                    style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;"
+                                    title="Marcar como leída"
+                                    aria-label="Marcar como leída">
+                                <i class="bi bi-check2" aria-hidden="true"></i>
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% empty %}
+            <div class="p-5 text-center text-muted">
+                <i class="bi bi-bell-slash text-secondary opacity-50 mb-3" style="font-size: 3rem; display: block;" aria-hidden="true"></i>
+                <h2 class="h6 fw-bold text-body">No tienes notificaciones por ahora</h2>
+                <p class="small text-secondary mb-0">
+                    Cuando recibas comentarios, menciones, reacciones o nuevos seguidores aparecerán aquí.
                 </p>
             </div>
-            {% if notificaciones %}
-                <form method="post" action="{% url 'blog:notificaciones_marcar_todas' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                    <button type="submit" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-check2-all me-1"></i>Marcar todas como leídas
-                    </button>
-                </form>
-            {% endif %}
-        </div>
-
-        <div class="card shadow-sm border-0">
-            <div class="list-group list-group-flush">
-                {% for notif in notificaciones %}
-                    <div class="list-group-item d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 py-3 {% if not notif.leida %}bg-primary-subtle{% endif %}">
-                        <div class="flex-grow-1 min-w-0 w-100 w-sm-auto">
-                            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                                <span class="badge bg-secondary">{{ notif.get_tipo_display }}</span>
-                                {% if not notif.leida %}
-                                    <span class="badge bg-primary">No leída</span>
-                                {% endif %}
-                                <span class="text-muted small">{{ notif.creado|date:"d/m/Y H:i" }}</span>
-                            </div>
-                            <a href="{% url 'blog:notificacion_ir' notif.pk %}" class="text-decoration-none fw-semibold d-block text-break">
-                                {{ notif.mensaje }}
-                            </a>
-                        </div>
-                        <div class="d-flex align-items-center gap-2 flex-shrink-0 w-100 w-sm-auto justify-content-end pt-2 pt-sm-0 border-top border-sm-0">
-                            <a href="{% url 'blog:notificacion_ir' notif.pk %}" class="btn btn-sm btn-primary">
-                                Ir <i class="bi bi-arrow-right"></i>
-                            </a>
-                            {% if not notif.leida %}
-                                <form method="post" action="{% url 'blog:notificacion_leer' notif.pk %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                    <button type="submit" class="btn btn-sm btn-outline-secondary touch-target-44"
-                                            aria-label="Marcar notificación como leída"
-                                            title="Marcar como leída">
-                                        <i class="bi bi-check2" aria-hidden="true"></i>
-                                    </button>
-                                </form>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% empty %}
-                    <div class="empty-state border-0 shadow-none my-3">
-                        <svg width="104" height="104" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                        </svg>
-                        <h2 class="h6 fw-bold text-body">No tienes notificaciones por ahora</h2>
-                        <p class="small text-muted mb-0">Cuando recibas comentarios, menciones o nuevos seguidores aparecerán aquí.</p>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        {% include "blog/includes/pagination.html" %}
+        {% endfor %}
     </div>
+
+    {% include "blog/includes/pagination.html" %}
 </div>
 {% endblock %}
-
