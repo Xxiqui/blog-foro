@@ -3355,12 +3355,9 @@ class ForoAdaptableFase8ProductionTests(TestCase):
     def test_railway_production_settings(self):
         """Verifica que los dominios de Railway y el storage de Whitenoise estén configurados."""
         from django.conf import settings
-        from django.core.files.storage import storages
-        from whitenoise.storage import CompressedManifestStaticFilesStorage
 
-        # Storage de estáticos
-        static_storage = storages['staticfiles']
-        self.assertIsInstance(static_storage, CompressedManifestStaticFilesStorage)
+        # Storage de estáticos para producción
+        self.assertIn('whitenoise.storage.CompressedManifestStaticFilesStorage', settings.STORAGES['staticfiles']['BACKEND'])
 
         # Hosts de Railway
         self.assertTrue(any('.railway.app' in h for h in settings.ALLOWED_HOSTS))

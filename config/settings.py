@@ -5,12 +5,14 @@ Condicionada por entorno (desarrollo y producción) mediante variables de entorn
 
 import importlib.util
 import os
+import sys
 from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 ALLAUTH_INSTALLED = importlib.util.find_spec('allauth') is not None
+IS_TESTING = 'test' in sys.argv
 
 # Cargar variables de entorno desde archivo .env si existe
 load_dotenv(BASE_DIR / '.env')
@@ -185,7 +187,11 @@ STORAGES = {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
     },
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        'BACKEND': (
+            'django.contrib.staticfiles.storage.StaticFilesStorage'
+            if (DEBUG or IS_TESTING)
+            else 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+        ),
     },
 }
 WHITENOISE_MANIFEST_STRICT = False
